@@ -1,6 +1,6 @@
-*.swp
 bin/
 lib/
+data/
 CMakeCache.txt
 CMakeFiles/
 Makefile
