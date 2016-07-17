@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8)
 
 project(SuperResolution)
 
@@ -39,7 +39,6 @@ add_executable(
   SuperResolution
   source/super_resolution.cpp
 )
-target_compile_features(SuperResolution PRIVATE cxx_range_for)
 target_link_libraries(
   SuperResolution
   glog
