@@ -34,6 +34,16 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 
+# Create a library for all of the added Super Resolution dependencies (i.e. all
+# the classes).
+file(GLOB sr_lib_SRC "src/*.cpp")
+
+add_library(
+  LibSuperResolution
+  ${sr_lib_SRC}
+)
+
+
 # Add the SuperResolution binary.
 add_executable(
   SuperResolution
@@ -41,6 +51,7 @@ add_executable(
 )
 target_link_libraries(
   SuperResolution
+  LibSuperResolution
   glog
   gflags
   ${OpenCV_LIBS}

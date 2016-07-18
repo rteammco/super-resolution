@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 
+#include "data_generator.h"
+
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -18,6 +20,8 @@ int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
 
   CHECK(!FLAGS_image_path.empty()) << "Must provide an image file path.";
+
+  super_resolution::DataGenerator dg;
 
   const cv::Mat image = cv::imread(FLAGS_image_path, CV_LOAD_IMAGE_GRAYSCALE);
 
