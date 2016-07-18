@@ -36,7 +36,7 @@ class DataGenerator {
   // Defines the motion shift for each image that is generated. If the given
   // motion sequence is shorter than the number of frames to be generated, the
   // motion sequence will be looped.
-  void SetMotionSequence(const std::vector<MotionShift>& motion_sequence);
+  void SetMotionSequence(const std::vector<MotionShift>& motion_shifts);
 
   // Option setters.
   void SetBlurImage(const bool blur_image) {
@@ -46,6 +46,10 @@ class DataGenerator {
  private:
   // The original high-resolution image from which the data will be generated.
   const cv::Mat& high_res_image_;
+
+  // Contains a list of shift amounts. These define how many pixels each image
+  // in the generated sequence will be shifted by from the default position.
+  std::vector<MotionShift> motion_shifts_;
 
   // If true, the image will be blurred during the downsampling process.
   bool blur_image_;

@@ -27,8 +27,14 @@ int main(int argc, char** argv) {
   cv::imshow("Image", image);
   cv::waitKey(0);
 
+  data_generator.SetMotionSequence({
+      super_resolution::MotionShift(0, 0),
+      super_resolution::MotionShift(0, 1),
+      super_resolution::MotionShift(2, 0),
+      super_resolution::MotionShift(1, 2)});
   std::vector<cv::Mat> low_res_images =
       data_generator.GenerateLowResImages(5, 4);
+
   cv::Mat vis;
   cv::resize(low_res_images[0], vis, image.size());
   cv::imshow("low res 1", vis);
