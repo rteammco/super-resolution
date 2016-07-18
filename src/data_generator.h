@@ -38,9 +38,15 @@ class DataGenerator {
   // motion sequence will be looped.
   void SetMotionSequence(const std::vector<MotionShift>& motion_shifts);
 
-  // Option setters.
+  // Set to false to disable blurring the image before downsampling.
   void SetBlurImage(const bool blur_image) {
     blur_image_ = blur_image;
+  }
+
+  // Set the noise standard deviation (set to 0 to not add any noise). This
+  // value is in pixel intensities (0 to 255).
+  void SetNoiseStandardDeviation(const int noise_standard_deviation) {
+    noise_standard_deviation_ = noise_standard_deviation;
   }
 
  private:
