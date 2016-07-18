@@ -10,7 +10,7 @@ find_package(glog REQUIRED)
 #find_package(gmock REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Default to Release mode.
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
@@ -31,13 +31,13 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Grab all files in the source directory.
-file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/source/*")
+file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 
 # Add the SuperResolution binary.
 add_executable(
   SuperResolution
-  source/super_resolution.cpp
+  src/super_resolution.cpp
 )
 target_link_libraries(
   SuperResolution
