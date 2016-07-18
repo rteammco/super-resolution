@@ -1,25 +1,42 @@
+// TODO(richard): comments.
+
 #ifndef SRC_DATA_GENERATOR_H_
 #define SRC_DATA_GENERATOR_H_
 
 #include <vector>
+#include <utility>
 
 #include "opencv2/core/core.hpp"
 
 namespace super_resolution {
 
+// Defines the motion (pixel shift) between two images, namely between an image
+// and the first image in the frame sequence.
+struct MotionShift {
+  MotionShift(const double dx, const double dy) : dx(dx), dy(dy) {}
+  const double dx;
+  const double dy;
+};
+
 class DataGenerator {
  public:
-  explicit DataGenerator(const cv::Mat& image) :
-      image_(image),
+  // Stores the given image from which the low resolution frames will be
+  // generated. Also sets default values.
+  explicit DataGenerator(const cv::Mat& high_res_image) :
+      high_res_image_(high_res_image),
       blur_image_(true),
       noise_standard_deviation_(5) {}
 
-  // TODO(richard): also include number of images to generate.
-  std::vector<cv::Mat> GenerateLowResImages(const int scale) const;
+  // Returns a list of num_images OpenCV images generated from the original
+  // high-resolution image. The given scale is the amount by which the original
+  // image will be scaled down.
+  std::vector<cv::Mat> GenerateLowResImages(
+      const int scale, const int num_images) const;
 
-  // TODO(richard): add these functions.
-  // SetMotionSequence(...);
-  // ;
+  // Defines the motion shift for each image that is generated. If the given
+  // motion sequence is shorter than the number of frames to be generated, the
+  // motion sequence will be looped.
+  void SetMotionSequence(const std::vector<MotionShift>& motion_sequence);
 
   // Option setters.
   void SetBlurImage(const bool blur_image) {
@@ -28,13 +45,15 @@ class DataGenerator {
 
  private:
   // The original high-resolution image from which the data will be generated.
-  const cv::Mat& image_;
+  const cv::Mat& high_res_image_;
 
   // If true, the image will be blurred during the downsampling process.
   bool blur_image_;
 
   // The applied noise standard deviation is in pixels.
   int noise_standard_deviation_;
+
+  // TODO(richard): no-copy allowed.
 };
 
 }  // namespace super_resolution

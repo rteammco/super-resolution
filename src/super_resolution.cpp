@@ -27,7 +27,8 @@ int main(int argc, char** argv) {
   cv::imshow("Image", image);
   cv::waitKey(0);
 
-  std::vector<cv::Mat> low_res_images = data_generator.GenerateLowResImages(5);
+  std::vector<cv::Mat> low_res_images =
+      data_generator.GenerateLowResImages(5, 4);
   cv::Mat vis;
   cv::resize(low_res_images[0], vis, image.size());
   cv::imshow("low res 1", vis);

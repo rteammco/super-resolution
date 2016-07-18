@@ -8,7 +8,7 @@
 namespace super_resolution {
 
 std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
-    const int scale) const {
+    const int scale, const int num_images) const {
 
   // Blur the image if the blur flag is enabled.
   cv::Mat blurred_image;
@@ -16,9 +16,12 @@ std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
     // Make kernel_size so that it is odd even if scale is even.
     const int kernel_size = (scale % 2 == 1) ? scale : scale - 1;
     cv::GaussianBlur(
-        image_, blurred_image, cv::Size(kernel_size, kernel_size), kernel_size);
+        high_res_image_,
+        blurred_image,
+        cv::Size(kernel_size, kernel_size),
+        kernel_size);
   } else {
-    blurred_image = image_;
+    blurred_image = high_res_image_;
   }
 
   // Downsample the image into a set of all the images.
@@ -28,8 +31,8 @@ std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
   const int num_low_res_images = 4;
 
   std::vector<cv::Mat> low_res_images;
-  const int num_rows = image_.rows / scale;
-  const int num_cols = image_.cols / scale;
+  const int num_rows = high_res_image_.rows / scale;
+  const int num_cols = high_res_image_.cols / scale;
   const cv::Size dimensions(num_cols, num_rows);
 
   for (int i = 0; i < num_low_res_images; ++i) {
@@ -39,7 +42,7 @@ std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
          0, 1, dy[i] + 0.5);
     cv::Mat shifted_image;
     cv::warpAffine(
-      blurred_image, shifted_image, shift_kernel, blurred_image.size());
+        blurred_image, shifted_image, shift_kernel, blurred_image.size());
 
     // Downsample the sifted image.
     cv::Mat low_res_image;
