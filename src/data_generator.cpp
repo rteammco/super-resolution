@@ -9,13 +9,17 @@ namespace super_resolution {
 
 std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
     const int scale) const {
-  // Blur the image.
-  const cv::Mat blur_kernel = (cv::Mat_<double>(3, 3)
-    << 1, 2, 1,
-       2, 4, 2,
-       1, 2, 1) / 16;
+
+  // Blur the image if the blur flag is enabled.
   cv::Mat blurred_image;
-  cv::filter2D(image_, blurred_image, image_.depth(), blur_kernel);
+  if (blur_image_) {
+    // Make kernel_size so that it is odd even if scale is even.
+    const int kernel_size = (scale % 2 == 1) ? scale : scale - 1;
+    cv::GaussianBlur(
+        image_, blurred_image, cv::Size(kernel_size, kernel_size), kernel_size);
+  } else {
+    blurred_image = image_;
+  }
 
   // Downsample the image into a set of all the images.
   const int dx[4] = {0, 0, 2, 1};
