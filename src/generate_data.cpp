@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "data_generator/data_generator.h"
+#include "util/util.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -25,11 +26,8 @@ DEFINE_int32(number_of_frames, 4,
     "The number of LR images that will be generated.");
 
 int main(int argc, char** argv) {
-  google::SetUsageMessage(
+  super_resolution::util::InitApp(argc, argv,
       "Generate low-resolution frames from a high-resolution image.");
-  google::SetVersionString("0.1");
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
-  google::InitGoogleLogging(argv[0]);
 
   CHECK(!FLAGS_image_path.empty()) << "Must provide an image file path.";
 

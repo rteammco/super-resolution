@@ -1,4 +1,4 @@
-#include "./data_generator.h"
+#include "data_generator/data_generator.h"
 
 #include <vector>
 
