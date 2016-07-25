@@ -1,3 +1,6 @@
+// This binary is used to generate low-resolution images from a given
+// high-resolution ground truth image.
+
 #include <iostream>
 #include <vector>
 
@@ -10,11 +13,20 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
-DEFINE_string(image_path, "", "The path to an image file.");
+DEFINE_string(image_path, "",
+    "Path to the HR image that will be used to generate the LR images.");
+DEFINE_bool(no_image_blur, false,
+    "Option to not blur the generated LR images.");
+DEFINE_int32(noise_standard_deviation, 5,
+    "Standard deviation of the noise to be added to the LR images.");
+DEFINE_int32(downsampling_scale, 3,
+    "The scale by which the HR image will be downsampled and blurred.");
+DEFINE_int32(number_of_frames, 4,
+    "The number of LR images that will be generated.");
 
 int main(int argc, char** argv) {
   google::SetUsageMessage(
-      "Super-resolves a video into a higher quality video.");
+      "Generate low-resolution frames from a high-resolution image.");
   google::SetVersionString("0.1");
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
@@ -32,25 +44,16 @@ int main(int argc, char** argv) {
       super_resolution::MotionShift(0, 1),
       super_resolution::MotionShift(2, 0),
       super_resolution::MotionShift(1, 2)});
-  data_generator.SetBlurImage(false);
-  data_generator.SetNoiseStandardDeviation(0);
-  std::vector<cv::Mat> low_res_images =
-      data_generator.GenerateLowResImages(3, 4);
+  data_generator.SetBlurImage(!FLAGS_no_image_blur);
+  data_generator.SetNoiseStandardDeviation(FLAGS_noise_standard_deviation);
+  std::vector<cv::Mat> low_res_images = data_generator.GenerateLowResImages(
+      FLAGS_downsampling_scale, FLAGS_number_of_frames);
 
   cv::Mat vis;
   cv::resize(low_res_images[0], vis, image.size());
   cv::imshow("low res 1", vis);
   cv::imshow("low res 1 norm", low_res_images[0]);
   cv::waitKey(0);
-
-  // TODO(richard): the list of algorithm steps (eventually).
-  // 1. Verify that the data has 2N frames.
-  // 2. Load up all images.
-  // 3. Compute SR for the middle image.
-  // 4. Evaluate the results.
-  // Ultimately, I/O is:
-  //  in  => one of my old low-quality videos
-  //  out => noticably better quality version of that video
 
   return EXIT_SUCCESS;
 }

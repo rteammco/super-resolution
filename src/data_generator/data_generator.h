@@ -1,7 +1,7 @@
 // TODO(richard): comments.
 
-#ifndef SRC_DATA_GENERATOR_H_
-#define SRC_DATA_GENERATOR_H_
+#ifndef SRC_DATA_GENERATOR_DATA_GENERATOR_H_
+#define SRC_DATA_GENERATOR_DATA_GENERATOR_H_
 
 #include <vector>
 #include <utility>
@@ -68,4 +68,4 @@ class DataGenerator {
 
 }  // namespace super_resolution
 
-#endif  // SRC_DATA_GENERATOR_H_
+#endif  // SRC_DATA_GENERATOR_DATA_GENERATOR_H_
