@@ -37,12 +37,26 @@ file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 # Create a library for all of the added Super Resolution dependencies (i.e. all
 # the classes).
 file(GLOB sr_lib_SRC "src/*.cpp")
+file(GLOB sr_lib_SRC "src/data_generator/*.cpp")
 
 add_library(
   LibSuperResolution
   ${sr_lib_SRC}
 )
 
+
+# Add the GenerateData binary.
+add_executable(
+  GenerateData
+  src/data_generator/generate_data.cpp
+)
+target_link_libraries(
+  GenerateData
+  LibSuperResolution
+  glog
+  gflags
+  ${OpenCV_LIBS}
+)
 
 # Add the SuperResolution binary.
 add_executable(
