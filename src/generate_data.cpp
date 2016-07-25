@@ -1,7 +1,6 @@
 // This binary is used to generate low-resolution images from a given
 // high-resolution ground truth image.
 
-#include <iostream>
 #include <vector>
 
 #include "data_generator/data_generator.h"

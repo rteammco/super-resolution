@@ -13,6 +13,9 @@ void InitApp(int argc, char** argv, const std::string& usage_message) {
   google::SetVersionString(kCodeVersion);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
+
+  // TODO(richard): remove this or put it under a debug guard.
+  FLAGS_logtostderr = true;
 }
 
 }  // namespace util

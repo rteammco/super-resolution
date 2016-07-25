@@ -1,7 +1,11 @@
-#include <iostream>
+#include "util/util.h"
+
+#include "glog/logging.h"
 
 int main(int argc, char** argv) {
-  std::cout << "Hello, world" << std::endl;
+  super_resolution::util::InitApp(argc, argv, "Super resolution.");
+
+  LOG(INFO) << "Super resolution.";
 
   // TODO(richard): the list of algorithm steps (eventually).
   // 1. Verify that the data has 2N frames.
