@@ -1,4 +1,6 @@
-// TODO(richard): comments.
+// The VideoLoader class handles all file I/O and converts videos into
+// individual video frames. Load low-resolution videos with this class and
+// apply super resolution on the individual frames.
 
 #ifndef SRC_VIDEO_VIDEO_LOADER_H_
 #define SRC_VIDEO_VIDEO_LOADER_H_
@@ -12,8 +14,11 @@ namespace super_resolution {
 
 class VideoLoader {
  public:
+  // Loads all frames of the given video file. The given path must be a valid
+  // video file supported by OpenCV.
   void LoadFramesFromVideo(const std::string& video_path);
 
+  // Plays the original video file in a GUI window.
   void PlayOriginalVideo() const;
 
  private:

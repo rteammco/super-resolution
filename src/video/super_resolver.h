@@ -1,4 +1,5 @@
-// TODO(richard): comments.
+// The SuperResolver provides an interface to apply a super resolution
+// algorithm to the given data.
 
 #ifndef SRC_VIDEO_SUPER_RESOLVER_H_
 #define SRC_VIDEO_SUPER_RESOLVER_H_

@@ -1,4 +1,6 @@
-// TODO(richard): comments.
+// The DataGenerator class creates a set of simulated low-resolution image from
+// a single high-resolution image. The DataGenerator can be used to test the
+// super resolution algorithm against ground truth data.
 
 #ifndef SRC_DATA_GENERATOR_DATA_GENERATOR_H_
 #define SRC_DATA_GENERATOR_DATA_GENERATOR_H_

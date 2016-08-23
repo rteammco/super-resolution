@@ -11,6 +11,7 @@
 namespace super_resolution {
 
 // The size of a video frame that gets displayed.
+// TODO(richard): Move this to an optional parameter somewhere.
 static const cv::Size kDisplayFrameSize(1000, 600);
 
 void VideoLoader::LoadFramesFromVideo(const std::string& video_path) {
@@ -35,7 +36,7 @@ void VideoLoader::PlayOriginalVideo() const {
     cv::Mat resized_frame;
     cv::resize(frame, resized_frame, kDisplayFrameSize);
     cv::imshow(window_name, resized_frame);
-  
+
     if (cv::waitKey(30) >= 0) {
       break;
     }
