@@ -18,6 +18,10 @@ brew install opencv3
 Make sure `/usr/local/lib` is in your library path:
 ```
 export LIBRARY_PATH=/usr/local/lib
+
+or
+
+xcode-select install
 ```
 
 To cmake with OpenCV, need to run
