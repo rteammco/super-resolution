@@ -22,6 +22,7 @@ class VideoLoader {
   void PlayOriginalVideo() const;
 
  private:
+  // The original (low resolution) video frames.
   std::vector<const cv::Mat> video_frames_;
 };
 
