@@ -9,9 +9,9 @@ namespace super_resolution {
 
 class VideoLoader {
  public:
-  void LoadFramesFromVideo(const std::string& video_path) {}
+  void LoadFramesFromVideo(const std::string& video_path);
 
-  void PlayVideo() const {}
+  void PlayVideo() const;
 
  private:
 };

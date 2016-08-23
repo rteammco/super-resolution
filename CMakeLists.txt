@@ -38,11 +38,13 @@ file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 # the classes).
 file(GLOB data_generator_SRC "src/data_generator/*.cpp")
 file(GLOB util_SRC "src/util/*.cpp")
+file(GLOB video_SRC "src/video/*.cpp")
 
 add_library(
   LibSuperResolution
   ${data_generator_SRC}
   ${util_SRC}
+  ${video_SRC}
 )
 
 

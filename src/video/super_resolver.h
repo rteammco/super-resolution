@@ -17,7 +17,7 @@ class SuperResolver {
       const VideoLoader& video_loader,
       const SuperResolutionOptions& options) {}
 
-  void SuperResolve() {}
+  void SuperResolve();
 
  private:
 };
