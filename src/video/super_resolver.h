@@ -16,7 +16,8 @@ struct SuperResolutionOptions {
   std::string optical_flow_algorithm = "";
 
   int scale = 2;
-  int num_iterations = 0;
+  int num_iterations = 1;
+  int temporal_radius = 3;
 
   double blur_kernel_size = 3;
   double blur_sigma = 3;

@@ -21,6 +21,11 @@ class VideoLoader {
   // Plays the original video file in a GUI window.
   void PlayOriginalVideo() const;
 
+  // Returns the list of original video frames.
+  const std::vector<const cv::Mat>& GetFrames() const {
+    return video_frames_;
+  }
+
  private:
   // The original (low resolution) video frames.
   std::vector<const cv::Mat> video_frames_;
