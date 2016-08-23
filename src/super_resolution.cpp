@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
 
   super_resolution::VideoLoader video_loader;
   video_loader.LoadFramesFromVideo(FLAGS_video_path);
-  video_loader.PlayVideo();
+  video_loader.PlayOriginalVideo();
 
   super_resolution::SuperResolutionOptions options;
 
