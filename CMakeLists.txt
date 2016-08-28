@@ -61,6 +61,19 @@ target_link_libraries(
   ${OpenCV_LIBS}
 )
 
+# Add the Shift-Add Fusion binary.
+add_executable(
+  ShiftAddFusion
+  src/shift_add_fusion.cpp
+)
+target_link_libraries(
+  ShiftAddFusion
+  LibSuperResolution
+  glog
+  gflags
+  ${OpenCV_LIBS}
+)
+
 # Add the SuperResolution binary.
 add_executable(
   SuperResolution
