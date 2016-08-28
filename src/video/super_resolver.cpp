@@ -12,7 +12,6 @@
 namespace super_resolution {
 
 void SuperResolver::SuperResolve() {
-
   cv::Ptr<cv::superres::SuperResolution> super_resolution =
       cv::superres::createSuperResolution_BTVL1();
 
