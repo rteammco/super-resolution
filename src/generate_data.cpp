@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
         FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";
     // Convert to 0-255 scale before saving JPG file.
     cv::Mat output_image = low_res_images[i];
-    output_image.convertTo(output_image, CV_8UC3, 255.0); 
+    output_image.convertTo(output_image, CV_8UC3, 255.0);
     cv::imwrite(image_path, output_image);
   }
 
