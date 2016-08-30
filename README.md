@@ -40,3 +40,9 @@ mkdir build && cd build
 cmake ..
 make
 ```
+
+Directory Structure
+--------------------
+Add source files are in `./src`. Most files (classes and utilities) are organized into subdirectories. All files that are compiled into binaries (i.e. "main" files) are in the top level of `./src`.
+
+Tests are included in `./test` and follow a similar directory structure.
