@@ -22,17 +22,22 @@ class VideoLoader {
   // need to be a video, but rather multiple frames of the same scene.
   void LoadFramesFromDirectory(const std::string& directory_path);
 
+  // Returns the size of the low resolution images. If the size of the images
+  // varies, then this will return the size of the first image. If there are no
+  // images, the size returned will be (0, 0).
+  cv::Size GetImageSize() const;
+
   // Plays the original video file in a GUI window.
   void PlayOriginalVideo() const;
 
   // Returns the list of original video frames.
-  const std::vector<const cv::Mat>& GetFrames() const {
+  const std::vector<cv::Mat>& GetFrames() const {
     return video_frames_;
   }
 
  private:
   // The original (low resolution) video frames.
-  std::vector<const cv::Mat> video_frames_;
+  std::vector<cv::Mat> video_frames_;
 };
 
 }  // namespace super_resolution

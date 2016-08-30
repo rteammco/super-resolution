@@ -38,7 +38,7 @@ void SuperResolver::SuperResolve() {
   // int temporalAreaRadius - Radius of the temporal search area.
   // Ptr<DenseOpticalFlowExt> opticalFlow - Dense optical flow algorithm.
 
-  const std::vector<const cv::Mat>& frames = video_loader_.GetFrames();
+  const std::vector<cv::Mat>& frames = video_loader_.GetFrames();
 
   cv::Ptr<cv::superres::FrameSource> frame_source =
       cv::superres::createFrameSource_Video("../data/ditchjump.mp4");

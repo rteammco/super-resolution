@@ -48,6 +48,14 @@ void VideoLoader::LoadFramesFromDirectory(const std::string& directory_path) {
   }
 }
 
+cv::Size VideoLoader::GetImageSize() const {
+  if (video_frames_.empty()) {
+    return cv::Size(0, 0);
+  }
+
+  return video_frames_[0].size();
+}
+
 void VideoLoader::PlayOriginalVideo() const {
   const std::string window_name = "Original Video";
   cv::namedWindow(window_name);
