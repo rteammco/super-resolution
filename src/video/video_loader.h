@@ -18,6 +18,10 @@ class VideoLoader {
   // video file supported by OpenCV.
   void LoadFramesFromVideo(const std::string& video_path);
 
+  // Loads all frames in the given image directory. This does not technically
+  // need to be a video, but rather multiple frames of the same scene.
+  void LoadFramesFromDirectory(const std::string& directory_path);
+
   // Plays the original video file in a GUI window.
   void PlayOriginalVideo() const;
 
