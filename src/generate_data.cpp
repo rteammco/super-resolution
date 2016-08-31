@@ -26,7 +26,7 @@ DEFINE_bool(no_image_blur, false,
     "Option to not blur the generated LR images.");
 DEFINE_int32(noise_standard_deviation, 5,
     "Standard deviation of the noise to be added to the LR images.");
-DEFINE_int32(downsampling_scale, 3,
+DEFINE_int32(downsampling_scale, 2,
     "The scale by which the HR image will be downsampled and blurred.");
 DEFINE_int32(number_of_frames, 4,
     "The number of LR images that will be generated.");
@@ -42,11 +42,12 @@ int main(int argc, char** argv) {
       FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
   super_resolution::DataGenerator data_generator(image);
 
+  // TODO(richard): Don't hardcode the motion sequence.
   data_generator.SetMotionSequence({
       super_resolution::MotionShift(0, 0),
       super_resolution::MotionShift(0, 1),
-      super_resolution::MotionShift(2, 0),
-      super_resolution::MotionShift(1, 2)});
+      super_resolution::MotionShift(1, 0),
+      super_resolution::MotionShift(1, 1)});
   data_generator.SetBlurImage(!FLAGS_no_image_blur);
   data_generator.SetNoiseStandardDeviation(FLAGS_noise_standard_deviation);
   std::vector<cv::Mat> low_res_images = data_generator.GenerateLowResImages(
