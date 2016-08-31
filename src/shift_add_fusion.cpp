@@ -2,6 +2,7 @@
 // Introduction to Super-Resolution Imaging (2012)".
 
 #include <string>
+#include <vector>
 
 #include "data_generator/data_generator.h"
 #include "util/macros.h"
@@ -52,7 +53,6 @@ int main(int argc, char** argv) {
       << "The number of motion estimates must match the number of frames.";
 
   for (int i = 0; i < frames.size(); ++i) {
-  //for (int i = 0; i < 1; ++i) {
     cv::Mat frame = frames[i];
     cv::cvtColor(frame, frame, CV_BGR2GRAY);
 
