@@ -12,6 +12,7 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/photo/photo.hpp"
 
 #include "gflags/gflags.h"
 #include "glog/logging.h"
@@ -35,17 +36,21 @@ int main(int argc, char** argv) {
 
   // Create an empty HR image.
   const cv::Size low_res_image_size = video_loader.GetImageSize();
-  const int width = FLAGS_upsampling_scale * low_res_image_size.width;
-  const int height = FLAGS_upsampling_scale * low_res_image_size.height;
-  cv::Mat super_resolved_image = cv::Mat::zeros(width, height, CV_8UC1);
+  const int fused_width = FLAGS_upsampling_scale * low_res_image_size.width;
+  const int fused_height = FLAGS_upsampling_scale * low_res_image_size.height;
+  cv::Mat fusion_image = cv::Mat::zeros(fused_width, fused_height, CV_8UC1);
+
+  // Non-zero pixels in the inpaint mask will indicate where the SR image needs
+  // to be inpainted after fusion.
+  cv::Mat inpaint_mask = cv::Mat::ones(fused_width, fused_height, CV_8UC1);
 
   // TODO(richard): Don't hardcode the motion sequence. Eventually estimate the
   // motion automatically.
   std::vector<super_resolution::MotionShift> motion_shifts = {
       super_resolution::MotionShift(0, 0),
-      super_resolution::MotionShift(0, 1),
+      super_resolution::MotionShift(0, 2),
       super_resolution::MotionShift(1, 0),
-      super_resolution::MotionShift(1, 1)
+      super_resolution::MotionShift(2, 1)
   };
 
   const std::vector<cv::Mat>& frames = video_loader.GetFrames();
@@ -61,15 +66,29 @@ int main(int argc, char** argv) {
       for (int y = 0; y < frame.rows; ++y) {
         const int hr_x = FLAGS_upsampling_scale * x - motion_shifts[i].dx;
         const int hr_y = FLAGS_upsampling_scale * y - motion_shifts[i].dy;
-        if (hr_x < 0 || hr_x >= width || hr_y < 0 || hr_y >= height) {
+        if (hr_x < 0 || hr_x >= fused_width ||
+            hr_y < 0 || hr_y >= fused_height) {
           continue;
         }
-        super_resolved_image.at<uchar>(hr_y, hr_x) = frame.at<uchar>(y, x);
+        fusion_image.at<uchar>(hr_y, hr_x) = frame.at<uchar>(y, x);
+        inpaint_mask.at<uchar>(hr_y, hr_x) = 0;
       }
     }
   }
 
-  cv::imshow("disp", super_resolved_image);
+  // Display the image before inpainting.
+  cv::imshow("disp", fusion_image);
+  cv::waitKey(0);
+
+  // Then inpaint it and display it after.
+  cv::Mat inpainted_image;
+  cv::inpaint(
+      fusion_image,
+      inpaint_mask,
+      inpainted_image,
+      FLAGS_upsampling_scale,  // The radius considered for inpainting.
+      cv::INPAINT_NS);
+  cv::imshow("disp", inpainted_image);
   cv::waitKey(0);
 
   return EXIT_SUCCESS;

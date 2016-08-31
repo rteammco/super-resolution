@@ -45,9 +45,9 @@ int main(int argc, char** argv) {
   // TODO(richard): Don't hardcode the motion sequence.
   data_generator.SetMotionSequence({
       super_resolution::MotionShift(0, 0),
-      super_resolution::MotionShift(0, 1),
+      super_resolution::MotionShift(0, 2),
       super_resolution::MotionShift(1, 0),
-      super_resolution::MotionShift(1, 1)});
+      super_resolution::MotionShift(2, 1)});
   data_generator.SetBlurImage(!FLAGS_no_image_blur);
   data_generator.SetNoiseStandardDeviation(FLAGS_noise_standard_deviation);
   std::vector<cv::Mat> low_res_images = data_generator.GenerateLowResImages(
