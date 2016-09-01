@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "data_generator/motion_shift.h"
+
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
@@ -27,14 +29,15 @@ std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
   const cv::Size low_res_dimensions(
       high_res_image_.cols / scale, high_res_image_.rows / scale);
   const double noise_std = static_cast<double>(noise_standard_deviation_) / 255;
-  const int num_motion_shifts = motion_shifts_.size();
+  const int num_motion_shifts = motion_shift_sequence_.GetNumMotionShifts();
 
   std::vector<cv::Mat> low_res_images;
   for (int i = 0; i < num_images; ++i) {
     // Shift the image by the given motion amounts (if any are given).
     cv::Mat shifted_image;
     if (num_motion_shifts > 0) {
-      const MotionShift& motion_shift = motion_shifts_[i % num_motion_shifts];
+      const MotionShift& motion_shift =
+          motion_shift_sequence_[i % num_motion_shifts];
       const cv::Mat shift_kernel = (cv::Mat_<double>(2, 3)
         << 1, 0, motion_shift.dx + 0.5,
            0, 1, motion_shift.dy + 0.5);
@@ -59,12 +62,6 @@ std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
   }
 
   return low_res_images;
-}
-
-void DataGenerator::SetMotionSequence(
-    const std::vector<MotionShift>& motion_shifts) {
-
-  motion_shifts_ = std::vector<MotionShift>(motion_shifts);
 }
 
 }  // namespace super_resolution

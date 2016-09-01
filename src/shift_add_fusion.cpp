@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "data_generator/data_generator.h"
+#include "data_generator/motion_shift.h"
 #include "util/macros.h"
 #include "util/util.h"
 #include "video/video_loader.h"

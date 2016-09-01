@@ -5,20 +5,15 @@
 #ifndef SRC_DATA_GENERATOR_DATA_GENERATOR_H_
 #define SRC_DATA_GENERATOR_DATA_GENERATOR_H_
 
-#include <vector>
+#include <string>
 #include <utility>
+#include <vector>
+
+#include "data_generator/motion_shift.h"
 
 #include "opencv2/core/core.hpp"
 
 namespace super_resolution {
-
-// Defines the motion (pixel shift) between two images, namely between an image
-// and the first image in the frame sequence.
-struct MotionShift {
-  MotionShift(const double dx, const double dy) : dx(dx), dy(dy) {}
-  const double dx;
-  const double dy;
-};
 
 class DataGenerator {
  public:
@@ -38,7 +33,14 @@ class DataGenerator {
   // Defines the motion shift for each image that is generated. If the given
   // motion sequence is shorter than the number of frames to be generated, the
   // motion sequence will be looped.
-  void SetMotionSequence(const std::vector<MotionShift>& motion_shifts);
+  void SetMotionSequence(const std::vector<MotionShift>& motion_shifts) {
+    motion_shift_sequence_.SetMotionSequence(motion_shifts);
+  }
+
+  // Set the motion sequence from a file.
+  void SetMotionSequence(const std::string& file_path) {
+    motion_shift_sequence_.LoadSequenceFromFile(file_path);
+  }
 
   // Set to false to disable blurring the image before downsampling.
   void SetBlurImage(const bool blur_image) {
@@ -57,7 +59,7 @@ class DataGenerator {
 
   // Contains a list of shift amounts. These define how many pixels each image
   // in the generated sequence will be shifted by from the default position.
-  std::vector<MotionShift> motion_shifts_;
+  MotionShiftSequence motion_shift_sequence_;
 
   // If true, the image will be blurred during the downsampling process.
   bool blur_image_;

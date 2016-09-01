@@ -15,11 +15,15 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
-// Input and output files.
+// Required input and output files.
 DEFINE_string(input_image, "",
     "Path to the HR image that will be used to generate the LR images.");
 DEFINE_string(output_image_dir, "",
     "Path to a directory that will contain all of the generated LR images.");
+
+// Motion estimate file I/O parameters.
+DEFINE_string(input_motion_sequence, "",
+    "Path to a text file containing a simulated motion sequence.");
 
 // Parameters for the low-resolution image generation.
 DEFINE_bool(no_image_blur, false,
@@ -42,12 +46,10 @@ int main(int argc, char** argv) {
       FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
   super_resolution::DataGenerator data_generator(image);
 
-  // TODO(richard): Don't hardcode the motion sequence.
-  data_generator.SetMotionSequence({
-      super_resolution::MotionShift(0, 0),
-      super_resolution::MotionShift(0, 2),
-      super_resolution::MotionShift(1, 0),
-      super_resolution::MotionShift(2, 1)});
+  // Load all the parameters as specified by the user.
+  if (!FLAGS_input_motion_sequence.empty()) {
+    data_generator.SetMotionSequence(FLAGS_input_motion_sequence);
+  }
   data_generator.SetBlurImage(!FLAGS_no_image_blur);
   data_generator.SetNoiseStandardDeviation(FLAGS_noise_standard_deviation);
   std::vector<cv::Mat> low_res_images = data_generator.GenerateLowResImages(
