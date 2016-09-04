@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "data_generator/data_generator.h"
+#include "data_generator/motion_shift.h"
 #include "util/macros.h"
 #include "util/util.h"
 
@@ -44,12 +45,15 @@ int main(int argc, char** argv) {
 
   const cv::Mat image = cv::imread(
       FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
-  super_resolution::DataGenerator data_generator(image);
 
-  // Load all the parameters as specified by the user.
+  // Set up a motion sequence from a file if the user specified one.
+  super_resolution::MotionShiftSequence motion_shift_sequence;
   if (!FLAGS_input_motion_sequence.empty()) {
-    data_generator.SetMotionSequence(FLAGS_input_motion_sequence);
+    motion_shift_sequence.LoadSequenceFromFile(FLAGS_input_motion_sequence);
   }
+
+  // Set up the DataGenerator with all the parameters specified by the user.
+  super_resolution::DataGenerator data_generator(image, motion_shift_sequence);
   data_generator.SetBlurImage(!FLAGS_no_image_blur);
   data_generator.SetNoiseStandardDeviation(FLAGS_noise_standard_deviation);
   std::vector<cv::Mat> low_res_images = data_generator.GenerateLowResImages(

@@ -47,8 +47,7 @@ int main(int argc, char** argv) {
   // to be inpainted after fusion.
   cv::Mat inpaint_mask = cv::Mat::ones(fused_width, fused_height, CV_8UC1);
 
-  // TODO(richard): Don't hardcode the motion sequence. Eventually estimate the
-  // motion automatically.
+  // TODO(richard): Eventually estimate the motion automatically.
   super_resolution::MotionShiftSequence motion_shift_sequence;
   motion_shift_sequence.LoadSequenceFromFile(FLAGS_input_motion_sequence);
 
@@ -78,7 +77,7 @@ int main(int argc, char** argv) {
   }
 
   // Display the image before inpainting.
-  cv::imshow("disp", fusion_image);
+  cv::imshow("Visualization", fusion_image);
   cv::waitKey(0);
 
   // Then inpaint it and display it after.
@@ -89,7 +88,7 @@ int main(int argc, char** argv) {
       inpainted_image,
       FLAGS_upsampling_scale,  // The radius considered for inpainting.
       cv::INPAINT_NS);
-  cv::imshow("disp", inpainted_image);
+  cv::imshow("Visualization", inpainted_image);
   cv::waitKey(0);
 
   return EXIT_SUCCESS;
