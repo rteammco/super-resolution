@@ -36,13 +36,15 @@ file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 # Create a library for all of the added Super Resolution dependencies (i.e. all
 # the classes).
-file(GLOB data_generator_SRC "src/data_generator/*.cpp")
-file(GLOB util_SRC "src/util/*.cpp")
-file(GLOB video_SRC "src/video/*.cpp")
+file(GLOB   data_generator_SRC   "src/data_generator/*.cpp")
+file(GLOB   ftir_SRC             "src/ftir/*.cpp")
+file(GLOB   util_SRC             "src/util/*.cpp")
+file(GLOB   video_SRC            "src/video/*.cpp")
 
 add_library(
   LibSuperResolution
   ${data_generator_SRC}
+  ${ftir_SRC}
   ${util_SRC}
   ${video_SRC}
 )
