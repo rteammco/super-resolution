@@ -1,4 +1,6 @@
+#include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
+#include "util/macros.h"
 #include "util/util.h"
 #include "video/super_resolver.h"
 #include "video/video_loader.h"
@@ -20,16 +22,22 @@ int main(int argc, char** argv) {
     // super_resolution::video::VideoModel model;
     LOG(INFO) << "VID";
   }
-  return 0;
+
+  REQUIRE_ARG(FLAGS_video_path);
 
   super_resolution::video::VideoLoader video_loader;
   video_loader.LoadFramesFromVideo(FLAGS_video_path);
   video_loader.PlayOriginalVideo();
 
-  super_resolution::video::SuperResolutionOptions options;
+  // Create the forward image model.
+  super_resolution::ImageModel image_model;
+  super_resolution::DownsamplingModule downsampling_module(5);
+  image_model.AddDegradationOperator(downsampling_module);
 
-  super_resolution::video::SuperResolver super_resolver(video_loader, options);
-  super_resolver.SuperResolve();
+  // super_resolution::video::SuperResolutionOptions options;
+
+  // super_resolution::video::SuperResolver super_resolver(video_loader, options);
+  // super_resolver.SuperResolve();
 
   // TODO(richard): the list of algorithm steps (eventually).
   // 1. Verify that the data has 2N frames.
