@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "data_generator/motion_shift.h"
+#include "video/motion_shift.h"
 #include "util/macros.h"
 #include "util/util.h"
 #include "video/video_loader.h"
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
   REQUIRE_ARG(FLAGS_input_image_dir);
   REQUIRE_ARG(FLAGS_input_motion_sequence);
 
-  super_resolution::VideoLoader video_loader;
+  super_resolution::video::VideoLoader video_loader;
   video_loader.LoadFramesFromDirectory(FLAGS_input_image_dir);
 
   // Create an empty HR image.
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   cv::Mat inpaint_mask = cv::Mat::ones(fused_width, fused_height, CV_8UC1);
 
   // TODO(richard): Eventually estimate the motion automatically.
-  super_resolution::MotionShiftSequence motion_shift_sequence;
+  super_resolution::video::MotionShiftSequence motion_shift_sequence;
   motion_shift_sequence.LoadSequenceFromFile(FLAGS_input_motion_sequence);
 
   const std::vector<cv::Mat>& frames = video_loader.GetFrames();
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     // Add this frame to the SR image.
     for (int x = 0; x < frame.cols; ++x) {
       for (int y = 0; y < frame.rows; ++y) {
-        const super_resolution::MotionShift& motion_shift =
+        const super_resolution::video::MotionShift& motion_shift =
             motion_shift_sequence[i];
         const int hr_x = FLAGS_upsampling_scale * x - motion_shift.dx;
         const int hr_y = FLAGS_upsampling_scale * y - motion_shift.dy;

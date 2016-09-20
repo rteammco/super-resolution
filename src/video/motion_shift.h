@@ -1,13 +1,14 @@
 // Provides a stricture to contain motion estimate and motion shift sequences
 // for multiframe low resolution data.
 
-#ifndef SRC_DATA_GENERATOR_MOTION_SHIFT_H_
-#define SRC_DATA_GENERATOR_MOTION_SHIFT_H_
+#ifndef SRC_VIDEO_MOTION_SHIFT_H_
+#define SRC_VIDEO_MOTION_SHIFT_H_
 
 #include <string>
 #include <vector>
 
 namespace super_resolution {
+namespace video {
 
 // Defines the motion (pixel shift) between two images, namely between an image
 // and the first image in the frame sequence.
@@ -56,6 +57,7 @@ class MotionShiftSequence {
   std::vector<MotionShift> motion_shifts_;
 };
 
+}  // namespace video
 }  // namespace super_resolution
 
-#endif  // SRC_DATA_GENERATOR_MOTION_SHIFT_H_
+#endif  // SRC_VIDEO_MOTION_SHIFT_H_

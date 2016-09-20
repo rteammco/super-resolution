@@ -10,6 +10,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace video {
 
 void SuperResolver::SuperResolve() {
   cv::Ptr<cv::superres::SuperResolution> super_resolution =
@@ -71,4 +72,5 @@ void SuperResolver::SuperResolve() {
   LOG(INFO) << "SuperResolve()";
 }
 
+}  // namespace video
 }  // namespace super_resolution

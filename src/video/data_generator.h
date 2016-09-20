@@ -2,18 +2,19 @@
 // a single high-resolution image. The DataGenerator can be used to test the
 // super resolution algorithm against ground truth data.
 
-#ifndef SRC_DATA_GENERATOR_DATA_GENERATOR_H_
-#define SRC_DATA_GENERATOR_DATA_GENERATOR_H_
+#ifndef SRC_VIDEO_DATA_GENERATOR_H_
+#define SRC_VIDEO_DATA_GENERATOR_H_
 
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "data_generator/motion_shift.h"
+#include "video/motion_shift.h"
 
 #include "opencv2/core/core.hpp"
 
 namespace super_resolution {
+namespace video {
 
 class DataGenerator {
  public:
@@ -61,6 +62,7 @@ class DataGenerator {
   // TODO(richard): no-copy allowed.
 };
 
+}  // namespace video
 }  // namespace super_resolution
 
-#endif  // SRC_DATA_GENERATOR_DATA_GENERATOR_H_
+#endif  // SRC_VIDEO_DATA_GENERATOR_H_

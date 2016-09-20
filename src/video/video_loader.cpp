@@ -12,6 +12,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace video {
 
 // The size of a video frame that gets displayed.
 // TODO(richard): Move this to an optional parameter somewhere.
@@ -73,4 +74,5 @@ void VideoLoader::PlayOriginalVideo() const {
   cv::destroyWindow(window_name);
 }
 
+}  // namespace video
 }  // namespace super_resolution

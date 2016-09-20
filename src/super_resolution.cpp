@@ -10,13 +10,13 @@ DEFINE_string(video_path, "", "Path to a video file to super resolve.");
 int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Super resolution.");
 
-  super_resolution::VideoLoader video_loader;
+  super_resolution::video::VideoLoader video_loader;
   video_loader.LoadFramesFromVideo(FLAGS_video_path);
   video_loader.PlayOriginalVideo();
 
-  super_resolution::SuperResolutionOptions options;
+  super_resolution::video::SuperResolutionOptions options;
 
-  super_resolution::SuperResolver super_resolver(video_loader, options);
+  super_resolution::video::SuperResolver super_resolver(video_loader, options);
   super_resolver.SuperResolve();
 
   // TODO(richard): the list of algorithm steps (eventually).

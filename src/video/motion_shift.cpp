@@ -1,4 +1,4 @@
-#include "data_generator/motion_shift.h"
+#include "video/motion_shift.h"
 
 #include <fstream>
 #include <string>
@@ -7,6 +7,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace video {
 
 void MotionShiftSequence::SetMotionSequence(
     const std::vector<MotionShift>& motion_shifts) {
@@ -52,4 +53,5 @@ const MotionShift& MotionShiftSequence::GetMotionShift(const int index) const {
     return motion_shifts_[index];
 }
 
+}  // namespace video
 }  // namespace super_resolution

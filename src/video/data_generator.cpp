@@ -1,13 +1,14 @@
-#include "data_generator/data_generator.h"
+#include "video/data_generator.h"
 
 #include <vector>
 
-#include "data_generator/motion_shift.h"
+#include "video/motion_shift.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
 namespace super_resolution {
+namespace video {
 
 std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
     const int scale, const int num_images) const {
@@ -64,4 +65,5 @@ std::vector<cv::Mat> DataGenerator::GenerateLowResImages(
   return low_res_images;
 }
 
+}  // namespace video
 }  // namespace super_resolution
