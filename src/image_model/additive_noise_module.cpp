@@ -12,14 +12,26 @@ AdditiveNoiseModule::AdditiveNoiseModule(const double sigma) : sigma_(sigma) {
 }
 
 void AdditiveNoiseModule::ApplyToImage(cv::Mat* image) const {
-  // TODO(richard): This method is only for 3-channel images.
-  cv::Mat noise = cv::Mat(image->size(), CV_16SC3);
-  cv::randn(noise, cv::Scalar::all(0), cv::Scalar::all(sigma_));
+  // Split the image up into individual channels.
+  const int num_image_channels = image->channels();
+  std::vector<cv::Mat> channels(num_image_channels);
+  cv::split(*image, channels);
 
-  cv::Mat noisy_image;
-  image->convertTo(noisy_image, CV_16SC3);
-  noisy_image += noise;
-  noisy_image.convertTo(*image, image->type());
+  // Add noise separately to each channel.
+  const cv::Size image_size = image->size();
+  const int image_type = image->type();
+  for (int i = 0; i < num_image_channels; ++i) {
+    cv::Mat noise = cv::Mat(image_size, CV_16SC1);
+    cv::randn(noise, 0, sigma_);
+
+    cv::Mat noisy_image;
+    channels[i].convertTo(noisy_image, CV_16SC1);
+    noisy_image += noise;
+    noisy_image.convertTo(channels[i], image_type);
+  }
+
+  // Put the noisy channels back together.
+  cv::merge(channels, *image);
 }
 
 }  // namespace super_resolution
