@@ -1,5 +1,6 @@
 #include <vector>
 
+#include "image_model/additive_noise_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/psf_blur_module.h"
@@ -38,11 +39,13 @@ int main(int argc, char** argv) {
   // Create the forward image model degradation components.
   super_resolution::DownsamplingModule downsampling_module(3);
   super_resolution::PsfBlurModule blur_module(5, 1.0);
+  super_resolution::AdditiveNoiseModule noise_module(5.0);
 
-  // Create the forward image model: y = DBx
+  // Create the forward image model: y = DBx + n
   super_resolution::ImageModel image_model;
   image_model.AddDegradationOperator(blur_module);
   image_model.AddDegradationOperator(downsampling_module);
+  image_model.AddDegradationOperator(noise_module);
 
   const std::vector<cv::Mat>& frames = video_loader.GetFrames();
   for (const cv::Mat& frame : frames) {
