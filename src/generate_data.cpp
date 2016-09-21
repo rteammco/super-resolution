@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "motion/motion_shift.h"
 #include "video/data_generator.h"
-#include "video/motion_shift.h"
 #include "util/macros.h"
 #include "util/util.h"
 
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
       FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
 
   // Set up a motion sequence from a file if the user specified one.
-  super_resolution::video::MotionShiftSequence motion_shift_sequence;
+  super_resolution::MotionShiftSequence motion_shift_sequence;
   if (!FLAGS_input_motion_sequence.empty()) {
     motion_shift_sequence.LoadSequenceFromFile(FLAGS_input_motion_sequence);
   }

@@ -16,7 +16,7 @@ class PsfBlurModule : public DegradationOperator {
   // The given blur radius and sigma (in pixels) will define the Gaussian blur.
   PsfBlurModule(const int blur_radius, const double sigma);
 
-  virtual void ApplyToImage(cv::Mat* image) const;
+  virtual void ApplyToImage(cv::Mat* image, const int index) const;
 
  private:
   const double blur_radius_;

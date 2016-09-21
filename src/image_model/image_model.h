@@ -28,8 +28,9 @@ class ImageModel {
   void AddDegradationOperator(
       const DegradationOperator& degradation_operator);
 
-  // Apply this forward model to the given image.
-  void ApplyModel(cv::Mat* image) const;
+  // Apply this forward model to the given image at the given index in the
+  // multiframe sequence.
+  void ApplyModel(cv::Mat* image, const int index) const;
 
  private:
   // An ordered list of degradation operators, to be applied in this order. We

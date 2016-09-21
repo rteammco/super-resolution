@@ -14,7 +14,10 @@ namespace super_resolution {
 
 class DegradationOperator {
  public:
-  virtual void ApplyToImage(cv::Mat* image) const = 0;
+  // Apply this degradation operator to the given image. The index is passed in
+  // for cases where the degradation is dependent on the specific frame (e.g.
+  // in the case of motion).
+  virtual void ApplyToImage(cv::Mat* image, const int index) const = 0;
 };
 
 }  // namespace super_resolution

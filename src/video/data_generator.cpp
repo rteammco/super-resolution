@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "video/motion_shift.h"
+#include "motion/motion_shift.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"

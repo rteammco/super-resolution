@@ -12,10 +12,10 @@ void ImageModel::AddDegradationOperator(
   degradation_operators_.push_back(&degradation_operator);
 }
 
-void ImageModel::ApplyModel(cv::Mat* image) const {
+void ImageModel::ApplyModel(cv::Mat* image, const int index) const {
   for (const DegradationOperator* degradation_operator
            : degradation_operators_) {
-    degradation_operator->ApplyToImage(image);
+    degradation_operator->ApplyToImage(image, index);
   }
 }
 

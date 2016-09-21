@@ -16,7 +16,7 @@ class AdditiveNoiseModule : public DegradationOperator {
   // given sigma value (in pixels).
   explicit AdditiveNoiseModule(const double sigma);
 
-  virtual void ApplyToImage(cv::Mat* image) const;
+  virtual void ApplyToImage(cv::Mat* image, const int index) const;
 
  private:
   const double sigma_;

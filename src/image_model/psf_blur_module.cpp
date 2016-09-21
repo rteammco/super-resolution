@@ -13,7 +13,7 @@ PsfBlurModule::PsfBlurModule(const int blur_radius, const double sigma)
   CHECK_GT(sigma_, 0.0);
 }
 
-void PsfBlurModule::ApplyToImage(cv::Mat* image) const {
+void PsfBlurModule::ApplyToImage(cv::Mat* image, const int index) const {
   const cv::Size kernel_size(blur_radius_, blur_radius_);
   cv::GaussianBlur(*image, *image, kernel_size, sigma_);
 }

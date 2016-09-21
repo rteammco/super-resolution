@@ -38,6 +38,7 @@ file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 # the classes).
 file(GLOB   ftir_SRC          "src/ftir/*.cpp")
 file(GLOB   image_model_SRC   "src/image_model/*.cpp")
+file(GLOB   motion_SRC        "src/motion/*.cpp")
 file(GLOB   util_SRC          "src/util/*.cpp")
 file(GLOB   video_SRC         "src/video/*.cpp")
 
@@ -46,6 +47,7 @@ add_library(
   ${data_generator_SRC}
   ${ftir_SRC}
   ${image_model_SRC}
+  ${motion_SRC}
   ${util_SRC}
   ${video_SRC}
 )

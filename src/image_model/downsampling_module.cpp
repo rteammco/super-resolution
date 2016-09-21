@@ -11,7 +11,7 @@ DownsamplingModule::DownsamplingModule(const double scale) : scale_(scale) {
   CHECK_GE(scale_, 1.0);
 }
 
-void DownsamplingModule::ApplyToImage(cv::Mat* image) const {
+void DownsamplingModule::ApplyToImage(cv::Mat* image, const int index) const {
   const double scale_ratio = 1.0 / scale_;
   cv::resize(
       *image,            // Source image.

@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include "video/motion_shift.h"
+#include "motion/motion_shift.h"
 
 #include "opencv2/core/core.hpp"
 

@@ -48,13 +48,13 @@ int main(int argc, char** argv) {
   image_model.AddDegradationOperator(noise_module);
 
   const std::vector<cv::Mat>& frames = video_loader.GetFrames();
-  for (const cv::Mat& frame : frames) {
-    cv::Mat low_res_frame = frame.clone();
-    image_model.ApplyModel(&low_res_frame);
+  for (int i = 0; i < frames.size(); ++i) {
+    cv::Mat low_res_frame = frames[i].clone();
+    image_model.ApplyModel(&low_res_frame, i);
 
     // Display the degradated frame.
     // TODO(richard): remove, and remove OpenCV includes.
-    cv::resize(low_res_frame, low_res_frame, frame.size());
+    cv::resize(low_res_frame, low_res_frame, frames[i].size());
     cv::imshow("test", low_res_frame);
     cv::waitKey(0);
   }

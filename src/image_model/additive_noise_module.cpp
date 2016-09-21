@@ -1,5 +1,7 @@
 #include "image_model/additive_noise_module.h"
 
+#include <vector>
+
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
@@ -11,7 +13,7 @@ AdditiveNoiseModule::AdditiveNoiseModule(const double sigma) : sigma_(sigma) {
   CHECK_GT(sigma_, 0.0);
 }
 
-void AdditiveNoiseModule::ApplyToImage(cv::Mat* image) const {
+void AdditiveNoiseModule::ApplyToImage(cv::Mat* image, const int index) const {
   // Split the image up into individual channels.
   const int num_image_channels = image->channels();
   std::vector<cv::Mat> channels(num_image_channels);
