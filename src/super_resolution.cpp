@@ -8,6 +8,9 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
 DEFINE_string(data_type, "",
     "The type of data to apply super-resolution to. Default is RGB video.");
 DEFINE_string(video_path, "", "Path to a video file to super resolve.");
@@ -33,6 +36,17 @@ int main(int argc, char** argv) {
   super_resolution::ImageModel image_model;
   super_resolution::DownsamplingModule downsampling_module(5);
   image_model.AddDegradationOperator(downsampling_module);
+
+  const std::vector<cv::Mat>& frames = video_loader.GetFrames();
+  for (const cv::Mat& frame : frames) {
+    cv::Mat low_res_frame = frame.clone();
+    image_model.ApplyModel(&low_res_frame);
+
+    // Display the degradated frame.
+    cv::resize(low_res_frame, low_res_frame, frame.size());
+    cv::imshow("test", low_res_frame);
+    cv::waitKey(0);
+  }
 
   // super_resolution::video::SuperResolutionOptions options;
 
