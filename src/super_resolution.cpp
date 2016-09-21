@@ -1,5 +1,6 @@
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
+#include "image_model/psf_blur_module.h"
 #include "util/macros.h"
 #include "util/util.h"
 #include "video/super_resolver.h"
@@ -32,9 +33,13 @@ int main(int argc, char** argv) {
   video_loader.LoadFramesFromVideo(FLAGS_video_path);
   video_loader.PlayOriginalVideo();
 
+  // Create the forward image model degradation components.
+  super_resolution::DownsamplingModule downsampling_module(3);
+  super_resolution::PsfBlurModule blur_module(5, 1.0);
+
   // Create the forward image model.
   super_resolution::ImageModel image_model;
-  super_resolution::DownsamplingModule downsampling_module(5);
+  image_model.AddDegradationOperator(blur_module);
   image_model.AddDegradationOperator(downsampling_module);
 
   const std::vector<cv::Mat>& frames = video_loader.GetFrames();
