@@ -38,6 +38,8 @@ int main(int argc, char** argv) {
 
   // TODO(richard): Remove this part.
   super_resolution::ftir::DataLoader ftir_data_loader(FLAGS_video_path);
+  const std::vector<std::vector<double>> pixles =
+      ftir_data_loader.GetPixelData();
   return 0;
 
   super_resolution::video::VideoLoader video_loader;

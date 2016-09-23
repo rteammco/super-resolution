@@ -12,6 +12,7 @@
 namespace super_resolution {
 namespace ftir {
 
+// TODO(richard): Pass the image size in as a parameter?
 constexpr int kFtirImageSize = 128;
 constexpr char kDataDelimiter = ',';
 
@@ -20,6 +21,9 @@ constexpr char kDataDelimiter = ',';
 DataLoader::DataLoader(const std::string& file_path) {
   // Sanity check the constants, just in case they get changed.
   CHECK_GT(kFtirImageSize, 0);
+
+  num_image_rows_ = kFtirImageSize;
+  num_image_cols_ = kFtirImageSize;
 
   std::ifstream fin(file_path);
   CHECK(fin.is_open()) << "Could not open file " << file_path;
@@ -47,10 +51,10 @@ DataLoader::DataLoader(const std::string& file_path) {
 
   // Note that we resized the vector and verified that the dimension is bigger
   // than 0, so it is safe to access the element at position [0][0].
-  const int num_bands = data_cube[0][0].size();
+  num_spectral_bands_ = data_cube[0][0].size();
 
   // Convert to matrix form.
-  for (int b = 0; b < num_bands; ++b) {
+  for (int b = 0; b < num_spectral_bands_; ++b) {
     cv::Mat band_matrix =
         cv::Mat::zeros(kFtirImageSize, kFtirImageSize, CV_64F);
     for (int row = 0; row < kFtirImageSize; ++row) {
@@ -63,7 +67,23 @@ DataLoader::DataLoader(const std::string& file_path) {
 
   LOG(INFO) << "Done: successfully loaded a "
             << kFtirImageSize << " x " << kFtirImageSize << " image with "
-            << num_bands << " spectral bands.";
+            << num_spectral_bands_ << " spectral bands.";
+}
+
+std::vector<std::vector<double>> DataLoader::GetPixelData() const {
+  std::vector<std::vector<double>> pixels;
+  pixels.resize(num_image_rows_ * num_image_cols_);
+
+  for (int row = 0; row < num_image_rows_; ++row) {
+    for (int col = 0; col < num_image_cols_; ++col) {
+      const int index = row * num_image_cols_+ col;
+      for (const cv::Mat& band_matrix : data_) {
+        const double value = band_matrix.at<double>(row, col);
+        pixels[index].push_back(value);
+      }
+    }
+  }
+  return pixels;
 }
 
 }  // namespace ftir
