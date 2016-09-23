@@ -3,11 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(SuperResolution)
 
 find_package(OpenCV REQUIRED)
-#find_package(gflags REQUIRED)
-#find_package(glog REQUIRED)
-#find_package(protobuf REQUIRED)
-#find_package(gtest REQUIRED)
-#find_package(gmock REQUIRED)
+find_package(gtest REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -50,6 +46,25 @@ add_library(
   ${motion_SRC}
   ${util_SRC}
   ${video_SRC}
+)
+
+
+# Set up the gtest/gmock testing framework.
+enable_testing()
+file(GLOB test_SRC "test/*.cpp")
+add_executable(
+  Test
+  ${test_SRC}
+)
+target_link_libraries(
+  Test
+  gtest
+  gtest_main
+)
+target_link_libraries(
+  Test
+  gmock
+  gmock_main
 )
 
 

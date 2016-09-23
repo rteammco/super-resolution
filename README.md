@@ -11,12 +11,23 @@ First install Homebrew: http://brew.sh/.
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-Install required libraries:
+Install required libraries with Homebrew:
 ```
 brew install gflags
 brew install glog
 brew install opencv3
 brew install webp
+```
+
+Install gtest:
+```
+git clone https://github.com/google/googletest.git
+cd googletest/
+mkdir build
+cd build
+cmake ..
+make
+make install
 ```
 
 Make sure `/usr/local/lib` is in your library path:
