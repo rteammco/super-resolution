@@ -1,13 +1,11 @@
 #include "ftir/data_loader.h"
 
-#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 
 #include "glog/logging.h"
 
@@ -29,7 +27,7 @@ DataLoader::DataLoader(const std::string& file_path) {
   LOG(INFO) << "Loading data from file " << file_path << "...";
 
   std::vector<cv::Mat> channels;
-  std::vector<std::vector<std::vector<float>>> data_cube;
+  std::vector<std::vector<std::vector<double>>> data_cube;
   data_cube.resize(kFtirImageSize);
   for (int row = 0; row < kFtirImageSize; ++row) {
     std::string line;
@@ -40,7 +38,7 @@ DataLoader::DataLoader(const std::string& file_path) {
     std::string token;
     int token_number = 0;
     while (std::getline(token_stream, token, kDataDelimiter)) {
-      const float value = std::stof(token);
+      const double value = std::stof(token);
       const int col = token_number % kFtirImageSize;
       data_cube[row][col].push_back(value);
       token_number++;
@@ -53,16 +51,13 @@ DataLoader::DataLoader(const std::string& file_path) {
 
   // Convert to matrix form.
   for (int b = 0; b < num_bands; ++b) {
-    LOG(INFO) << b;
     cv::Mat band_matrix =
-        cv::Mat::zeros(kFtirImageSize, kFtirImageSize, CV_32F);
+        cv::Mat::zeros(kFtirImageSize, kFtirImageSize, CV_64F);
     for (int row = 0; row < kFtirImageSize; ++row) {
       for (int col = 0; col < kFtirImageSize; ++col) {
-        band_matrix.at<float>(row, col) = data_cube[row][col][b];
+        band_matrix.at<double>(row, col) = data_cube[row][col][b];
       }
     }
-    cv::Mat bigger;
-    cv::resize(band_matrix, bigger, cv::Size(512, 512));
     data_.push_back(band_matrix);
   }
 

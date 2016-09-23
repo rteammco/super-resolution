@@ -35,6 +35,8 @@ int main(int argc, char** argv) {
   }
 
   REQUIRE_ARG(FLAGS_video_path);
+
+  // TODO(richard): Remove this part.
   super_resolution::ftir::DataLoader ftir_data_loader(FLAGS_video_path);
   return 0;
 
