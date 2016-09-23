@@ -1,9 +1,12 @@
 #include <vector>
 
+#include "ftir/data_loader.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
+#include "image_model/motion_module.h"
 #include "image_model/psf_blur_module.h"
+#include "motion/motion_shift.h"
 #include "util/macros.h"
 #include "util/util.h"
 #include "video/super_resolver.h"
@@ -31,18 +34,32 @@ int main(int argc, char** argv) {
   }
 
   REQUIRE_ARG(FLAGS_video_path);
+  super_resolution::ftir::DataLoader ftir_data_loader(FLAGS_video_path);
+  return 0;
 
   super_resolution::video::VideoLoader video_loader;
   video_loader.LoadFramesFromVideo(FLAGS_video_path);
   video_loader.PlayOriginalVideo();
 
+  // Create the motion estimates.
+  super_resolution::MotionShiftSequence motion_shift_sequence({
+      super_resolution::MotionShift(10, 3),
+      super_resolution::MotionShift(-10, 15),
+      super_resolution::MotionShift(0, 0),
+      super_resolution::MotionShift(5, 10),
+      super_resolution::MotionShift(-8, -10),
+      super_resolution::MotionShift(3, -15)
+    });
+
   // Create the forward image model degradation components.
   super_resolution::DownsamplingModule downsampling_module(3);
+  super_resolution::MotionModule motion_module(motion_shift_sequence);
   super_resolution::PsfBlurModule blur_module(5, 1.0);
   super_resolution::AdditiveNoiseModule noise_module(5.0);
 
   // Create the forward image model: y = DBx + n
   super_resolution::ImageModel image_model;
+  image_model.AddDegradationOperator(motion_module);
   image_model.AddDegradationOperator(blur_module);
   image_model.AddDegradationOperator(downsampling_module);
   image_model.AddDegradationOperator(noise_module);

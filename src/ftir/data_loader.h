@@ -3,12 +3,19 @@
 #ifndef SRC_FTIR_DATA_LOADER_H_
 #define SRC_FTIR_DATA_LOADER_H_
 
+#include <string>
+#include <vector>
+
 namespace super_resolution {
 namespace ftir {
 
 class DataLoader {
  public:
+  // Provide a data file name that will be processed.
+  explicit DataLoader(const std::string& file_path);
+
  private:
+  std::vector<std::vector<std::vector<float>>> data_cube_;
 };
 
 }  // namespace ftir
