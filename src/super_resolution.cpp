@@ -12,6 +12,7 @@
 #include "video/super_resolver.h"
 #include "video/video_loader.h"
 
+#include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 

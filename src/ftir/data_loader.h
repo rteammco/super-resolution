@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "opencv2/core/core.hpp"
+
 namespace super_resolution {
 namespace ftir {
 
@@ -15,7 +17,9 @@ class DataLoader {
   explicit DataLoader(const std::string& file_path);
 
  private:
-  std::vector<std::vector<std::vector<float>>> data_cube_;
+  // The data is stored as independent matrices because the channel count is
+  // generally very high.
+  std::vector<cv::Mat> data_;
 };
 
 }  // namespace ftir
