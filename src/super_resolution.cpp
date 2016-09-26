@@ -38,8 +38,13 @@ int main(int argc, char** argv) {
 
   // TODO(richard): Remove this part.
   super_resolution::ftir::DataLoader ftir_data_loader(FLAGS_video_path);
-  const std::vector<std::vector<double>> pixles =
-      ftir_data_loader.GetPixelData();
+  LOG(INFO) << "Getting pixel data.";
+  cv::Mat pixels = ftir_data_loader.GetPixelData();
+  LOG(INFO) << "Done.";
+  cv::PCA pca(pixels, cv::Mat(), CV_PCA_DATA_AS_ROW);
+  LOG(INFO) << pca.eigenvectors;
+  LOG(INFO) << pca.mean;
+  LOG(INFO) << pca.eigenvalues;
   return 0;
 
   super_resolution::video::VideoLoader video_loader;

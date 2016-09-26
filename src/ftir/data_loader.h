@@ -16,11 +16,14 @@ class DataLoader {
   // Provide a data file name that will be processed.
   explicit DataLoader(const std::string& file_path);
 
-  // Returns the data in pixel form, where each of the returned vectors
-  // represents the values for each band in that pixel. The pixels are ordered
-  // rows before columns; that is, the first M elements are the entire first
-  // row of M columns, the next M elements is the second row, and so on.
-  std::vector<std::vector<double>> GetPixelData() const;
+  // Returns the data in pixel form, where each row of the returned matrix
+  // represents the values for each band in that pixel. Hence the returned matrix
+  // is (num_image_rows_ *num_image_cols_) by num_spectral_bands_.
+  //
+  // The pixels from the raw image are ordered rows before columns; that is,
+  // the first M rows of the returned matrix is the first row (of M columns) in
+  // the image, the next M elements is the second row of the image, and so on.
+  cv::Mat GetPixelData() const;
 
  private:
   // The data is stored as independent matrices because the channel count is

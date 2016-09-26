@@ -70,19 +70,18 @@ DataLoader::DataLoader(const std::string& file_path) {
             << num_spectral_bands_ << " spectral bands.";
 }
 
-std::vector<std::vector<double>> DataLoader::GetPixelData() const {
-  std::vector<std::vector<double>> pixels;
-  pixels.resize(num_image_rows_ * num_image_cols_);
+cv::Mat DataLoader::GetPixelData() const {
+  const int num_pixels = num_image_rows_ * num_image_cols_;
+  cv::Mat pixels(num_pixels, num_spectral_bands_, CV_64F);
 
-  for (int row = 0; row < num_image_rows_; ++row) {
-    for (int col = 0; col < num_image_cols_; ++col) {
-      const int index = row * num_image_cols_+ col;
-      for (const cv::Mat& band_matrix : data_) {
-        const double value = band_matrix.at<double>(row, col);
-        pixels[index].push_back(value);
-      }
-    }
+  // Flatten the matrix of each band into a single column vector (O(1)
+  // operation) and then copy it to the pixel matrix.
+  for (int band = 0; band < num_spectral_bands_; ++band) {
+    const cv::Mat band_matrix = data_[band];
+    const cv::Mat band_vector = band_matrix.reshape(1, num_pixels);
+    band_vector.copyTo(pixels.col(band));
   }
+
   return pixels;
 }
 
