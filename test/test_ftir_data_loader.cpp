@@ -8,6 +8,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+// TODO(richard): make this test data available in the repo and make it
+// smaller and more optimal for testing.
 static const std::string kTestDataPath = "../data/ftir_test.txt";
 
 TEST(FtirDataLoader, DataLoaderTest) {
