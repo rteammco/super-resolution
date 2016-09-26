@@ -19,7 +19,14 @@ TEST(FtirDataLoader, DataLoaderTest) {
   // Test PCA.
   cv::PCA pca(pixels, cv::Mat(), CV_PCA_DATA_AS_ROW);
   // TODO(richard): remove these prints.
-  std::cout << pca.eigenvectors << std::endl;
-  std::cout << pca.mean << std::endl;
+  // std::cout << pca.eigenvectors << std::endl;
+  // std::cout << pca.mean << std::endl;
   std::cout << pca.eigenvalues << std::endl;
+
+  cv::Mat indices;
+  cv::sortIdx(
+      pca.eigenvalues,
+      indices,
+      CV_SORT_EVERY_COLUMN + CV_SORT_DESCENDING);
+  std::cout << indices << std::endl;
 }
