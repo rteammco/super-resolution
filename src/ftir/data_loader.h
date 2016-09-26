@@ -17,8 +17,8 @@ class DataLoader {
   explicit DataLoader(const std::string& file_path);
 
   // Returns the data in pixel form, where each row of the returned matrix
-  // represents the values for each band in that pixel. Hence the returned matrix
-  // is (num_image_rows_ *num_image_cols_) by num_spectral_bands_.
+  // represents the values for each band in that pixel. Hence the returned
+  // matrix is (num_image_rows_ *num_image_cols_) by num_spectral_bands_.
   //
   // The pixels from the raw image are ordered rows before columns; that is,
   // the first M rows of the returned matrix is the first row (of M columns) in

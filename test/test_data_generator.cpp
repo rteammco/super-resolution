@@ -14,4 +14,9 @@ TEST(BasicTest, ExampleTest) {
   EXPECT_THAT(vals, IsEmpty());
 
   super_resolution::MotionShiftSequence motion_shift_sequence;
+  std::vector<super_resolution::MotionShift> motion_shifts = {
+    super_resolution::MotionShift(1, 1),
+    super_resolution::MotionShift(1, 1)
+  };
+  motion_shift_sequence.SetMotionSequence(motion_shifts);
 }

@@ -60,11 +60,11 @@ target_link_libraries(
   Test
   gtest
   gtest_main
-)
-target_link_libraries(
-  Test
   gmock
   gmock_main
+  LibSuperResolution
+  glog
+  ${OpenCV_LIBS}
 )
 
 
