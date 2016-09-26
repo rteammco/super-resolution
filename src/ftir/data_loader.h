@@ -16,6 +16,15 @@ class DataLoader {
   // Provide a data file name that will be processed.
   explicit DataLoader(const std::string& file_path);
 
+  // Returns the number of bands (channels) in this hyperspectral image.
+  int GetNumSpectralBands() const {
+    return num_spectral_bands_;
+  }
+
+  // Returns the image for a given spectral band index. The index must be
+  // valid: 0 <= band_index < GetNumSpectralBands().
+  cv::Mat GetSpectralBandImage(const int band_index) const;
+
   // Returns the data in pixel form, where each row of the returned matrix
   // represents the values for each band in that pixel. Hence the returned
   // matrix is (num_image_rows_ *num_image_cols_) by num_spectral_bands_.

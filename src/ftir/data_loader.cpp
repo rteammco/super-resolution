@@ -70,6 +70,15 @@ DataLoader::DataLoader(const std::string& file_path) {
             << num_spectral_bands_ << " spectral bands.";
 }
 
+cv::Mat DataLoader::GetSpectralBandImage(const int band_index) const {
+  CHECK_GE(band_index, 0) << "Band index must be greater than 0.";
+  CHECK_LT(band_index, num_spectral_bands_)
+      << "Band index must be less than the number of bands: "
+      << num_spectral_bands_;
+
+  return data_[band_index];
+}
+
 cv::Mat DataLoader::GetPixelData() const {
   const int num_pixels = num_image_rows_ * num_image_cols_;
   cv::Mat pixels(num_pixels, num_spectral_bands_, CV_64F);
