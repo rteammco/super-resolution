@@ -10,19 +10,27 @@ from PIL import Image
 from PIL import ImageOps
 
 IMAGE_SIZE = 128
+NUM_CHANNELS = 5
 NOISE_INTENSITY = 0.2
 
 def convert_image(src_image_path, dest_txt_path):
-  """
+  """Converts the given src image into FT-IR test format.
+
+  The image is loaded from the given image path. The generated data is saved to
+  the given output file path.
+
+  Args:
+    src_inage_path: (str) the path to the input image file.
+    dest_txt_path: (str) the path to the output text file.
   """
   # Open the image, invert it, and turn it into binary.
   image = Image.open(src_image_path)
   image = image.convert('L')
   image = ImageOps.invert(image)
   image = image.convert('1')
-  # Make 5 separate images, each with different pixel values.
+  # Copy separate channel images, each with different pixel values.
   channels = []
-  for i in range(5):
+  for i in range(NUM_CHANNELS):
     channels.append(image.copy())
   data = []
   # row => all bands in col 0, all bands in col 1, ....
