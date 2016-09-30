@@ -27,8 +27,10 @@ TEST(FtirDataLoader, DataLoaderTest) {
   cv::Mat band_0_image = ftir_data_loader.GetSpectralBandImage(0);
   EXPECT_EQ(band_0_image.size(), cv::Size(128, 128));
 
-  cv::imshow("test window", band_0_image);
-  cv::waitKey(0);
+  for (int b = 0; b < num_spectral_bands; ++b) {
+    cv::imshow("test window", ftir_data_loader.GetSpectralBandImage(b));
+    cv::waitKey(0);
+  }
 
   // Test PCA.
   cv::PCA pca(pixels, cv::Mat(), CV_PCA_DATA_AS_ROW);
