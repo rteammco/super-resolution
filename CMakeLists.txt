@@ -40,7 +40,6 @@ file(GLOB   video_SRC         "src/video/*.cpp")
 
 add_library(
   LibSuperResolution
-  ${data_generator_SRC}
   ${ftir_SRC}
   ${image_model_SRC}
   ${motion_SRC}
