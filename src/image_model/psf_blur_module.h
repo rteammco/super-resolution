@@ -14,12 +14,14 @@ namespace super_resolution {
 class PsfBlurModule : public DegradationOperator {
  public:
   // The given blur radius and sigma (in pixels) will define the Gaussian blur.
+  // The blur radius must be at least 1 and sigma must be greater than 0.
+  // The blur radius must be an odd number.
   PsfBlurModule(const int blur_radius, const double sigma);
 
   virtual void ApplyToImage(cv::Mat* image, const int index) const;
 
  private:
-  const double blur_radius_;
+  const int blur_radius_;
   const double sigma_;
 };
 

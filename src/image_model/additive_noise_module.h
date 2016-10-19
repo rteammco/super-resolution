@@ -13,7 +13,7 @@ namespace super_resolution {
 class AdditiveNoiseModule : public DegradationOperator {
  public:
   // The additive noise is sampled from a zero-mean standard deviation with the
-  // given sigma value (in pixels).
+  // given sigma value (in pixels). Sigma must be greater than 0.
   explicit AdditiveNoiseModule(const double sigma);
 
   virtual void ApplyToImage(cv::Mat* image, const int index) const;

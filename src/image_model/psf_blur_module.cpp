@@ -11,6 +11,7 @@ PsfBlurModule::PsfBlurModule(const int blur_radius, const double sigma)
     : blur_radius_(blur_radius), sigma_(sigma) {
   CHECK_GE(blur_radius_, 1);
   CHECK_GT(sigma_, 0.0);
+  CHECK(blur_radius_ % 2 == 1) << "Blur radius must be an odd number.";
 }
 
 void PsfBlurModule::ApplyToImage(cv::Mat* image, const int index) const {

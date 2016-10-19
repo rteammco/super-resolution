@@ -1,11 +1,14 @@
 // This binary is used to generate low-resolution images from a given
 // high-resolution ground truth image.
-
 #include <string>
 #include <vector>
 
+#include "image_model/additive_noise_module.h"
+#include "image_model/downsampling_module.h"
+#include "image_model/image_model.h"
+#include "image_model/motion_module.h"
+#include "image_model/psf_blur_module.h"
 #include "motion/motion_shift.h"
-#include "video/data_generator.h"
 #include "util/macros.h"
 #include "util/util.h"
 
@@ -27,12 +30,14 @@ DEFINE_string(input_motion_sequence, "",
     "Path to a text file containing a simulated motion sequence.");
 
 // Parameters for the low-resolution image generation.
-DEFINE_bool(no_image_blur, false,
-    "Option to not blur the generated LR images.");
-DEFINE_int32(noise_standard_deviation, 5,
-    "Standard deviation of the noise to be added to the LR images.");
+DEFINE_int32(blur_radius, 0,
+    "The radius of the Gaussian blur kernel. If 0, no blur will be added.");
+DEFINE_double(blur_sigma, 0.0,
+    "The sigma of the Gaussian blur kernel. If 0, no blur will be added.");
+DEFINE_double(noise_sigma, 0.0,
+    "Standard deviation of the additive noise. If 0, no noise will be added.");
 DEFINE_int32(downsampling_scale, 2,
-    "The scale by which the HR image will be downsampled and blurred.");
+    "The scale by which the HR image will be downsampled.");
 DEFINE_int32(number_of_frames, 4,
     "The number of LR images that will be generated.");
 
@@ -43,8 +48,7 @@ int main(int argc, char** argv) {
   REQUIRE_ARG(FLAGS_input_image);
   REQUIRE_ARG(FLAGS_output_image_dir);
 
-  const cv::Mat image = cv::imread(
-      FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
+  const cv::Mat image = cv::imread(FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
 
   // Set up a motion sequence from a file if the user specified one.
   super_resolution::MotionShiftSequence motion_shift_sequence;
@@ -52,22 +56,41 @@ int main(int argc, char** argv) {
     motion_shift_sequence.LoadSequenceFromFile(FLAGS_input_motion_sequence);
   }
 
-  // Set up the DataGenerator with all the parameters specified by the user.
-  super_resolution::video::DataGenerator data_generator(
-      image, motion_shift_sequence);
-  data_generator.SetBlurImage(!FLAGS_no_image_blur);
-  data_generator.SetNoiseStandardDeviation(FLAGS_noise_standard_deviation);
-  std::vector<cv::Mat> low_res_images = data_generator.GenerateLowResImages(
-      FLAGS_downsampling_scale, FLAGS_number_of_frames);
+  // Set up the ImageModel with all the parameters specified by the user. This
+  // model will be used to generate the degradated images.
+  super_resolution::ImageModel image_model;
 
-  // Save the image to the provided directory.
-  for (int i = 0; i < low_res_images.size(); ++i) {
+  // Add motion.
+  super_resolution::MotionModule motion_module(motion_shift_sequence);
+  image_model.AddDegradationOperator(motion_module);
+
+  // Add blur if the parameters are specified.
+  if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
+    super_resolution::PsfBlurModule blur_module(
+        FLAGS_blur_radius, FLAGS_blur_sigma);
+    image_model.AddDegradationOperator(blur_module);
+  }
+
+  // Add downsampling.
+  super_resolution::DownsamplingModule downsampling_module(
+      FLAGS_downsampling_scale);
+  image_model.AddDegradationOperator(downsampling_module);
+
+  // Add additive noise if the parameter was specified.
+  if (FLAGS_noise_sigma > 0) {
+    super_resolution::AdditiveNoiseModule noise_module(FLAGS_noise_sigma);
+    image_model.AddDegradationOperator(noise_module);
+  }
+
+  std::vector<cv::Mat> frames;
+  for (int i = 0; i < FLAGS_number_of_frames; ++i) {
+    cv::Mat low_res_frame = image.clone();
+    image_model.ApplyModel(&low_res_frame, i);
+    frames.push_back(low_res_frame);
+    // Write the file.
     std::string image_path =
         FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";
-    // Convert to 0-255 scale before saving JPG file.
-    cv::Mat output_image = low_res_images[i];
-    output_image.convertTo(output_image, CV_8UC3, 255.0);
-    cv::imwrite(image_path, output_image);
+    cv::imwrite(image_path, low_res_frame);
   }
 
   return EXIT_SUCCESS;
