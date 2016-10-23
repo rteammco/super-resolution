@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
   const std::vector<cv::Mat>& frames = video_loader.GetFrames();
   for (int i = 0; i < frames.size(); ++i) {
     cv::Mat low_res_frame = frames[i].clone();
-    image_model.ApplyModel(&low_res_frame, i);
+    //image_model.ApplyModel(&low_res_frame, i); // TODO
 
     // Display the degradated frame.
     // TODO(richard): remove, and remove OpenCV includes.

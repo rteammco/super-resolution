@@ -8,7 +8,7 @@
 #ifndef SRC_IMAGE_MODEL_DEGRADATION_OPERATOR_H_
 #define SRC_IMAGE_MODEL_DEGRADATION_OPERATOR_H_
 
-#include "opencv2/core/core.hpp"
+#include "image/image_data.h"
 
 namespace super_resolution {
 
@@ -17,7 +17,7 @@ class DegradationOperator {
   // Apply this degradation operator to the given image. The index is passed in
   // for cases where the degradation is dependent on the specific frame (e.g.
   // in the case of motion).
-  virtual void ApplyToImage(cv::Mat* image, const int index) const = 0;
+  virtual void ApplyToImage(ImageData* image_data, const int index) const = 0;
 };
 
 }  // namespace super_resolution

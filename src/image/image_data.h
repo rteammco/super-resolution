@@ -14,9 +14,9 @@ namespace super_resolution {
 
 class ImageData {
  public:
-  // Empty constructor initializes an empty image. Add channels to empty images
-  // one at a time.
-  ImageData() {}
+  // Copy constructor clones the channel OpenCV Mats because they are
+  // effectively smart pointers and are not copied by default.
+  ImageData(const ImageData& other);
 
   // Pass in an OpenCV Mat to create an ImageData object out of that.
   explicit ImageData(const cv::Mat& image);

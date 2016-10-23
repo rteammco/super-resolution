@@ -4,10 +4,9 @@
 #ifndef SRC_IMAGE_MODEL_MOTION_MODULE_H_
 #define SRC_IMAGE_MODEL_MOTION_MODULE_H_
 
+#include "image/image_data.h"
 #include "image_model/degradation_operator.h"
 #include "motion/motion_shift.h"
-
-#include "opencv2/core/core.hpp"
 
 namespace super_resolution {
 
@@ -18,7 +17,7 @@ class MotionModule : public DegradationOperator {
   explicit MotionModule(const MotionShiftSequence& motion_shift_sequence)
       : motion_shift_sequence_(motion_shift_sequence) {}
 
-  virtual void ApplyToImage(cv::Mat* image, const int index) const;
+  virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
  private:
   const MotionShiftSequence& motion_shift_sequence_;

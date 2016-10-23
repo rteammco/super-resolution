@@ -7,8 +7,6 @@
 
 #include "image_model/degradation_operator.h"
 
-#include "opencv2/core/core.hpp"
-
 namespace super_resolution {
 
 class PsfBlurModule : public DegradationOperator {
@@ -18,7 +16,7 @@ class PsfBlurModule : public DegradationOperator {
   // The blur radius must be an odd number.
   PsfBlurModule(const int blur_radius, const double sigma);
 
-  virtual void ApplyToImage(cv::Mat* image, const int index) const;
+  virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
  private:
   const int blur_radius_;

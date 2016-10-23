@@ -7,7 +7,14 @@
 namespace super_resolution {
 
 ImageData::ImageData(const cv::Mat& image) {
-  // TODO: implement.
+  const int num_image_channels = image.channels();
+  cv::split(image, channels_);
+}
+
+ImageData::ImageData(const ImageData& other) {
+  for (const cv::Mat& channel_image : other.channels_) {
+    channels_.push_back(channel_image.clone());
+  }
 }
 
 void ImageData::AddChannel(const cv::Mat& channel_image) {

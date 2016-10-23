@@ -4,9 +4,8 @@
 #ifndef SRC_IMAGE_MODEL_ADDITIVE_NOISE_MODULE_H_
 #define SRC_IMAGE_MODEL_ADDITIVE_NOISE_MODULE_H_
 
+#include "image/image_data.h"
 #include "image_model/degradation_operator.h"
-
-#include "opencv2/core/core.hpp"
 
 namespace super_resolution {
 
@@ -16,7 +15,7 @@ class AdditiveNoiseModule : public DegradationOperator {
   // given sigma value (in pixels). Sigma must be greater than 0.
   explicit AdditiveNoiseModule(const double sigma);
 
-  virtual void ApplyToImage(cv::Mat* image, const int index) const;
+  virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
  private:
   const double sigma_;

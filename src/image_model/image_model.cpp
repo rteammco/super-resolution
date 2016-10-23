@@ -1,5 +1,6 @@
 #include "image_model/image_model.h"
 
+#include "image/image_data.h"
 #include "image_model/degradation_operator.h"
 
 #include "opencv2/core/core.hpp"
@@ -12,10 +13,10 @@ void ImageModel::AddDegradationOperator(
   degradation_operators_.push_back(&degradation_operator);
 }
 
-void ImageModel::ApplyModel(cv::Mat* image, const int index) const {
+void ImageModel::ApplyModel(ImageData* image_data, const int index) const {
   for (const DegradationOperator* degradation_operator
            : degradation_operators_) {
-    degradation_operator->ApplyToImage(image, index);
+    degradation_operator->ApplyToImage(image_data, index);
   }
 }
 

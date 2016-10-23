@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
@@ -49,6 +50,7 @@ int main(int argc, char** argv) {
   REQUIRE_ARG(FLAGS_output_image_dir);
 
   const cv::Mat image = cv::imread(FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
+  super_resolution::ImageData image_data(image);
 
   // Set up a motion sequence from a file if the user specified one.
   super_resolution::MotionShiftSequence motion_shift_sequence;
@@ -82,15 +84,13 @@ int main(int argc, char** argv) {
     image_model.AddDegradationOperator(noise_module);
   }
 
-  std::vector<cv::Mat> frames;
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {
-    cv::Mat low_res_frame = image.clone();
+    super_resolution::ImageData low_res_frame = image_data;
     image_model.ApplyModel(&low_res_frame, i);
-    frames.push_back(low_res_frame);
     // Write the file.
     std::string image_path =
         FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";
-    cv::imwrite(image_path, low_res_frame);
+    cv::imwrite(image_path, low_res_frame.GetChannel(0));
   }
 
   return EXIT_SUCCESS;

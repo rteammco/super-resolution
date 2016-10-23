@@ -11,9 +11,8 @@
 
 #include <vector>
 
+#include "image/image_data.h"
 #include "image_model/degradation_operator.h"
-
-#include "opencv2/core/core.hpp"
 
 namespace super_resolution {
 
@@ -30,7 +29,7 @@ class ImageModel {
 
   // Apply this forward model to the given image at the given index in the
   // multiframe sequence.
-  void ApplyModel(cv::Mat* image, const int index) const;
+  void ApplyModel(ImageData* image_data, const int index) const;
 
  private:
   // An ordered list of degradation operators, to be applied in this order. We
