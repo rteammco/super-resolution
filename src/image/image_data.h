@@ -41,11 +41,15 @@ class ImageData {
   // channels may be 0 for an empty image.
   cv::Mat GetChannel(const int index) const;
 
-  // Returns a visualization image. The visualization image is a
-  // naively-constructed monochrome or RGB image combined from the channels in
-  // this image for visualization purposes only. An empty OpenCV Mat will be
-  // returned (and a warning will be logged) if this image is empty.
-  cv::Mat GetVisualizationImage() const;
+  // Returns an OpenCV Mat image. This image is a naively-constructed
+  // monochrome or RGB image combined from the channels in this image for
+  // visualization purposes. An empty OpenCV Mat will be returned (and a
+  // warning will be logged) if this image is empty.
+  //
+  // If the data is already monochrome or RGB, this will just return the image
+  // in its original cv::Mat form. This can be used for storing or displaying
+  // the data in native image form.
+  cv::Mat GetOpenCvImage() const;
 
   // Returns the OpenCV type for the image (e.g. CV_16SC1). All channels have
   // the same image type. If this image is empty, -1 will be returned instead.

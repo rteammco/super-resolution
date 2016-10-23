@@ -20,6 +20,7 @@ void DownsamplingModule::ApplyToImage(
   const int num_image_channels = image_data.GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
     cv::Mat channel_image = image_data.GetChannel(i);
+    LOG(INFO) << channel_image.size();
     cv::resize(
         channel_image,     // Source image.
         channel_image,     // Dest image (overwrite the old image).
@@ -27,6 +28,9 @@ void DownsamplingModule::ApplyToImage(
         scale_ratio,       // Scaling ratio in the x asix (0 < r <= 1).
         scale_ratio,       // Scaling ratio in the y axis.
         cv::INTER_AREA);   // Area method aliases images by dropping pixels.
+    LOG(INFO) << channel_image.size();
+    LOG(INFO) << image_data.GetChannel(i).size();
+    // TODO: this isn't updating the image in ImageData...
   }
 }
 

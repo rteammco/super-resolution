@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
     // Write the file.
     std::string image_path =
         FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";
-    cv::imwrite(image_path, low_res_frame.GetChannel(0));
+    cv::imwrite(image_path, low_res_frame.GetOpenCvImage());
   }
 
   return EXIT_SUCCESS;

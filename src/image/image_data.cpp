@@ -1,5 +1,7 @@
 #include "image/image_data.h"
 
+#include <vector>
+
 #include "opencv2/core/core.hpp"
 
 #include "glog/logging.h"
@@ -49,13 +51,27 @@ cv::Mat ImageData::GetChannel(const int index) const {
   return channels_[index];
 }
 
-cv::Mat ImageData::GetVisualizationImage() const {
-  // TODO: implement.
-  cv::Mat visualization_image;
+cv::Mat ImageData::GetOpenCvImage() const {
+  cv::Mat opencv_image;
   if (channels_.empty()) {
     LOG(WARNING) << "This image is empty. Returning empty visualization image.";
+    return opencv_image;
   }
-  return visualization_image;
+
+  const int num_channels = channels_.size();
+  // For a monochrome image (or if it has two channels for some reason), just
+  // return the first (and likely only) channel.
+  if (num_channels < 3) {
+    return channels_[0];
+  }
+
+  // For 3 or more channels, return an RGB image of the first, middle, and last
+  // channel. The middle channel is just the average index.
+  std::vector<cv::Mat> bgr_channels = {
+    channels_[0], channels_[num_channels / 2], channels_[num_channels - 1]
+  };
+  cv::merge(bgr_channels, opencv_image);
+  return opencv_image;
 }
 
 int ImageData::GetOpenCvType() const {
