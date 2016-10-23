@@ -26,13 +26,14 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Grab all files in the source directory.
+# Grab all binary source files in the src directory.
 file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 
 # Create a library for all of the added Super Resolution dependencies (i.e. all
 # the classes).
 file(GLOB   ftir_SRC          "src/ftir/*.cpp")
+file(GLOB   image_SRC         "src/image/*.cpp")
 file(GLOB   image_model_SRC   "src/image_model/*.cpp")
 file(GLOB   motion_SRC        "src/motion/*.cpp")
 file(GLOB   util_SRC          "src/util/*.cpp")
@@ -41,6 +42,7 @@ file(GLOB   video_SRC         "src/video/*.cpp")
 add_library(
   LibSuperResolution
   ${ftir_SRC}
+  ${image_SRC}
   ${image_model_SRC}
   ${motion_SRC}
   ${util_SRC}
