@@ -17,7 +17,7 @@ class DownsamplingModule : public DegradationOperator {
   // be modified. The scale should be greater than or equal to 1.
   explicit DownsamplingModule(const double scale);
 
-  virtual void ApplyToImage(ImageData* image_data, const int index) const;
+  virtual void ApplyToImage(const ImageData& image_data, const int index) const;
 
  private:
   const double scale_;

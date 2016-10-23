@@ -14,12 +14,12 @@ DownsamplingModule::DownsamplingModule(const double scale) : scale_(scale) {
 }
 
 void DownsamplingModule::ApplyToImage(
-    ImageData* image_data, const int index) const {
+    const ImageData& image_data, const int index) const {
 
   const double scale_ratio = 1.0 / scale_;
-  const int num_image_channels = image_data->GetNumChannels();
+  const int num_image_channels = image_data.GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
-    cv::Mat channel_image = image_data->GetChannel(i);
+    cv::Mat channel_image = image_data.GetChannel(i);
     cv::resize(
         channel_image,     // Source image.
         channel_image,     // Dest image (overwrite the old image).

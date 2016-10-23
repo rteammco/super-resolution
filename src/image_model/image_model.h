@@ -29,7 +29,7 @@ class ImageModel {
 
   // Apply this forward model to the given image at the given index in the
   // multiframe sequence.
-  void ApplyModel(ImageData* image_data, const int index) const;
+  void ApplyModel(const ImageData& image_data, const int index) const;
 
  private:
   // An ordered list of degradation operators, to be applied in this order. We
