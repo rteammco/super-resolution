@@ -33,6 +33,14 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
   } channels_.push_back(channel_image);
 }
 
+void ImageData::ReplaceChannel(const cv::Mat& channel_image, const int index) {
+  CHECK_GE(index, 0) << "Minimum channel index is 0.";
+  CHECK_LT(index, channels_.size())
+      << "Index out of bounds: there are only "
+      << channels_.size() << " image channels.";
+  channels_[index] = channel_image;
+}
+
 cv::Size ImageData::GetImageSize() const {
   // Return (0, 0) if this image is empty.
   if (channels_.empty()) {

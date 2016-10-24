@@ -17,7 +17,7 @@ class MotionModule : public DegradationOperator {
   explicit MotionModule(const MotionShiftSequence& motion_shift_sequence)
       : motion_shift_sequence_(motion_shift_sequence) {}
 
-  virtual void ApplyToImage(const ImageData& image_data, const int index) const;
+  virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
  private:
   const MotionShiftSequence& motion_shift_sequence_;

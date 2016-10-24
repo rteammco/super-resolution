@@ -16,7 +16,7 @@ class PsfBlurModule : public DegradationOperator {
   // The blur radius must be an odd number.
   PsfBlurModule(const int blur_radius, const double sigma);
 
-  virtual void ApplyToImage(const ImageData& image_data, const int index) const;
+  virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
  private:
   const int blur_radius_;

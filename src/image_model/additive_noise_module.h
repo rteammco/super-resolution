@@ -15,7 +15,7 @@ class AdditiveNoiseModule : public DegradationOperator {
   // given sigma value (in pixels). Sigma must be greater than 0.
   explicit AdditiveNoiseModule(const double sigma);
 
-  virtual void ApplyToImage(const ImageData& image_data, const int index) const;
+  virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
  private:
   const double sigma_;

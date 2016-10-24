@@ -13,9 +13,7 @@ void ImageModel::AddDegradationOperator(
   degradation_operators_.push_back(&degradation_operator);
 }
 
-void ImageModel::ApplyModel(
-    const ImageData& image_data, const int index) const {
-
+void ImageModel::ApplyModel(ImageData* image_data, const int index) const {
   for (const DegradationOperator* degradation_operator
            : degradation_operators_) {
     degradation_operator->ApplyToImage(image_data, index);

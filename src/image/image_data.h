@@ -26,6 +26,12 @@ class ImageData {
   // added channel must have the same dimensions as the rest of the image.
   void AddChannel(const cv::Mat& channel_image);
 
+  // Replaces a channel image with the given image. In most cases it is
+  // possible to modify the cv::Mat directly (e.g. to blur it), but if the
+  // image is resized a new matrix must be added to replace it. Error if the
+  // given index is out of bounds.
+  void ReplaceChannel(const cv::Mat& channel_image, const int index);
+
   // Returns the total number of channels (bands) in this image. Note that this
   // value may be 0.
   int GetNumChannels() const {
