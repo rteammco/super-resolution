@@ -1,20 +1,15 @@
 #ifndef SRC_SOLVERS_SUPER_RESOLUTION_MAP_H_
 #define SRC_SOLVERS_SUPER_RESOLUTION_MAP_H_
 
-#include <vector>
+#include "image/image_data.h"
+#include "solvers/solver.h"
 
 namespace super_resolution {
 
 class MapSolver : public Solver {
  public:
-  MapSolver(
-      const std::vector<ImageData>& low_res_images,
-      const ImageModel& image_model);
-
-  virtual ImageData Solve();
-
- private:
-  // here
+  // Solves the problem using the MAP (maximum a posteriori) formulation.
+  virtual ImageData Solve() const;
 };
 
 }  // namespace super_resolution

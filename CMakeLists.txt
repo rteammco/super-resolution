@@ -36,6 +36,7 @@ file(GLOB   ftir_SRC          "src/ftir/*.cpp")
 file(GLOB   image_SRC         "src/image/*.cpp")
 file(GLOB   image_model_SRC   "src/image_model/*.cpp")
 file(GLOB   motion_SRC        "src/motion/*.cpp")
+file(GLOB   solvers_SRC       "src/solvers/*.cpp")
 file(GLOB   util_SRC          "src/util/*.cpp")
 file(GLOB   video_SRC         "src/video/*.cpp")
 
@@ -45,6 +46,7 @@ add_library(
   ${image_SRC}
   ${image_model_SRC}
   ${motion_SRC}
+  ${solvers_SRC}
   ${util_SRC}
   ${video_SRC}
 )
