@@ -17,6 +17,7 @@ brew install gflags
 brew install glog
 brew install opencv3
 brew install webp
+brew install ceres-solver
 ```
 
 Install gtest:
