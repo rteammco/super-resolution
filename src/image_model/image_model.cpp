@@ -8,9 +8,9 @@
 namespace super_resolution {
 
 void ImageModel::AddDegradationOperator(
-    const DegradationOperator& degradation_operator) {
+    const DegradationOperator* degradation_operator) {
 
-  degradation_operators_.push_back(&degradation_operator);
+  degradation_operators_.push_back(degradation_operator);
 }
 
 void ImageModel::ApplyModel(ImageData* image_data, const int index) const {

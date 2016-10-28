@@ -10,7 +10,6 @@
 #define SRC_IMAGE_MODEL_IMAGE_MODEL_H_
 
 #include <vector>
-
 #include "image/image_data.h"
 #include "image_model/degradation_operator.h"
 
@@ -25,7 +24,7 @@ class ImageModel {
   // should be M, B, D, n.
   // Note that additive operators come last due to the order of operations.
   void AddDegradationOperator(
-      const DegradationOperator& degradation_operator);
+      const DegradationOperator* degradation_operator);
 
   // Apply this forward model to the given image at the given index in the
   // multiframe sequence.

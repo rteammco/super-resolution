@@ -64,24 +64,29 @@ int main(int argc, char** argv) {
   super_resolution::ImageModel image_model;
 
   // Add motion.
-  super_resolution::MotionModule motion_module(motion_shift_sequence);
+  // TODO: change all of these DegradationOperator pointers to unique_ptr.
+  // Currently there is a potential memory leak.
+  super_resolution::DegradationOperator* motion_module =
+      new super_resolution::MotionModule(motion_shift_sequence);
   image_model.AddDegradationOperator(motion_module);
 
   // Add blur if the parameters are specified.
   if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
-    super_resolution::PsfBlurModule blur_module(
-        FLAGS_blur_radius, FLAGS_blur_sigma);
+    super_resolution::DegradationOperator* blur_module =
+        new super_resolution::PsfBlurModule(
+            FLAGS_blur_radius, FLAGS_blur_sigma);
     image_model.AddDegradationOperator(blur_module);
   }
 
   // Add downsampling.
-  super_resolution::DownsamplingModule downsampling_module(
-      FLAGS_downsampling_scale);
+  super_resolution::DegradationOperator* downsampling_module =
+      new super_resolution::DownsamplingModule(FLAGS_downsampling_scale);
   image_model.AddDegradationOperator(downsampling_module);
 
   // Add additive noise if the parameter was specified.
   if (FLAGS_noise_sigma > 0) {
-    super_resolution::AdditiveNoiseModule noise_module(FLAGS_noise_sigma);
+    super_resolution::DegradationOperator* noise_module
+        = new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma);
     image_model.AddDegradationOperator(noise_module);
   }
 

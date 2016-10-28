@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(SuperResolution)
 
 find_package(OpenCV REQUIRED)
-find_package(gtest REQUIRED)
+#find_package(gtest REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)

@@ -18,7 +18,6 @@ AdditiveNoiseModule::AdditiveNoiseModule(const double sigma) : sigma_(sigma) {
 void AdditiveNoiseModule::ApplyToImage(
     ImageData* image_data, const int index) const {
 
-
   // Add noise separately to each channel.
   const cv::Size image_size = image_data->GetImageSize();
   const int image_type = image_data->GetOpenCvType();

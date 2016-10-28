@@ -19,6 +19,8 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
+using super_resolution::DegradationOperator;
+
 DEFINE_string(data_type, "",
     "The type of data to apply super-resolution to. Default is RGB video.");
 DEFINE_string(video_path, "", "Path to a video file to super resolve.");
@@ -48,13 +50,18 @@ int main(int argc, char** argv) {
       super_resolution::MotionShift(5, 10),
       super_resolution::MotionShift(-8, -10),
       super_resolution::MotionShift(3, -15)
-    });
+  });
 
   // Create the forward image model degradation components.
-  super_resolution::DownsamplingModule downsampling_module(3);
-  super_resolution::MotionModule motion_module(motion_shift_sequence);
-  super_resolution::PsfBlurModule blur_module(5, 1.0);
-  super_resolution::AdditiveNoiseModule noise_module(5.0);
+  // TODO: change DegradationOperators pointers to smart pointers.
+  DegradationOperator* downsampling_module =
+      new super_resolution::DownsamplingModule(3);
+  DegradationOperator* motion_module =
+      new super_resolution::MotionModule(motion_shift_sequence);
+  DegradationOperator* blur_module =
+      new super_resolution::PsfBlurModule(5, 1.0);
+  DegradationOperator* noise_module =
+      new super_resolution::AdditiveNoiseModule(5.0);
 
   // Create the forward image model: y = DBx + n
   super_resolution::ImageModel image_model;
@@ -66,10 +73,10 @@ int main(int argc, char** argv) {
   const std::vector<cv::Mat>& frames = video_loader.GetFrames();
   for (int i = 0; i < frames.size(); ++i) {
     cv::Mat low_res_frame = frames[i].clone();
-    //image_model.ApplyModel(&low_res_frame, i); // TODO
+    // image_model.ApplyModel(&low_res_frame, i); // TODO: fix
 
     // Display the degradated frame.
-    // TODO(richard): remove, and remove OpenCV includes.
+    // TODO: remove, and remove OpenCV includes.
     cv::resize(low_res_frame, low_res_frame, frames[i].size());
     cv::imshow("test", low_res_frame);
     cv::waitKey(0);
