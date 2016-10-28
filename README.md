@@ -11,6 +11,11 @@ First install Homebrew: http://brew.sh/.
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
+When in doubt and just in case,
+```
+brew update
+```
+
 Make sure you have CMake:
 ```
 brew install cmake
