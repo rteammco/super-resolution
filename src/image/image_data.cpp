@@ -51,12 +51,31 @@ cv::Size ImageData::GetImageSize() const {
   return channels_[0].size();
 }
 
+int ImageData::GetNumPixels() const {
+  const cv::Size image_size = GetImageSize();  // (0, 0) if image is empty.
+  return image_size.width * image_size.height;
+}
+
 cv::Mat ImageData::GetChannel(const int index) const {
   CHECK_GE(index, 0) << "Minimum channel index is 0.";
   CHECK_LT(index, channels_.size())
       << "Index out of bounds: there are only "
       << channels_.size() << " image channels.";
   return channels_[index];
+}
+
+double ImageData::GetPixelValue(
+    const int channel_index, const int pixel_index) const {
+
+  // TODO: implement and check index ranges.
+  return 0.0;
+}
+
+double* ImageData::GetMutableDataPointer(
+    const int channel_index, const int pixel_index) const {
+
+  // TODO: implement and check index ranges.
+  return nullptr;
 }
 
 cv::Mat ImageData::GetOpenCvImage() const {

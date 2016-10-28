@@ -47,11 +47,7 @@ class ImageData {
 
   // Returns the number of pixels in the image at each channel. Each channel
   // has the same number of pixels. If the image is empty, 0 will be returned.
-  // TODO: implement and return 0 on empty image.
-  int GetNumPixels() const {
-    // TODO: move to cpp file.
-    return 0;
-  }
+  int GetNumPixels() const;
 
   // Returns the channel at the given index. Error if index is out of bounds.
   // Use GetNumChannels() to get a valid range. Note that the number of
@@ -59,21 +55,14 @@ class ImageData {
   cv::Mat GetChannel(const int index) const;
 
   // Returns the pixel value at the given channel and pixel indices. This will
-  // be just a single intensity value for that specific pixel.
-  // TODO: implement and check index ranges.
-  double GetPixelValue(const int channel_index, const int pixel_index) const {
-    // TODO: move to cpp file
-    return 0.0;
-  }
+  // be just a single intensity value for that specific pixel. The given
+  // channel and pixel indices must be valid.
+  double GetPixelValue(const int channel_index, const int pixel_index) const;
 
   // Returns a mutable data pointer (for the solver to adjust) at the given
   // channel and pixel indices.
-  // TODO: implement and check index ranges.
   double* GetMutableDataPointer(
-      const int channel_index, const int pixel_index) const {
-    // TODO: move to cpp file
-    return nullptr;
-  }
+      const int channel_index, const int pixel_index) const;
 
   // Returns an OpenCV Mat image. This image is a naively-constructed
   // monochrome or RGB image combined from the channels in this image for
