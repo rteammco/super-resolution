@@ -29,8 +29,8 @@ class ImageModel {
       std::unique_ptr<DegradationOperator> degradation_operator);
 
   // Apply this forward model to the given image at the given index in the
-  // multiframe sequence.
-  void ApplyModel(ImageData* image_data, const int index) const;
+  // multiframe sequence. The degraded image is returned.
+  ImageData ApplyModel(const ImageData& image_data, const int index) const;
 
  private:
   // An ordered list of degradation operators, to be applied in this order. We
