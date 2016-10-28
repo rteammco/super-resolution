@@ -3,9 +3,10 @@ cmake_minimum_required(VERSION 2.8)
 project(SuperResolution)
 
 find_package(OpenCV REQUIRED)
-#find_package(gtest REQUIRED)
+find_package(ceres REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${EIGEN_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Default to Release mode.
@@ -61,12 +62,12 @@ add_executable(
 )
 target_link_libraries(
   Test
-  gtest
-  gtest_main
-  gmock
-  gmock_main
   LibSuperResolution
   glog
+  gmock
+  gmock_main
+  gtest
+  gtest_main
   ${OpenCV_LIBS}
 )
 
