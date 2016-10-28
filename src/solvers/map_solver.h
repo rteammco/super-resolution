@@ -1,5 +1,5 @@
-#ifndef SRC_SOLVERS_SUPER_RESOLUTION_MAP_H_
-#define SRC_SOLVERS_SUPER_RESOLUTION_MAP_H_
+#ifndef SRC_SOLVERS_MAP_SOLVER_H_
+#define SRC_SOLVERS_MAP_SOLVER_H_
 
 #include "image/image_data.h"
 #include "solvers/solver.h"
@@ -14,4 +14,4 @@ class MapSolver : public Solver {
 
 }  // namespace super_resolution
 
-#endif  // SRC_SOLVERS_SUPER_RESOLUTION_MAP_H_
+#endif  // SRC_SOLVERS_MAP_SOLVER_H_

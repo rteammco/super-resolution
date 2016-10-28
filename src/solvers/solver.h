@@ -23,7 +23,7 @@ class Solver {
   // image. This must be implemented by the specific solver module.
   virtual ImageData Solve() const = 0;
 
- private:
+ protected:
   const ImageModel& image_model_;
   const std::vector<ImageData>& low_res_images_;
 };

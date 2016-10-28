@@ -9,6 +9,7 @@
 #include "image_model/motion_module.h"
 #include "image_model/psf_blur_module.h"
 #include "motion/motion_shift.h"
+#include "solvers/map_solver.h"
 #include "util/macros.h"
 #include "util/util.h"
 #include "video/super_resolver.h"
