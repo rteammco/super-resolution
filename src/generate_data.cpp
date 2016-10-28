@@ -1,7 +1,9 @@
 // This binary is used to generate low-resolution images from a given
 // high-resolution ground truth image.
 
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "image/image_data.h"
@@ -20,6 +22,8 @@
 
 #include "gflags/gflags.h"
 #include "glog/logging.h"
+
+using super_resolution::DegradationOperator;
 
 // Required input and output files.
 DEFINE_string(input_image, "",
@@ -64,30 +68,28 @@ int main(int argc, char** argv) {
   super_resolution::ImageModel image_model;
 
   // Add motion.
-  // TODO: change all of these DegradationOperator pointers to unique_ptr.
-  // Currently there is a potential memory leak.
-  super_resolution::DegradationOperator* motion_module =
-      new super_resolution::MotionModule(motion_shift_sequence);
-  image_model.AddDegradationOperator(motion_module);
+  std::unique_ptr<DegradationOperator> motion_module(
+      new super_resolution::MotionModule(motion_shift_sequence));
+  image_model.AddDegradationOperator(std::move(motion_module));
 
   // Add blur if the parameters are specified.
   if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
-    super_resolution::DegradationOperator* blur_module =
+    std::unique_ptr<DegradationOperator> blur_module(
         new super_resolution::PsfBlurModule(
-            FLAGS_blur_radius, FLAGS_blur_sigma);
-    image_model.AddDegradationOperator(blur_module);
+            FLAGS_blur_radius, FLAGS_blur_sigma));
+    image_model.AddDegradationOperator(std::move(blur_module));
   }
 
   // Add downsampling.
-  super_resolution::DegradationOperator* downsampling_module =
-      new super_resolution::DownsamplingModule(FLAGS_downsampling_scale);
-  image_model.AddDegradationOperator(downsampling_module);
+  std::unique_ptr<DegradationOperator> downsampling_module(
+      new super_resolution::DownsamplingModule(FLAGS_downsampling_scale));
+  image_model.AddDegradationOperator(std::move(downsampling_module));
 
   // Add additive noise if the parameter was specified.
   if (FLAGS_noise_sigma > 0) {
-    super_resolution::DegradationOperator* noise_module
-        = new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma);
-    image_model.AddDegradationOperator(noise_module);
+    std::unique_ptr<DegradationOperator> noise_module(
+        new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma));
+    image_model.AddDegradationOperator(std::move(noise_module));
   }
 
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {

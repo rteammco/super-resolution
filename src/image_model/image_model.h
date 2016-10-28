@@ -9,7 +9,9 @@
 #ifndef SRC_IMAGE_MODEL_IMAGE_MODEL_H_
 #define SRC_IMAGE_MODEL_IMAGE_MODEL_H_
 
+#include <memory>
 #include <vector>
+
 #include "image/image_data.h"
 #include "image_model/degradation_operator.h"
 
@@ -24,7 +26,7 @@ class ImageModel {
   // should be M, B, D, n.
   // Note that additive operators come last due to the order of operations.
   void AddDegradationOperator(
-      const DegradationOperator* degradation_operator);
+      std::unique_ptr<DegradationOperator> degradation_operator);
 
   // Apply this forward model to the given image at the given index in the
   // multiframe sequence.
@@ -33,7 +35,7 @@ class ImageModel {
  private:
   // An ordered list of degradation operators, to be applied in this order. We
   // keep pointers because the DegradationOperator class is pure virtual.
-  std::vector<const DegradationOperator*> degradation_operators_;
+  std::vector<std::unique_ptr<DegradationOperator>> degradation_operators_;
 };
 
 }  // namespace super_resolution
