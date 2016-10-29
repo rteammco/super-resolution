@@ -93,12 +93,8 @@ int main(int argc, char** argv) {
   }
 
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {
-    cv::imshow("test", image_data.GetVisualizationImage());
-    cv::waitKey(0);
     super_resolution::ImageData low_res_frame =
         image_model.ApplyModel(image_data, i);
-    cv::imshow("test", low_res_frame.GetVisualizationImage());
-    cv::waitKey(0);
     // Write the file.
     std::string image_path =
         FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";

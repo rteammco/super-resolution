@@ -65,23 +65,23 @@ void ImageData::ResizeImage(
 
   CHECK_GT(scale_factor, 0) << "Scale factor must be larger than 0.";
 
-  return;
+  // Update the size. If image was empty, the size was 0 and won't change. For
+  // consistency, this size will be used to rescale all the channel images.
+  image_size_.width *= scale_factor;
+  image_size_.height *= scale_factor;
+
   const int num_image_channels = channels_.size();
   for (int i = 0; i < num_image_channels; ++i) {
     cv::Mat scaled_image;
     cv::resize(
-        channels_[i],     // Source image.
-        scaled_image,     // Dest image.
-        cv::Size(0, 0),   // Size is set to 0, so it will use the ratio.
-        scale_factor,     // Scaling ratio in the x asix.
-        scale_factor,     // Scaling ratio in the y axis.
+        channels_[i],   // Source image.
+        scaled_image,   // Dest image.
+        image_size_,    // Desired image size.
+        0,              // Scaling factors: Set to 0 to use the given Size instead.
+        0,
         interpolation_method);
     channels_[i] = scaled_image;
   }
-
-  // Update the size. If image was empty, the size was 0 and won't change.
-  image_size_.width *= scale_factor;
-  image_size_.height *= scale_factor;
 }
 
 int ImageData::GetNumPixels() const {
