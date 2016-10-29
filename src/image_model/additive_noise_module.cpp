@@ -19,7 +19,7 @@ void AdditiveNoiseModule::ApplyToImage(
     ImageData* image_data, const int index) const {
 
   // The image pixels are scaled between 0 and 1, so scale the sigma also.
-  const double scaled_sigma = double(sigma_) / 255.0;
+  const double scaled_sigma = static_cast<double>(sigma_) / 255.0;
 
   // Add noise separately to each channel.
   const cv::Size image_size = image_data->GetImageSize();

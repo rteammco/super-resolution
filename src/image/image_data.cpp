@@ -77,7 +77,7 @@ void ImageData::ResizeImage(
         channels_[i],   // Source image.
         scaled_image,   // Dest image.
         image_size_,    // Desired image size.
-        0,              // Scaling factors: Set to 0 to use the given Size instead.
+        0,              // Set x, y scale to 0 to use the given Size instead.
         0,
         interpolation_method);
     channels_[i] = scaled_image;

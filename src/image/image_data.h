@@ -15,7 +15,6 @@ namespace super_resolution {
 
 class ImageData {
  public:
-
   // Default constructor to make an empty image.
   ImageData();
 
