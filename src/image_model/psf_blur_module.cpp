@@ -20,7 +20,7 @@ void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
   const cv::Size kernel_size(blur_radius_, blur_radius_);
   int num_image_channels = image_data->GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
-    cv::Mat channel_image = image_data->GetChannel(i);
+    cv::Mat channel_image = image_data->GetChannelImage(i);
     cv::GaussianBlur(channel_image, channel_image, kernel_size, sigma_);
   }
 }

@@ -14,14 +14,16 @@ namespace super_resolution {
 
 class ImageData {
  public:
+
   // Default constructor to make an empty image.
-  ImageData() {}
+  ImageData();
 
   // Copy constructor clones the channel OpenCV Mats because they are
   // effectively smart pointers and are not copied by default.
   ImageData(const ImageData& other);
 
-  // Pass in an OpenCV Mat to create an ImageData object out of that.
+  // Pass in an OpenCV Mat to create an ImageData object out of that. If the
+  // given image has multiple channels, they will all be added independently.
   explicit ImageData(const cv::Mat& image);
 
   // Appends a channel (band) to the image. Each new channel will be added as
@@ -43,16 +45,18 @@ class ImageData {
 
   // Returns the size of the image (width and height). If there are no channels
   // in this image (i.e. it is empty), the returned size will be (0, 0).
-  cv::Size GetImageSize() const;
+  cv::Size GetImageSize() const {
+    return image_size_;
+  }
 
   // Returns the number of pixels in the image at each channel. Each channel
   // has the same number of pixels. If the image is empty, 0 will be returned.
   int GetNumPixels() const;
 
-  // Returns the channel at the given index. Error if index is out of bounds.
-  // Use GetNumChannels() to get a valid range. Note that the number of
-  // channels may be 0 for an empty image.
-  cv::Mat GetChannel(const int index) const;
+  // Returns the channel image (OpenCV Mat) at the given index. Error if index
+  // is out of bounds. Use GetNumChannels() to get a valid range. Note that the
+  // number of channels may be 0 for an empty image.
+  cv::Mat GetChannelImage(const int index) const;
 
   // Returns the pixel value at the given channel and pixel indices. This will
   // be just a single intensity value for that specific pixel. The given
@@ -64,21 +68,31 @@ class ImageData {
   double* GetMutableDataPointer(
       const int channel_index, const int pixel_index) const;
 
-  // Returns an OpenCV Mat image. This image is a naively-constructed
-  // monochrome or RGB image combined from the channels in this image for
-  // visualization purposes. An empty OpenCV Mat will be returned (and a
-  // warning will be logged) if this image is empty.
+  // Returns an OpenCV Mat image which is a naively-constructed monochrome or
+  // RGB image combined from the channels in this image for visualization
+  // purposes. An empty OpenCV Mat will be returned (and a warning will be
+  // logged) if this image is empty.
   //
   // If the data is already monochrome or RGB, this will just return the image
   // in its original cv::Mat form. This can be used for storing or displaying
   // the data in native image form.
-  cv::Mat GetOpenCvImage() const;
+  cv::Mat GetVisualizationImage() const;
 
-  // Returns the OpenCV type for the image (e.g. CV_16SC1). All channels have
-  // the same image type. If this image is empty, -1 will be returned instead.
-  int GetOpenCvType() const;
+  // Returns the OpenCV type for the image (e.g. CV_64FC1). All channels stored
+  // in this ImageData object have the same image type.
+  //
+  // The type is an implementation detail and is defined in image_data.cpp.
+  // However, the pixel values are values between values of 0 and 1.
+  int GetOpenCvImageType() const;
 
  private:
+  // The size of the image (width and height) is set when the first channel is
+  // added. The size is guaranteed to be consistent between all channels in the
+  // image. Empty images have a size of (0, 0).
+  cv::Size image_size_;
+
+  // The data is stored as OpenCV Mat images, one for each channel to support
+  // an arbitrary number of channels.
   std::vector<cv::Mat> channels_;
 };
 

@@ -19,7 +19,7 @@ void DownsamplingModule::ApplyToImage(
   const double scale_ratio = 1.0 / scale_;
   const int num_image_channels = image_data->GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
-    cv::Mat channel_image = image_data->GetChannel(i);
+    cv::Mat channel_image = image_data->GetChannelImage(i);
     cv::Mat scaled_image;
     cv::resize(
         channel_image,     // Source image.

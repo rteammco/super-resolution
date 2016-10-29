@@ -8,21 +8,42 @@
 
 namespace super_resolution {
 
-ImageData::ImageData(const cv::Mat& image) {
-  const int num_image_channels = image.channels();
-  cv::split(image, channels_);
+// The type used for all OpenCV images stored in this object. Any images given
+// in another format will be converted to this type.
+constexpr int kOpenCvImageType = CV_64FC1;
+
+// Default constructor.
+ImageData::ImageData() {
+  image_size_ = cv::Size(0, 0);
 }
 
-ImageData::ImageData(const ImageData& other) {
+// Copy constructor.
+ImageData::ImageData(const ImageData& other) : image_size_(other.image_size_) {
+  // TODO: remove after verifying that this is indeed size 0 on copy.
+  CHECK(channels_.empty());
   for (const cv::Mat& channel_image : other.channels_) {
     channels_.push_back(channel_image.clone());
   }
 }
 
+// Constructor from OpenCV image.
+ImageData::ImageData(const cv::Mat& image) {
+  image_size_ = image.size();
+  cv::split(image, channels_);  // cv::split copies the data.
+
+  // Make sure the channels are all scaled between 0 and 1.
+  for (int i = 0; i < channels_.size(); ++i) {
+    // TODO: this only works if the given pixel values are 0 to 255.
+    channels_[i].convertTo(channels_[i], kOpenCvImageType, 1.0 / 255.0);
+  }
+}
+
 void ImageData::AddChannel(const cv::Mat& channel_image) {
-  // Check size and type first.
-  if (!channels_.empty()) {
-    CHECK(channel_image.size() == channels_[0].size())
+  if (channels_.empty()) {
+    image_size_ = channel_image.size();
+  } else {
+    // Check size and type first if other channels already exist.
+    CHECK(channel_image.size() == image_size_)
         << "Channel size did not match the expected size: "
         << channels_[0].size() << " size expected, "
         << channel_image.size() << " size given.";
@@ -30,33 +51,40 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
         << "Channel type did not match the expected type: "
         << channels_[0].type() << " type expected, "
         << channel_image.type() << " type given.";
-  } channels_.push_back(channel_image);
+  }
+
+  // TODO: this only works if the given pixel values are 0 to 255.
+  // TODO: make sure that this is making a copy of the image.
+  cv::Mat converted_image;
+  channel_image.convertTo(converted_image, kOpenCvImageType, 1.0 / 255.0);
+  channels_.push_back(converted_image);
 }
 
 void ImageData::ReplaceChannel(const cv::Mat& channel_image, const int index) {
+  // Verify valid channel index.
   CHECK_GE(index, 0) << "Minimum channel index is 0.";
   CHECK_LT(index, channels_.size())
       << "Index out of bounds: there are only "
       << channels_.size() << " image channels.";
-  channels_[index] = channel_image;
-}
 
-cv::Size ImageData::GetImageSize() const {
-  // Return (0, 0) if this image is empty.
-  if (channels_.empty()) {
-    return cv::Size(0, 0);
-  }
-  // All channels must be the same size, so return the size of the first
-  // channel.
-  return channels_[0].size();
+  // Verify that the new channel is the correct size and type.
+  CHECK(channel_image.size() == image_size_)
+      << "New channel image is not the same size as the other channels.";
+  CHECK(channel_image.type() == channels_[index].type())
+      << "New channel image is not the same type as the other channels.";
+
+  // TODO: this only works if the given pixel values are 0 to 255.
+  // TODO: make sure that this is making a copy of the image.
+  cv::Mat converted_image;
+  channel_image.convertTo(converted_image, kOpenCvImageType, 1.0 / 255.0);
+  channels_[index] = converted_image;
 }
 
 int ImageData::GetNumPixels() const {
-  const cv::Size image_size = GetImageSize();  // (0, 0) if image is empty.
-  return image_size.width * image_size.height;
+  return image_size_.width * image_size_.height;  // (0, 0) if image is empty.
 }
 
-cv::Mat ImageData::GetChannel(const int index) const {
+cv::Mat ImageData::GetChannelImage(const int index) const {
   CHECK_GE(index, 0) << "Minimum channel index is 0.";
   CHECK_LT(index, channels_.size())
       << "Index out of bounds: there are only "
@@ -78,11 +106,11 @@ double* ImageData::GetMutableDataPointer(
   return nullptr;
 }
 
-cv::Mat ImageData::GetOpenCvImage() const {
-  cv::Mat opencv_image;
+cv::Mat ImageData::GetVisualizationImage() const {
+  cv::Mat visualization_image;
   if (channels_.empty()) {
     LOG(WARNING) << "This image is empty. Returning empty visualization image.";
-    return opencv_image;
+    return visualization_image;
   }
 
   const int num_channels = channels_.size();
@@ -97,16 +125,12 @@ cv::Mat ImageData::GetOpenCvImage() const {
   std::vector<cv::Mat> bgr_channels = {
     channels_[0], channels_[num_channels / 2], channels_[num_channels - 1]
   };
-  cv::merge(bgr_channels, opencv_image);
-  return opencv_image;
+  cv::merge(bgr_channels, visualization_image);
+  return visualization_image;
 }
 
-int ImageData::GetOpenCvType() const {
-  // Return -1 if this image is empty.
-  if (channels_.empty()) {
-    return -1;
-  }
-  return channels_[0].type();
+int ImageData::GetOpenCvImageType() const {
+  return kOpenCvImageType;
 }
 
 }  // namespace super_resolution

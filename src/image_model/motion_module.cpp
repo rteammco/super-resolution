@@ -19,7 +19,7 @@ void MotionModule::ApplyToImage(ImageData* image_data, const int index) const {
   const cv::Size image_size = image_data->GetImageSize();
   int num_image_channels = image_data->GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
-    cv::Mat channel_image = image_data->GetChannel(i);
+    cv::Mat channel_image = image_data->GetChannelImage(i);
     cv::warpAffine(channel_image, channel_image, shift_kernel, image_size);
   }
 }
