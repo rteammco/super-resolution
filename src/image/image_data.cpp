@@ -60,24 +60,28 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
   channels_.push_back(converted_image);
 }
 
-void ImageData::ReplaceChannel(const cv::Mat& channel_image, const int index) {
-  // Verify valid channel index.
-  CHECK_GE(index, 0) << "Minimum channel index is 0.";
-  CHECK_LT(index, channels_.size())
-      << "Index out of bounds: there are only "
-      << channels_.size() << " image channels.";
+void ImageData::ResizeImage(
+    const double scale_factor, const int interpolation_method) {
 
-  // Verify that the new channel is the correct size and type.
-  CHECK(channel_image.size() == image_size_)
-      << "New channel image is not the same size as the other channels.";
-  CHECK(channel_image.type() == channels_[index].type())
-      << "New channel image is not the same type as the other channels.";
+  CHECK_GT(scale_factor, 0) << "Scale factor must be larger than 0.";
 
-  // TODO: this only works if the given pixel values are 0 to 255.
-  // TODO: make sure that this is making a copy of the image.
-  cv::Mat converted_image;
-  channel_image.convertTo(converted_image, kOpenCvImageType, 1.0 / 255.0);
-  channels_[index] = converted_image;
+  return;
+  const int num_image_channels = channels_.size();
+  for (int i = 0; i < num_image_channels; ++i) {
+    cv::Mat scaled_image;
+    cv::resize(
+        channels_[i],     // Source image.
+        scaled_image,     // Dest image.
+        cv::Size(0, 0),   // Size is set to 0, so it will use the ratio.
+        scale_factor,     // Scaling ratio in the x asix.
+        scale_factor,     // Scaling ratio in the y axis.
+        interpolation_method);
+    channels_[i] = scaled_image;
+  }
+
+  // Update the size. If image was empty, the size was 0 and won't change.
+  image_size_.width *= scale_factor;
+  image_size_.height *= scale_factor;
 }
 
 int ImageData::GetNumPixels() const {
@@ -114,18 +118,21 @@ cv::Mat ImageData::GetVisualizationImage() const {
   }
 
   const int num_channels = channels_.size();
-  // For a monochrome image (or if it has two channels for some reason), just
-  // return the first (and likely only) channel.
   if (num_channels < 3) {
-    return channels_[0];
+    // For a monochrome image (or if it has two channels for some reason), just
+    // return the first (and likely only) channel.
+    visualization_image = channels_[0].clone();
+    visualization_image.convertTo(visualization_image, CV_8UC1, 255);
+  } else {
+    // For 3 or more channels, return an RGB image of the first, middle, and
+    // last channel. The middle channel is just the average index.
+    std::vector<cv::Mat> bgr_channels = {
+      channels_[0], channels_[num_channels / 2], channels_[num_channels - 1]
+    };
+    cv::merge(bgr_channels, visualization_image);
+    visualization_image.convertTo(visualization_image, CV_8UC3, 255);
   }
 
-  // For 3 or more channels, return an RGB image of the first, middle, and last
-  // channel. The middle channel is just the average index.
-  std::vector<cv::Mat> bgr_channels = {
-    channels_[0], channels_[num_channels / 2], channels_[num_channels - 1]
-  };
-  cv::merge(bgr_channels, visualization_image);
   return visualization_image;
 }
 

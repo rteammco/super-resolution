@@ -16,20 +16,9 @@ DownsamplingModule::DownsamplingModule(const double scale) : scale_(scale) {
 void DownsamplingModule::ApplyToImage(
     ImageData* image_data, const int index) const {
 
-  const double scale_ratio = 1.0 / scale_;
-  const int num_image_channels = image_data->GetNumChannels();
-  for (int i = 0; i < num_image_channels; ++i) {
-    cv::Mat channel_image = image_data->GetChannelImage(i);
-    cv::Mat scaled_image;
-    cv::resize(
-        channel_image,     // Source image.
-        scaled_image,      // Dest image (overwrite the old image).
-        cv::Size(0, 0),    // Size is set to 0, so it will use the ratio.
-        scale_ratio,       // Scaling ratio in the x asix (0 < r <= 1).
-        scale_ratio,       // Scaling ratio in the y axis.
-        cv::INTER_AREA);   // Area method aliases images by dropping pixels.
-    image_data->ReplaceChannel(scaled_image, i);
-  }
+  const double scale_factor = 1.0 / scale_;
+  // Area interpolation method aliases images by dropping pixels.
+  image_data->ResizeImage(scale_factor, cv::INTER_AREA);
 }
 
 }  // namespace super_resolution

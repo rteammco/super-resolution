@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "opencv2/core/core.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 namespace super_resolution {
 
@@ -31,11 +32,12 @@ class ImageData {
   // added channel must have the same dimensions as the rest of the image.
   void AddChannel(const cv::Mat& channel_image);
 
-  // Replaces a channel image with the given image. In most cases it is
-  // possible to modify the cv::Mat directly (e.g. to blur it), but if the
-  // image is resized a new matrix must be added to replace it. Error if the
-  // given index is out of bounds.
-  void ReplaceChannel(const cv::Mat& channel_image, const int index);
+  // Resizes this image by the given scale factor. The scale factor must be
+  // larger than 0. All channels will be resized equally. Any new channels
+  // added to this image must be the same size as the rescaled image size.
+  void ResizeImage(
+      const double scale_factor,
+      const int interpolation_method = cv::INTER_AREA);
 
   // Returns the total number of channels (bands) in this image. Note that this
   // value may be 0.
@@ -76,6 +78,9 @@ class ImageData {
   // If the data is already monochrome or RGB, this will just return the image
   // in its original cv::Mat form. This can be used for storing or displaying
   // the data in native image form.
+  //
+  // The visualization image will be re-scaled to standard pixel values of 0 to
+  // 255.
   cv::Mat GetVisualizationImage() const;
 
   // Returns the OpenCV type for the image (e.g. CV_64FC1). All channels stored

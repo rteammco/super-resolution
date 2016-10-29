@@ -18,19 +18,18 @@ AdditiveNoiseModule::AdditiveNoiseModule(const double sigma) : sigma_(sigma) {
 void AdditiveNoiseModule::ApplyToImage(
     ImageData* image_data, const int index) const {
 
+  // The image pixels are scaled between 0 and 1, so scale the sigma also.
+  const double scaled_sigma = double(sigma_) / 255.0;
+
   // Add noise separately to each channel.
   const cv::Size image_size = image_data->GetImageSize();
   const int image_type = image_data->GetOpenCvImageType();
   const int num_image_channels = image_data->GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
-    cv::Mat noise = cv::Mat(image_size, CV_16SC1);
-    cv::randn(noise, 0, sigma_);
-
-    cv::Mat noisy_image;
+    cv::Mat noise = cv::Mat(image_size, CV_64FC1);
+    cv::randn(noise, 0, scaled_sigma);
     cv::Mat channel_image = image_data->GetChannelImage(i);
-    channel_image.convertTo(noisy_image, CV_16SC1);
-    noisy_image += noise;
-    noisy_image.convertTo(channel_image, image_type);
+    channel_image += noise;
   }
 }
 
