@@ -6,6 +6,7 @@
 #ifndef SRC_IMAGE_IMAGE_DATA_H_
 #define SRC_IMAGE_IMAGE_DATA_H_
 
+#include <utility>
 #include <vector>
 
 #include "opencv2/core/core.hpp"
@@ -90,6 +91,15 @@ class ImageData {
   int GetOpenCvImageType() const;
 
  private:
+  // Returns a 2D pixel coordinate given the pixel index. This is used for
+  // consistent indexing given a particular image size. The index range should
+  // be (0 <= index < image_width * image_height) and will be verified.
+  //
+  // Pixels are accessed row-by-row: all pixels in the first row of the image,
+  // followed by all pixels in the second row, etc. The returned coordinates
+  // are (row, col).
+  std::pair<int, int> GetPixelCoordinatesFromIndex(const int index) const;
+
   // The size of the image (width and height) is set when the first channel is
   // added. The size is guaranteed to be consistent between all channels in the
   // image. Empty images have a size of (0, 0).

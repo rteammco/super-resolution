@@ -1,5 +1,6 @@
 #include "image/image_data.h"
 
+#include <utility>
 #include <vector>
 
 #include "opencv2/core/core.hpp"
@@ -36,8 +37,7 @@ ImageData::ImageData(const cv::Mat& image) {
     // TODO: this only works if the given pixel values are 0 to 255.
     channels_[i].convertTo(channels_[i], kOpenCvImageType, 1.0 / 255.0);
   }
-}
-
+} 
 void ImageData::AddChannel(const cv::Mat& channel_image) {
   if (channels_.empty()) {
     image_size_ = channel_image.size();
@@ -138,6 +138,17 @@ cv::Mat ImageData::GetVisualizationImage() const {
 
 int ImageData::GetOpenCvImageType() const {
   return kOpenCvImageType;
+}
+
+std::pair<int, int> ImageData::GetPixelCoordinatesFromIndex(
+    const int index) const {
+
+  CHECK_GE(index, 0) << "Pixel index must be at least 0.";
+  CHECK_LT(index, GetNumPixels()) << "Pixel index was out of bounds.";
+
+  const int row = index / image_size_.width;
+  const int col = index % image_size_.width;
+  return std::make_pair(row, col);
 }
 
 }  // namespace super_resolution
