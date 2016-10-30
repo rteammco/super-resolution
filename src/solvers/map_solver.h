@@ -9,7 +9,7 @@ namespace super_resolution {
 class MapSolver : public Solver {
  public:
   // Solves the problem using the MAP (maximum a posteriori) formulation.
-  virtual ImageData Solve() const;
+  virtual ImageData Solve(const ImageData& initial_estimate) const;
 };
 
 }  // namespace super_resolution

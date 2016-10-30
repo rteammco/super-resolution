@@ -32,9 +32,16 @@ class ImageData {
   // added channel must have the same dimensions as the rest of the image.
   void AddChannel(const cv::Mat& channel_image);
 
-  // Resizes this image by the given scale factor. The scale factor must be
-  // larger than 0. All channels will be resized equally. Any new channels
-  // added to this image must be the same size as the rescaled image size.
+  // Resizes this image to the given Size. The given Size must be valid (i.e.
+  // positive values for width and height). All channels will be resized
+  // equally. Any new channels added to this image must be the same size as the
+  // rescaled image size. Empty images cannot be resized.
+  void ResizeImage(
+      const cv::Size& new_size,
+      const int interpolation_method = cv::INTER_AREA);
+
+  // Resizes this image by the given scale factor, in the same manner as
+  // ResizeImage(size). The given scale factor must be larger than 0.
   void ResizeImage(
       const double scale_factor,
       const int interpolation_method = cv::INTER_AREA);

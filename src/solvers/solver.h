@@ -20,8 +20,9 @@ class Solver {
     : image_model_(image_model), low_res_images_(low_res_images) {}
 
   // Solves the super-resolution optimization and returns the super-resolved
-  // image. This must be implemented by the specific solver module.
-  virtual ImageData Solve() const = 0;
+  // image. The given initial estimate is used as a starting point for
+  // iterative methods.
+  virtual ImageData Solve(const ImageData& initial_estimate) const = 0;
 
  protected:
   const ImageModel& image_model_;

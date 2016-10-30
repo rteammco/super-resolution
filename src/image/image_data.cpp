@@ -54,14 +54,12 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
 }
 
 void ImageData::ResizeImage(
-    const double scale_factor, const int interpolation_method) {
+    const cv::Size& new_size, const int interpolation_method) {
 
-  CHECK_GT(scale_factor, 0) << "Scale factor must be larger than 0.";
-
-  // Update the size. If image was empty, the size was 0 and won't change. For
-  // consistency, this size will be used to rescale all the channel images.
-  image_size_.width *= scale_factor;
-  image_size_.height *= scale_factor;
+  // Undefined behavior if image is empty.
+  CHECK(!channels_.empty()) << "Cannot resize an empty image.";
+  CHECK_GT(new_size.width, 0) << "Images must have a positive width.";
+  CHECK_GT(new_size.height, 0) << "Images must have a positive height.";
 
   const int num_image_channels = channels_.size();
   for (int i = 0; i < num_image_channels; ++i) {
@@ -69,12 +67,25 @@ void ImageData::ResizeImage(
     cv::resize(
         channels_[i],   // Source image.
         scaled_image,   // Dest image.
-        image_size_,    // Desired image size.
+        new_size,       // Desired image size.
         0,              // Set x, y scale to 0 to use the given Size instead.
         0,
         interpolation_method);
     channels_[i] = scaled_image;
   }
+  image_size_ = new_size;
+}
+
+void ImageData::ResizeImage(
+    const double scale_factor, const int interpolation_method) {
+
+  // Undefined behavior if image is empty.
+  CHECK(!channels_.empty()) << "Cannot resize an empty image.";
+  CHECK_GT(scale_factor, 0) << "Scale factor must be larger than 0.";
+  cv::Size new_size(
+      static_cast<int>(image_size_.width * scale_factor),
+      static_cast<int>(image_size_.height * scale_factor));
+  ResizeImage(new_size, interpolation_method);
 }
 
 int ImageData::GetNumPixels() const {

@@ -6,20 +6,36 @@
 #include "image/image_data.h"
 #include "solvers/map_cost_function.h"
 
+#include "opencv2/core/core.hpp"
+
 #include "ceres/ceres.h"
 
 namespace super_resolution {
 
-ImageData MapSolver::Solve() const {
-  CHECK(low_res_images_.size() > 0) << "Cannot solve with 0 images.";
+ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
+  const int num_observations = low_res_images_.size();
+  CHECK(num_observations > 0) << "Cannot solve with 0 low-res images.";
 
-  // Scale up the LR images so we can compare them to the HR estimate.
-  // TODO: implement.
-  // TODO: get the scale (as parameter? or from model...?).
+  ImageData estimated_image = initial_estimate;
+  const cv::Size image_size = initial_estimate.GetImageSize();
 
-  // 1. Compute an initial HR image estimate.
-  // TODO: get an initial estimate.
-  ImageData estimated_image;
+  // Upsample all of the observed low-resolution images to the size of the
+  // high-resolution image so we can compare pixels directly.
+  std::vector<ImageData> observations;
+  for (const ImageData& low_res_image : low_res_images_) {
+    ImageData observation = low_res_image;
+    observation.ResizeImage(image_size, cv::INTER_AREA);
+    observations.push_back(observation);
+  }
+
+  // (r)3. Initialize w_i = 1.
+
+  // 4. Iterate:
+  //    a. set est. ^Y_k = image_model_.ApplyModel(X) in low_res_predictions
+  //    (r)b. compute regularization at every pixel in estimated X
+  //    c. run data term LS between every pixel i of Y_k(i) and X(i)
+  //    (r)d. set regularization residuals for every X(i) using w_i.
+  //    (r)e. update weights w_i
 
   // 2. For each frame, apply the image model and naively scale it up to the
   // size of the HR image.
