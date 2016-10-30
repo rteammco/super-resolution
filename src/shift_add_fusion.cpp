@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
   // to be inpainted after fusion.
   cv::Mat inpaint_mask = cv::Mat::ones(fused_width, fused_height, CV_8UC1);
 
-  // TODO(richard): Eventually estimate the motion automatically.
+  // TODO: Eventually estimate the motion automatically.
   super_resolution::MotionShiftSequence motion_shift_sequence;
   motion_shift_sequence.LoadSequenceFromFile(FLAGS_input_motion_sequence);
 

@@ -16,7 +16,7 @@ void SuperResolver::SuperResolve() {
   cv::Ptr<cv::superres::SuperResolution> super_resolution =
       cv::superres::createSuperResolution_BTVL1();
 
-  // TODO(richard): OpenCV has several optical flow options:
+  // TODO: OpenCV has several optical flow options:
   //  Farneback
   //  Simple
   //  DualTVL1
@@ -29,7 +29,7 @@ void SuperResolver::SuperResolve() {
   super_resolution->setScale(options_.scale);
   super_resolution->setIterations(options_.num_iterations);
   super_resolution->setTemporalAreaRadius(options_.temporal_radius);
-  // TODO(richard): All settings for the super resolution algorithm:
+  // TODO: All settings for the super resolution algorithm:
   // double tau - Asymptotic value of steepest descent method.
   // double lambda - Weight parameter to balance data term and smoothness term.
   // double alpha - Parameter of spacial distribution in Bilateral-TV.

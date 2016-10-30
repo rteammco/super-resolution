@@ -16,7 +16,7 @@ void InitApp(int argc, char** argv, const std::string& usage_message) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  // TODO(richard): remove this or put it under a debug guard.
+  // TODO: remove this or put it under a debug guard.
   FLAGS_logtostderr = true;
 }
 

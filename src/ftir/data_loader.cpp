@@ -12,12 +12,12 @@
 namespace super_resolution {
 namespace ftir {
 
-// TODO(richard): Pass the image size in as a parameter?
+// TODO: Pass the image size in as a parameter?
 constexpr int kFtirImageSize = 128;
 constexpr char kDataDelimiter = ',';
 
-// TODO(richard): Currently, this only loads a single FT-IR image from text
-// format exported from Matlab using dlmwrite.
+// TODO: Currently, this only loads a single FT-IR image from text format
+// exported from Matlab using dlmwrite.
 DataLoader::DataLoader(const std::string& file_path) {
   // Sanity check the constants, just in case they get changed.
   CHECK_GT(kFtirImageSize, 0);
