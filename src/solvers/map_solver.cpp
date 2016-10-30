@@ -12,6 +12,19 @@
 
 namespace super_resolution {
 
+// TODO: comments.
+class ImageProcessingCallback : public ceres::IterationCallback {
+ public:
+  ceres::CallbackReturnType operator() (
+      const ceres::IterationSummary& summary) {
+
+    // TODO: Estimate ^Y_k = image_model.ApplyModel(X) for each k for the next
+    // iteration.
+
+    return ceres::SOLVER_CONTINUE;
+  }
+};
+
 ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const int num_observations = low_res_images_.size();
   CHECK(num_observations > 0) << "Cannot solve with 0 low-res images.";
@@ -28,14 +41,18 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
     observations.push_back(observation);
   }
 
-  // (r)3. Initialize w_i = 1.
+  // 3. (r) Initialize w_i = 1.
 
   // 4. Iterate:
   //    a. set est. ^Y_k = image_model_.ApplyModel(X) in low_res_predictions
-  //    (r)b. compute regularization at every pixel in estimated X
-  //    c. run data term LS between every pixel i of Y_k(i) and X(i)
-  //    (r)d. set regularization residuals for every X(i) using w_i.
-  //    (r)e. update weights w_i
+  //    b. run data term LS between every pixel i of Y_k(i) and X(i)
+  //    c. (r) compute regularization at every pixel in estimated X
+  //        THIS NEEDS TO BE DONE right after data fidelity estimate is
+  //        computed because the regularization is applied to those changes.
+  //        Right when regularization is computed, simultaneously compute the
+  //        weight w_i.
+  //        >>> It might be worth doing this in the regularization cost
+  //            function directly.
 
   // 2. For each frame, apply the image model and naively scale it up to the
   // size of the HR image.
