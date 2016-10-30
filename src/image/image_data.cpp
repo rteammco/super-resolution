@@ -20,8 +20,6 @@ ImageData::ImageData() {
 
 // Copy constructor.
 ImageData::ImageData(const ImageData& other) : image_size_(other.image_size_) {
-  // TODO: remove after verifying that this is indeed size 0 on copy.
-  CHECK(channels_.empty());
   for (const cv::Mat& channel_image : other.channels_) {
     channels_.push_back(channel_image.clone());
   }
@@ -50,9 +48,8 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
   }
 
   // TODO: this only works if the given pixel values are 0 to 255.
-  // TODO: make sure that this is making a copy of the image.
-  cv::Mat converted_image;
-  channel_image.convertTo(converted_image, kOpenCvImageType, 1.0 / 255.0);
+  cv::Mat converted_image = channel_image.clone();
+  converted_image.convertTo(converted_image, kOpenCvImageType, 1.0 / 255.0);
   channels_.push_back(converted_image);
 }
 

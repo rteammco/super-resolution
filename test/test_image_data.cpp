@@ -1,3 +1,5 @@
+#include <limits>
+
 #include "image/image_data.h"
 
 #include "opencv2/core/core.hpp"
@@ -6,8 +8,6 @@
 #include "gmock/gmock.h"
 
 using super_resolution::ImageData;
-
-using testing::DoubleEq;
 
 constexpr double kPixelErrorTolerance = 1.0 / 255.0;
 
@@ -32,6 +32,7 @@ TEST(ImageData, AddAndAccessImageData) {
       << 0.1,  0.2,  0.3,  0.4,  0.5,
          0.15, 0.25, 0.35, 0.45, 0.55,
          0.6,  0.65, 0.7,  0.75, 0.8);
+  cv::Mat channel_0_original_clone = channel_0.clone();
   cv::Mat channel_0_converted;
   channel_0.convertTo(channel_0_converted, CV_8UC1, 255);
   image_data.AddChannel(channel_0_converted);
@@ -54,8 +55,7 @@ TEST(ImageData, AddAndAccessImageData) {
           returned_channel_0.at<double>(row, col),
           channel_0.at<double>(row, col),
           kPixelErrorTolerance);
-    }
-  }
+    } }
 
   // Check data pointer access.
   double* pixel_ptr = image_data.GetMutableDataPointer(0, 0);
@@ -90,8 +90,18 @@ TEST(ImageData, AddAndAccessImageData) {
     }
   }
 
-  // TODO: check that the channel got inserted as a copy and that the original
-  // image was not actually modified.
+  // Check that the image channel_0_converted which got inserted as a channel
+  // got inserted as a copy and that the original image was not actually
+  // modified.
+  cv::Mat channel_0_clone_converted;
+  channel_0_original_clone.convertTo(channel_0_clone_converted, CV_8UC1, 255);
+  for (int row = 0; row < num_test_rows; ++row) {
+    for (int col = 0; col < num_test_cols; ++col) {
+      EXPECT_EQ(
+          channel_0_converted.at<uchar>(row, col),
+          channel_0_clone_converted.at<uchar>(row, col));
+    }
+  }
 
   /* Verify behavior with multiple channels. */
 
@@ -119,8 +129,37 @@ TEST(ImageData, AddAndAccessImageData) {
 
 // This test verifies that the copy constructor works as expected.
 TEST(ImageData, CopyConstructor) {
-  // TODO: implement.
-  // ImageData(const ImageData& other)
+  // Create an ImageData object with 10 channels.
+  ImageData image_data;
+  for (int i = 0; i < 10; ++i) {
+    cv::Mat next_channel(25, 25, CV_8UC1);
+    next_channel = cv::Scalar(5 * i);  // single intensity is 5 * i
+    image_data.AddChannel(next_channel);
+  }
+
+  // Run some standard checks.
+  EXPECT_EQ(image_data.GetNumChannels(), 10);
+  EXPECT_EQ(image_data.GetImageSize(), cv::Size(25, 25));
+  EXPECT_EQ(image_data.GetNumPixels(), 25 * 25);
+
+  // Copy the ImageData and verify that the new object matches the old object.
+  ImageData image_data2 = image_data;
+  EXPECT_EQ(image_data2.GetNumChannels(), 10);
+  EXPECT_EQ(image_data2.GetImageSize(), cv::Size(25, 25));
+  EXPECT_EQ(image_data2.GetNumPixels(), 25 * 25);
+
+  for (int channel_index = 0; channel_index < 10; ++channel_index) {
+    for (int pixel_index = 0; pixel_index < 25 * 25; ++pixel_index) {
+      EXPECT_NEAR(
+          image_data.GetPixelValue(channel_index, pixel_index),
+          image_data2.GetPixelValue(channel_index, pixel_index),
+          std::numeric_limits<double>::epsilon());
+    }
+  }
+
+  // Check that the new ImageData is a clone, and changing the data will not
+  // affect the old ImageData object.
+  // TODO: do this.
 }
 
 // This test verifies that the constructor which takes an OpenCV image as input
