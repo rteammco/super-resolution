@@ -47,10 +47,6 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
         << "Channel size did not match the expected size: "
         << channels_[0].size() << " size expected, "
         << channel_image.size() << " size given.";
-    CHECK(channel_image.type() == channels_[0].type())
-        << "Channel type did not match the expected type: "
-        << channels_[0].type() << " type expected, "
-        << channel_image.type() << " type given.";
   }
 
   // TODO: this only works if the given pixel values are 0 to 255.
