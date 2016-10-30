@@ -89,25 +89,33 @@ int ImageData::GetNumPixels() const {
 }
 
 cv::Mat ImageData::GetChannelImage(const int index) const {
-  CHECK_GE(index, 0) << "Minimum channel index is 0.";
-  CHECK_LT(index, channels_.size())
-      << "Index out of bounds: there are only "
-      << channels_.size() << " image channels.";
+  CHECK_GE(index, 0) << "Channel index must be at least 0.";
+  CHECK_LT(index, channels_.size()) << "Channel index out of bounds.";
   return channels_[index];
 }
 
 double ImageData::GetPixelValue(
     const int channel_index, const int pixel_index) const {
 
-  // TODO: implement and check index ranges.
-  return 0.0;
+  CHECK_GE(channel_index, 0) << "Channel index must be at least 0.";
+  CHECK_LT(channel_index, channels_.size()) << "Channel index out of bounds.";
+
+  const std::pair<int, int> image_coordinates =
+      GetPixelCoordinatesFromIndex(pixel_index);  // Checks pixel index range.
+  return channels_[channel_index].at<double>(
+      image_coordinates.first, image_coordinates.second);
 }
 
 double* ImageData::GetMutableDataPointer(
     const int channel_index, const int pixel_index) const {
 
-  // TODO: implement and check index ranges.
-  return nullptr;
+  CHECK_GE(channel_index, 0) << "Channel index must be at least 0.";
+  CHECK_LT(channel_index, channels_.size()) << "Channel index out of bounds.";
+  CHECK_GE(pixel_index, 0) << "Pixel index must be at least 0.";
+  CHECK_LT(pixel_index, GetNumPixels()) << "Pixel index was out of bounds.";
+
+  double* pixel_data = (double*)(channels_[channel_index].data);
+  return pixel_data + pixel_index;
 }
 
 cv::Mat ImageData::GetVisualizationImage() const {
