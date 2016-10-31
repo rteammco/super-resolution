@@ -35,7 +35,8 @@ ImageData::ImageData(const cv::Mat& image) {
     // TODO: this only works if the given pixel values are 0 to 255.
     channels_[i].convertTo(channels_[i], kOpenCvImageType, 1.0 / 255.0);
   }
-} 
+}
+
 void ImageData::AddChannel(const cv::Mat& channel_image) {
   if (channels_.empty()) {
     image_size_ = channel_image.size();
@@ -118,7 +119,9 @@ double* ImageData::GetMutableDataPointer(
   CHECK_GE(pixel_index, 0) << "Pixel index must be at least 0.";
   CHECK_LT(pixel_index, GetNumPixels()) << "Pixel index was out of bounds.";
 
-  double* pixel_data = (double*)(channels_[channel_index].data);
+  // TODO: verify that this is the correct approach of getting the data array.
+  // static_cast doesn't work here because the data is apparently uchar*.
+  double* pixel_data = (double*)(channels_[channel_index].data);  // NOLINT
   return pixel_data + pixel_index;
 }
 

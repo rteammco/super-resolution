@@ -56,7 +56,6 @@ class ApplyModelCallback : public ceres::IterationCallback {
   // the next iteration.
   ceres::CallbackReturnType operator() (
       const ceres::IterationSummary& summary) {
-
     GetObservationEstimates(
         *estimated_image_,
         image_model_,
