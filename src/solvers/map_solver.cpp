@@ -146,6 +146,8 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   // Set the solver options. TODO: figure out what these should be.
   ceres::Solver::Options options;
   // options.linear_solver_type = ceres::DENSE_SCHUR;
+  // Always update parameters because we need to compute the new LR estimates.
+  options.update_state_every_iteration = true;
   options.minimizer_progress_to_stdout = true;
 
   // Solve.
