@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/psf_blur_module.h"
@@ -25,12 +27,20 @@ bool AreMatricesEqual(const cv::Mat& mat1, const cv::Mat& mat2) {
   if (mat1.cols != mat2.cols ||
       mat1.rows != mat2.rows ||
       mat1.dims != mat2.dims) {
+    std::cout << "Matrices have different dimensions: "
+              << mat1.size() << " vs. " << mat2.size() << std::endl;
     return false;
   }
 
   cv::Mat diff;
   cv::compare(mat1, mat2, diff, cv::CMP_NE);
-  return cv::countNonZero(diff) == 0;
+  const bool are_equal = (cv::countNonZero(diff) == 0);
+  if (!are_equal) {
+    std::cout << "Note: matrices are NOT equal:" << std::endl
+              << mat1 << std::endl << "--- vs. ---" << std::endl
+              << mat2 << std::endl;
+  }
+  return are_equal;
 }
 
 // Tests the static function(s) in DegradationOperator.
