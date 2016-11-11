@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/psf_blur_module.h"
@@ -44,51 +42,27 @@ TEST(ImageModel, DegradationOperator) {
   const cv::Mat test_image = (cv::Mat_<double>(2, 3)
       << 1, 3, 5,
          9, 5, 2);
-  return;  // TODO: test fails and segfault, needs to be fixed below.
   const cv::Mat operator_matrix =
       super_resolution::DegradationOperator::ConvertKernelToOperatorMatrix(
           kernel, test_image.size());
-  std::cout << operator_matrix << std::endl;
-  std::cout << operator_matrix.size() << std::endl;
 
+  // Make sure we get the correct kernel.
   const cv::Mat expected_matrix = (cv::Mat_<double>(6, 6)
-//    << 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//       -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//       0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//       0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//       0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//       0, 0, 0, 0, -2, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//       0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//       -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//       0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-//       0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-//       0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0,
-//       0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0,
-//       0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-//       0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0, 0,
-//       0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0, 0,
-//       0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1, 0,
-//       0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0, -1, 0, 1,
-//       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -2, 0, 0, 0, 0, 0, -1, 0,
-//       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
-//       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0, 0,
-//       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0, 0,
-//       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2, 0,
-//       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2, 0, 2,
-//       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, -2, 0);
       << 0,  2,  0,  0,  1,  0,
          -2, 0,  2,  -1, 0,  1,
          0,  -2, 0,  0,  -1, 0,
          0,  1,  0,  0,  2,  0,
          -1, 0,  1,  -2, 0,  2,
          0,  -1, 0,  0,  -2, 0);
-
   EXPECT_TRUE(AreMatricesEqual(operator_matrix, expected_matrix));
-  /*
-  Convolved image:
-  [[ 11   1 -11]
-   [ 13 -10 -13]]
-  */
+
+  // Now make sure that we get the correct image after multiplication.
+  const cv::Mat test_image_vector = test_image.reshape(1, 6);
+  const cv::Mat expected_result = (cv::Mat_<double>(6, 1)
+    << 11, 1,   -11,
+       13, -10, -13);
+  EXPECT_TRUE(AreMatricesEqual(
+      operator_matrix * test_image_vector, expected_result));
 }
 
 TEST(ImageModel, AdditiveNoiseModule) {
@@ -126,7 +100,7 @@ TEST(ImageModel, MotionModule) {
 
 TEST(ImageModel, PsfBlurModule) {
   super_resolution::PsfBlurModule blur_module(3, 1);
-  blur_module.GetOperatorMatrix(kSmallTestImageSize, 0);
+  // blur_module.GetOperatorMatrix(kSmallTestImageSize, 0);
   // TODO: implement
 }
 

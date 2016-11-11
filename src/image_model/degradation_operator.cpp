@@ -47,9 +47,9 @@ cv::Mat DegradationOperator::ConvertKernelToOperatorMatrix(
           const int image_index = image_row * image_size.width + image_col;
           operator_matrix.at<double>(next_row, image_index) =
               kernel.at<double>(kernel_row, kernel_col);
-          next_row++;
         }
       }
+      next_row++;
     }
   }
   return operator_matrix;
