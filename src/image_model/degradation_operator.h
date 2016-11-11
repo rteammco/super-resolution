@@ -21,7 +21,7 @@ class DegradationOperator {
   //
   // This is a standard algorithm that can be used for any spatial filtering
   // kernel such as a Gaussian blur kernel.
-  static cv::Mat ConvertKernelToOperatorMatrix(
+  static cv::SparseMat ConvertKernelToOperatorMatrix(
       const cv::Mat& kernel, const cv::Size& image_size);
 
   // Apply this degradation operator to the given image. The index is passed in
@@ -37,7 +37,7 @@ class DegradationOperator {
   // This function is implemented, and by default returns a num_pixels by
   // num_pixels identity matrix (num_pixels is Size width * height), which will
   // not change the image vector.
-  virtual cv::Mat GetOperatorMatrix(
+  virtual cv::SparseMat GetOperatorMatrix(
       const cv::Size& image_size, const int index) const;
 };
 

@@ -25,11 +25,18 @@ void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
   int num_image_channels = image_data->GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
     cv::Mat channel_image = image_data->GetChannelImage(i);
-    cv::GaussianBlur(channel_image, channel_image, kernel_size, sigma_);
+    cv::filter2D(
+        channel_image,            // input image
+        channel_image,            // output image
+        -1,                       // depth of output (-1 = same as input)
+        blur_kernel_,             // the convolution kernel
+        cv::Point(-1, -1),        // anchor kernel at its center
+        0,                        // addition to all values (none)
+        cv::BORDER_REFLECT_101);  // border mode
   }
 }
 
-cv::Mat PsfBlurModule::GetOperatorMatrix(
+cv::SparseMat PsfBlurModule::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 
   return ConvertKernelToOperatorMatrix(blur_kernel_, image_size);

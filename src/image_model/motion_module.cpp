@@ -2,6 +2,7 @@
 
 #include "image/image_data.h"
 #include "motion/motion_shift.h"
+#include "util/util.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -22,6 +23,14 @@ void MotionModule::ApplyToImage(ImageData* image_data, const int index) const {
     cv::Mat channel_image = image_data->GetChannelImage(i);
     cv::warpAffine(channel_image, channel_image, shift_kernel, image_size);
   }
+}
+
+cv::Mat MotionModule::GetOperationMatrix(
+    const cv::Size& image_size, const int index) const {
+
+  // TODO: implement.
+  const int num_pixels = image_size.width * image_size.height;
+  return cv::Mat::zeros(num_pixels, num_pixels, util::kOpenCvMatrixType);
 }
 
 }  // namespace super_resolution

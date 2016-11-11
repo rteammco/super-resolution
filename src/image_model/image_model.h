@@ -48,7 +48,8 @@ class ImageModel {
   //
   // At least one DegradationOperator must be available, otherwise this will
   // cause a check fail.
-  cv::Mat GetModelMatrix(const cv::Size& image_size, const int index) const;
+  cv::SparseMat GetModelMatrix(
+      const cv::Size& image_size, const int index) const;
 
  private:
   // An ordered list of degradation operators, to be applied in this order. We

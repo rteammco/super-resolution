@@ -20,7 +20,7 @@ class PsfBlurModule : public DegradationOperator {
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
-  virtual cv::Mat GetOperatorMatrix(
+  virtual cv::SparseMat GetOperatorMatrix(
       const cv::Size& image_size, const int index) const;
 
  private:

@@ -26,19 +26,19 @@ ImageData ImageModel::ApplyModel(
   return degraded_image;
 }
 
-cv::Mat ImageModel::GetModelMatrix(
+cv::SparseMat ImageModel::GetModelMatrix(
     const cv::Size& image_size, const int index) const {
 
   const int num_operators = degradation_operators_.size();
   CHECK_GT(num_operators, 0)
       << "Cannot build a model matrix with no degradation operators.";
 
-  cv::Mat model_matrix =
+  cv::SparseMat model_matrix =
       degradation_operators_[0]->GetOperatorMatrix(image_size, index);
   for (int i = 1; i < num_operators; ++i) {
-    const cv::Mat next_matrix =
+    const cv::SparseMat next_matrix =
         degradation_operators_[i]->GetOperatorMatrix(image_size, index);
-    model_matrix = next_matrix * model_matrix;
+    //model_matrix = next_matrix * model_matrix; // TODO: need multiplication
   }
   return model_matrix;
 }

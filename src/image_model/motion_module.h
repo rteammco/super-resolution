@@ -8,6 +8,8 @@
 #include "image_model/degradation_operator.h"
 #include "motion/motion_shift.h"
 
+#include "opencv2/core/core.hpp"
+
 namespace super_resolution {
 
 class MotionModule : public DegradationOperator {
@@ -18,6 +20,9 @@ class MotionModule : public DegradationOperator {
       : motion_shift_sequence_(motion_shift_sequence) {}
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
+
+  virtual cv::Mat GetOperationMatrix(
+      const cv::Size& image_size, const int index) const;
 
  private:
   const MotionShiftSequence& motion_shift_sequence_;

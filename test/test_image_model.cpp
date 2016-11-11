@@ -5,6 +5,7 @@
 #include "image_model/psf_blur_module.h"
 
 #include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -52,9 +53,11 @@ TEST(ImageModel, DegradationOperator) {
   const cv::Mat test_image = (cv::Mat_<double>(2, 3)
       << 1, 3, 5,
          9, 5, 2);
-  const cv::Mat operator_matrix =
+  const cv::SparseMat sparse_operator_matrix =
       super_resolution::DegradationOperator::ConvertKernelToOperatorMatrix(
           kernel, test_image.size());
+  cv::Mat operator_matrix;
+  sparse_operator_matrix.copyTo(operator_matrix);
 
   // Make sure we get the correct kernel.
   const cv::Mat expected_matrix = (cv::Mat_<double>(6, 6)
@@ -81,8 +84,10 @@ TEST(ImageModel, AdditiveNoiseModule) {
 
 TEST(ImageModel, DownsamplingModule) {
   super_resolution::DownsamplingModule downsampling_module(2);
-  const cv::Mat downsampling_matrix =
+  const cv::SparseMat sparse_downsampling_matrix =
       downsampling_module.GetOperatorMatrix(kSmallTestImageSize, 0);
+  cv::Mat downsampling_matrix;
+  sparse_downsampling_matrix.copyTo(downsampling_matrix);
 
   // 24 pixels in high-res input, 6 (= 24 / 2*2) pixels in downsampled output.
   const cv::Mat expected_matrix = (cv::Mat_<double>(6, 24) <<
@@ -96,12 +101,12 @@ TEST(ImageModel, DownsamplingModule) {
   EXPECT_TRUE(AreMatricesEqual(downsampling_matrix, expected_matrix));
 
   // Vectorize the test image and compare to the expected outcome.
-  const cv::Mat test_image = kSmallTestImage.reshape(1, 24);
-  const cv::Mat expected_downsampled_image = (cv::Mat_<double>(6, 1)
+  const cv::Mat test_image_vector = kSmallTestImage.reshape(1, 24);
+  const cv::Mat expected_downsampled_vector = (cv::Mat_<double>(6, 1)
       << 1, 3, 5,
          9, 5, 2);
   EXPECT_TRUE(AreMatricesEqual(
-      downsampling_matrix * test_image, expected_downsampled_image));
+      downsampling_matrix * test_image_vector, expected_downsampled_vector));
 }
 
 TEST(ImageModel, MotionModule) {
@@ -109,9 +114,38 @@ TEST(ImageModel, MotionModule) {
 }
 
 TEST(ImageModel, PsfBlurModule) {
-  super_resolution::PsfBlurModule blur_module(3, 1);
-  // blur_module.GetOperatorMatrix(kSmallTestImageSize, 0);
-  // TODO: implement
+//  super_resolution::PsfBlurModule blur_module(3, 1);
+//  const cv::Mat blur_matrix =
+//      blur_module.GetOperatorMatrix(kSmallTestImageSize, 0);
+//
+//  super_resolution::ImageData image_data(kSmallTestImage);
+//  const cv::Mat normalized_test_image = image_data.GetChannelImage(0).clone();
+//  blur_module.ApplyToImage(&image_data, 0);
+//  const cv::Mat expected_blurred_image = image_data.GetChannelImage(0);
+//  const cv::Mat expected_vector = expected_blurred_image.reshape(1, 24);
+//
+//  const cv::Mat test_image_vector = normalized_test_image.reshape(1, 24);
+//  EXPECT_TRUE(AreMatricesEqual(
+//      blur_matrix * test_image_vector, expected_vector));
+
+  // TODO: remove
+//  std::cout << "about to load" << std::endl;
+//  const cv::Mat image = cv::imread("../data/ostrich.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+//  std::cout << "loaded" << std::endl;
+//  super_resolution::PsfBlurModule blur_module(25, 10);
+//  const cv::SparseMat blur_matrix =
+//      blur_module.GetOperatorMatrix(image.size(), 0);
+//  std::cout << "got kernel" << std::endl;
+//
+//  super_resolution::ImageData image_data(image);
+//  cv::Mat normalized_image = image_data.GetChannelImage(0);
+//  const cv::Size image_size = image.size();
+//  const int npixels = image_size.width * image_size.height;
+//  normalized_image = normalized_image.reshape(1, npixels);
+//  cv::Mat blurred_image = blur_matrix * normalized_image;
+//  blurred_image = blurred_image.reshape(1, image_size.height);
+//  cv::imshow("test", blurred_image);
+//  cv::waitKey(0);
 }
 
 TEST(ImageModel, TestGetOperatorMatrix) {
