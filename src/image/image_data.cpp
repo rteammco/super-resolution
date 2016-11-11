@@ -3,15 +3,13 @@
 #include <utility>
 #include <vector>
 
+#include "util/util.h"
+
 #include "opencv2/core/core.hpp"
 
 #include "glog/logging.h"
 
 namespace super_resolution {
-
-// The type used for all OpenCV images stored in this object. Any images given
-// in another format will be converted to this type.
-constexpr int kOpenCvImageType = CV_64FC1;
 
 // Default constructor.
 ImageData::ImageData() {
@@ -33,7 +31,7 @@ ImageData::ImageData(const cv::Mat& image) {
   // Make sure the channels are all scaled between 0 and 1.
   for (int i = 0; i < channels_.size(); ++i) {
     // TODO: this only works if the given pixel values are 0 to 255.
-    channels_[i].convertTo(channels_[i], kOpenCvImageType, 1.0 / 255.0);
+    channels_[i].convertTo(channels_[i], util::kOpenCvMatrixType, 1.0 / 255.0);
   }
 }
 
@@ -50,7 +48,8 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
 
   // TODO: this only works if the given pixel values are 0 to 255.
   cv::Mat converted_image = channel_image.clone();
-  converted_image.convertTo(converted_image, kOpenCvImageType, 1.0 / 255.0);
+  converted_image.convertTo(
+      converted_image, util::kOpenCvMatrixType, 1.0 / 255.0);
   channels_.push_back(converted_image);
 }
 
@@ -149,10 +148,6 @@ cv::Mat ImageData::GetVisualizationImage() const {
   }
 
   return visualization_image;
-}
-
-int ImageData::GetOpenCvImageType() const {
-  return kOpenCvImageType;
 }
 
 std::pair<int, int> ImageData::GetPixelCoordinatesFromIndex(

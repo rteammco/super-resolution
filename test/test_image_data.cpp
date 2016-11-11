@@ -122,9 +122,6 @@ TEST(ImageData, AddAndAccessImageData) {
   // TODO: check that we can access pixels in each channel.
   // TODO: check that we can access the data pointer in each channel.
   // TODO: check that we can manipulate the data pointer in each channel.
-
-  // Verify image type is consistent.
-  EXPECT_EQ(image_data.GetOpenCvImageType(), CV_64FC1);
 }
 
 // This test verifies that the copy constructor works as expected.

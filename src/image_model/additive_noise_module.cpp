@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "image/image_data.h"
+#include "util/util.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -23,10 +24,9 @@ void AdditiveNoiseModule::ApplyToImage(
 
   // Add noise separately to each channel.
   const cv::Size image_size = image_data->GetImageSize();
-  const int image_type = image_data->GetOpenCvImageType();
   const int num_image_channels = image_data->GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
-    cv::Mat noise = cv::Mat(image_size, CV_64FC1);
+    cv::Mat noise = cv::Mat(image_size, util::kOpenCvMatrixType);
     cv::randn(noise, 0, scaled_sigma);
     cv::Mat channel_image = image_data->GetChannelImage(i);
     channel_image += noise;

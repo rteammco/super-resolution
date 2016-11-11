@@ -1,6 +1,7 @@
 #include "image_model/downsampling_module.h"
 
 #include "image/image_data.h"
+#include "util/util.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -26,8 +27,8 @@ cv::Mat DownsamplingModule::GetOperatorMatrix(
 
   const int num_high_res_pixels = image_size.width * image_size.height;
   const int num_low_res_pixels = num_high_res_pixels / (scale_ * scale_);
-  cv::Mat downsampling_matrix =
-      cv::Mat::zeros(num_low_res_pixels, num_high_res_pixels, CV_64FC1);
+  cv::Mat downsampling_matrix = cv::Mat::zeros(
+      num_low_res_pixels, num_high_res_pixels, util::kOpenCvMatrixType);
   int next_row = 0;
   for (int row = 0; row < image_size.height; ++row) {
     if (row % scale_ != 0) {

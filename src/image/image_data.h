@@ -90,13 +90,6 @@ class ImageData {
   // 255.
   cv::Mat GetVisualizationImage() const;
 
-  // Returns the OpenCV type for the image (e.g. CV_64FC1). All channels stored
-  // in this ImageData object have the same image type.
-  //
-  // The type is an implementation detail and is defined in image_data.cpp.
-  // However, the pixel values are values between values of 0 and 1.
-  int GetOpenCvImageType() const;
-
  private:
   // Returns a 2D pixel coordinate given the pixel index. This is used for
   // consistent indexing given a particular image size. The index range should
