@@ -6,6 +6,8 @@
 #include "image/image_data.h"
 #include "image_model/degradation_operator.h"
 
+#include "glog/logging.h"
+
 namespace super_resolution {
 
 void ImageModel::AddDegradationOperator(
@@ -22,6 +24,23 @@ ImageData ImageModel::ApplyModel(
     degradation_operator->ApplyToImage(&degraded_image, index);
   }
   return degraded_image;
+}
+
+cv::Mat ImageModel::GetModelMatrix(
+    const int num_pixels, const int index) const {
+
+  const int num_operators = degradation_operators_.size();
+  CHECK_GT(num_operators, 0)
+      << "Cannot build a model matrix with no degradation operators.";
+
+  cv::Mat model_matrix =
+      degradation_operators_[0]->GetOperatorMatrix(num_pixels, index);
+  for (int i = 1; i < num_operators; ++i) {
+    const cv::Mat next_matrix =
+        degradation_operators_[i]->GetOperatorMatrix(num_pixels, index);
+    model_matrix = next_matrix * model_matrix;
+  }
+  return model_matrix;
 }
 
 }  // namespace super_resolution
