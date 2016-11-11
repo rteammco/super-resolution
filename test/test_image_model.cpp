@@ -1,13 +1,11 @@
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
+#include "image_model/psf_blur_module.h"
 
 #include "opencv2/core/core.hpp"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-
-using super_resolution::DownsamplingModule;
-using super_resolution::ImageModel;
 
 const cv::Mat kSmallTestImage = (cv::Mat_<double>(4, 6)
     << 1, 2, 3, 4, 5, 6,
@@ -40,7 +38,7 @@ TEST(ImageModel, AdditiveNoiseModule) {
 }
 
 TEST(ImageModel, DownsamplingModule) {
-  DownsamplingModule downsampling_module(2);  // 2x downsampling scale.
+  super_resolution::DownsamplingModule downsampling_module(2);
   const cv::Mat downsampling_matrix =
       downsampling_module.GetOperatorMatrix(kSmallTestImageSize, 0);
 
@@ -69,13 +67,11 @@ TEST(ImageModel, MotionModule) {
 }
 
 TEST(ImageModel, PsfBlurModule) {
+  super_resolution::PsfBlurModule blur_module(3, 1);
+  blur_module.GetOperatorMatrix(kSmallTestImageSize, 0);
   // TODO: implement
 }
 
 TEST(ImageModel, TestGetOperatorMatrix) {
-//  [[1, 2, 3, 4, 5, 6],
-//   [7, 8, 9, 0, 1, 2],
-//   [9, 7, 5, 4, 2, 1],
-//   [2, 4, 6, 8, 0, 1]])
   // TODO: implement
 }

@@ -16,6 +16,14 @@ namespace super_resolution {
 
 class DegradationOperator {
  public:
+  // Converts the given kernel to an operator matrix that can be applied to a
+  // vectorized version of an image of the given size.
+  //
+  // This is a standard algorithm that can be used for any spatial filtering
+  // kernel such as a Gaussian blur kernel.
+  static cv::Mat ConvertKernelToOperatorMatrix(
+      const cv::Mat& kernel, const cv::Size& image_size);
+
   // Apply this degradation operator to the given image. The index is passed in
   // for cases where the degradation is dependent on the specific frame (e.g.
   // in the case of motion).

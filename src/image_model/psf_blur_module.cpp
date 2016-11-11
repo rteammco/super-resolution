@@ -14,6 +14,10 @@ PsfBlurModule::PsfBlurModule(const int blur_radius, const double sigma)
   CHECK_GE(blur_radius_, 1);
   CHECK_GT(sigma_, 0.0);
   CHECK(blur_radius_ % 2 == 1) << "Blur radius must be an odd number.";
+
+  const cv::Mat kernel_x = cv::getGaussianKernel(blur_radius_, sigma_);
+  const cv::Mat kernel_y = cv::getGaussianKernel(blur_radius_, sigma_);
+  blur_kernel_ = kernel_x * kernel_y.t();
 }
 
 void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
@@ -23,6 +27,12 @@ void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
     cv::Mat channel_image = image_data->GetChannelImage(i);
     cv::GaussianBlur(channel_image, channel_image, kernel_size, sigma_);
   }
+}
+
+cv::Mat PsfBlurModule::GetOperatorMatrix(
+    const cv::Size& image_size, const int index) const {
+
+  return ConvertKernelToOperatorMatrix(blur_kernel_, image_size);
 }
 
 }  // namespace super_resolution

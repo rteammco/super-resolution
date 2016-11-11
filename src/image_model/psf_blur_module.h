@@ -7,6 +7,8 @@
 
 #include "image_model/degradation_operator.h"
 
+#include "opencv2/core/core.hpp"
+
 namespace super_resolution {
 
 class PsfBlurModule : public DegradationOperator {
@@ -18,9 +20,16 @@ class PsfBlurModule : public DegradationOperator {
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
+  virtual cv::Mat GetOperatorMatrix(
+      const cv::Size& image_size, const int index) const;
+
  private:
   const int blur_radius_;
   const double sigma_;
+
+  // This kernel is created in the constructor and is used for the blurring
+  // convolution and for getting the operator matrix.
+  cv::Mat blur_kernel_;
 };
 
 }  // namespace super_resolution
