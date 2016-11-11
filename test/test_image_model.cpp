@@ -9,9 +9,17 @@
 using super_resolution::DownsamplingModule;
 using super_resolution::ImageModel;
 
+const cv::Mat kSmallTestImage = (cv::Mat_<double>(4, 6)
+    << 1, 2, 3, 4, 5, 6,
+       7, 8, 9, 0, 1, 2,
+       9, 7, 5, 4, 2, 1,
+       2, 4, 6, 8, 0, 1);
+const cv::Size kSmallTestImageSize = cv::Size(6, 4);  // 24 pixels total
+
 // Returns true if the two given matrices contain identical values.
 // Source:
 //   http://stackoverflow.com/questions/9905093/how-to-check-whether-two-matrixes-are-identical-in-opencv  NOLINT
+// TODO: this may need to do float comparisons.
 bool AreMatricesEqual(const cv::Mat& mat1, const cv::Mat& mat2) {
   if (mat1.empty() && mat2.empty()) {
     return true;
@@ -32,13 +40,12 @@ TEST(ImageModel, AdditiveNoiseModule) {
 }
 
 TEST(ImageModel, DownsamplingModule) {
-  const cv::Size image_size(6, 4);  // high res image has 24 pixels
-  const int downsampling_scale = 2;
-  const int num_high_res_pixels = 24;
-  const int num_low_res_pixels = 6;  // 24 / (2*2)
+  DownsamplingModule downsampling_module(2);  // 2x downsampling scale.
+  const cv::Mat downsampling_matrix =
+      downsampling_module.GetOperatorMatrix(kSmallTestImageSize, 0);
 
-  const cv::Mat expected_matrix = (cv::Mat_<double>(
-      num_low_res_pixels, num_high_res_pixels) <<
+  // 24 pixels in high-res input, 6 (= 24 / 2*2) pixels in downsampled output.
+  const cv::Mat expected_matrix = (cv::Mat_<double>(6, 24) <<
       1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -46,11 +53,15 @@ TEST(ImageModel, DownsamplingModule) {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0);
 
-  DownsamplingModule downsampling_module(downsampling_scale);
-  const cv::Mat downsampling_matrix =
-      downsampling_module.GetOperatorMatrix(image_size, 0);
-
   EXPECT_TRUE(AreMatricesEqual(downsampling_matrix, expected_matrix));
+
+  // Vectorize the test image and compare to the expected outcome.
+  const cv::Mat test_image = kSmallTestImage.reshape(1, 24);
+  const cv::Mat expected_downsampled_image = (cv::Mat_<double>(6, 1)
+      << 1, 3, 5,
+         9, 5, 2);
+  EXPECT_TRUE(AreMatricesEqual(
+      downsampling_matrix * test_image, expected_downsampled_image));
 }
 
 TEST(ImageModel, MotionModule) {
