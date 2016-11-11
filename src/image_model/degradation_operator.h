@@ -23,13 +23,14 @@ class DegradationOperator {
 
   // Returns a Matrix representation of this operator. The matrix is intended
   // to be applied onto a vectorized version of the image, assuming it is a
-  // column vector of stacked rows. The num_pixels parameter indicates how many
-  // pixels the image has (the size of its column vector).
+  // column vector of stacked rows. The image_size parameter is required for
+  // some computations.
   //
   // This function is implemented, and by default returns a num_pixels by
-  // num_pixels identity matrix, which will not change the image vector.
+  // num_pixels identity matrix (num_pixels is Size width * height), which will
+  // not change the image vector.
   virtual cv::Mat GetOperatorMatrix(
-      const int num_pixels, const int index) const;
+      const cv::Size& image_size, const int index) const;
 };
 
 }  // namespace super_resolution

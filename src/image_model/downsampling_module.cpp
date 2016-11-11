@@ -22,9 +22,10 @@ void DownsamplingModule::ApplyToImage(
 }
 
 cv::Mat DownsamplingModule::GetOperatorMatrix(
-    const int num_pixels, const int index) const {
+    const cv::Size& image_size, const int index) const {
 
   // TODO: implement.
+  const int num_pixels = image_size.width * image_size.height;
   return cv::Mat::eye(num_pixels, num_pixels, CV_64FC1);
 }
 

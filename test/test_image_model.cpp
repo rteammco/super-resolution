@@ -32,6 +32,7 @@ TEST(ImageModel, AdditiveNoiseModule) {
 }
 
 TEST(ImageModel, DownsamplingModule) {
+  const cv::Size image_size(6, 4);  // high res image has 24 pixels
   const int downsampling_scale = 2;
   const int num_high_res_pixels = 24;
   const int num_low_res_pixels = 6;  // 24 / (2*2)
@@ -47,7 +48,7 @@ TEST(ImageModel, DownsamplingModule) {
 
   DownsamplingModule downsampling_module(downsampling_scale);
   const cv::Mat downsampling_matrix =
-      downsampling_module.GetOperatorMatrix(num_high_res_pixels, 0);
+      downsampling_module.GetOperatorMatrix(image_size, 0);
 
   EXPECT_TRUE(AreMatricesEqual(downsampling_matrix, expected_matrix));
 }

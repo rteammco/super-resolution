@@ -42,13 +42,13 @@ class ImageModel {
   // and the operators were added in order M, B, D, then the matrix returned
   // will be A = DBM, first multiplying B*M, and then that result by D.
   //
-  // "num_pixels" is the number of pixels in the image to be multiplied. This
-  // must be specified to build the degradation matrices. "index" is the index
-  // of the LR image for which this operator will be generated.
+  // "image_size" is the size of the image to be multiplied. This must be
+  // specified correctly to build the degradation matrices. "index" is the
+  // index of the LR image for which this operator will be generated.
   //
   // At least one DegradationOperator must be available, otherwise this will
   // cause a check fail.
-  cv::Mat GetModelMatrix(const int num_pixels, const int index) const;
+  cv::Mat GetModelMatrix(const cv::Size& image_size, const int index) const;
 
  private:
   // An ordered list of degradation operators, to be applied in this order. We

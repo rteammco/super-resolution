@@ -20,7 +20,7 @@ class DownsamplingModule : public DegradationOperator {
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
   virtual cv::Mat GetOperatorMatrix(
-      const int num_pixels, const int index) const;
+      const cv::Size& image_size, const int index) const;
 
  private:
   const double scale_;
