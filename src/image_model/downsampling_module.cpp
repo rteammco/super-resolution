@@ -21,4 +21,11 @@ void DownsamplingModule::ApplyToImage(
   image_data->ResizeImage(scale_factor, cv::INTER_AREA);
 }
 
+cv::Mat DownsamplingModule::GetOperatorMatrix(
+    const int num_pixels, const int index) const {
+
+  // TODO: implement.
+  return cv::Mat::eye(num_pixels, num_pixels, CV_64FC1);
+}
+
 }  // namespace super_resolution
