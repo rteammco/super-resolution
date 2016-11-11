@@ -1,5 +1,8 @@
 #include "image_model/degradation_operator.h"
 
+#include <utility>
+#include <vector>
+
 #include "util/util.h"
 
 #include "opencv2/core/core.hpp"
@@ -9,39 +12,46 @@ namespace super_resolution {
 cv::Mat DegradationOperator::ConvertKernelToOperatorMatrix(
     const cv::Mat& kernel, const cv::Size& image_size) {
 
-  cv::Mat operator_matrix;
-  // TODO: implement this algorithm:
-  /*
-print 'Kernel:'
-print kernel
-# Image dimensions:
-nrows = image.shape[0]
-ncols = image.shape[1]
-# Kernel dimensions:
-krows = kernel.shape[0]
-kcols = kernel.shape[1]
-# Figure out relative kernel offsets:
-mid_row = krows / 2
-mid_col = kcols / 2
-offsets = []
-for row in range(krows):
-for col in range(kcols):
-offsets.append((row - mid_row, col - mid_col))
-# Build the operator matrix:
-K = []
-for row in range(nrows):
-for col in range(ncols):
-K.append([0] * (nrows * ncols))
-for offset in offsets:
-image_row = row + offset[0]
-image_col = col + offset[1]
-if (0 <= image_row < nrows) and (0 <= image_col < ncols):
-index = image_row * ncols + image_col
-kernel_coords = (offset[0] + mid_row, offset[1] + mid_col)
-K[-1][index] = kernel[kernel_coords]
-print 'Kernel matrix:'
-print K
-  */
+  // Initialize a zero matrix for the operator.
+  const int num_pixels = image_size.width * image_size.height;
+  cv::Mat operator_matrix = cv::Mat::zeros(
+      num_pixels, num_pixels, util::kOpenCvMatrixType);
+
+  // Compute kernel offsets. These are all the relative indices where the
+  // convolution kernel intersects the 2D image at every pixel.
+  const cv::Size kernel_size = kernel.size();
+  const int kernel_mid_row = kernel_size.height / 2;
+  const int kernel_mid_col = kernel_size.width / 2;
+  std::vector<std::pair<int, int>> kernel_offsets;
+  for (int i = 0; i < kernel_size.height; ++i) {
+    for (int j = 0; j < kernel_size.width; ++j) {
+      kernel_offsets.push_back(
+          std::make_pair(i - kernel_mid_row, j - kernel_mid_col));
+    }
+  }
+
+  // Finally, compute the matrix by computing the convolution intersection
+  // indices for every pixel in the image.
+  int next_row = 0;  // Next row to set in the resulting matrix.
+  for (int row = 0; row < image_size.height; ++row) {
+    for (int col = 0; col < image_size.width; ++col) {
+      for (const std::pair<int, int>& offset : kernel_offsets) {
+        // Find image row and col coordinates where this offset (value) in the
+        // kernel intersects with the image.
+        const int image_row = row + offset.first;
+        const int image_col = col + offset.second;
+        if ((image_row >= 0) && (image_row < image_size.height) &&
+            (image_col >= 0) && (image_col < image_size.width)) {
+          const int kernel_row = offset.first + kernel_mid_row;
+          const int kernel_col = offset.second + kernel_mid_col;
+          const int image_index = image_row * image_size.width + image_col;
+          operator_matrix.at<double>(next_row, image_index) =
+              kernel.at<double>(kernel_row, kernel_col);
+          next_row++;
+        }
+      }
+    }
+  }
   return operator_matrix;
 }
 
