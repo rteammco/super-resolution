@@ -34,6 +34,11 @@ class ImageModel {
   // multiframe sequence. The degraded image is returned.
   ImageData ApplyModel(const ImageData& image_data, const int index) const;
 
+  // TODO: This function is yet not fully implemented.
+  //
+  // NOTE: This function is very slow, and its only purpose is to test solver
+  // implementations on very small data sets.
+  //
   // Returns the combined matrix representation of the image model by
   // multiplying all of the operator matrices. These operators will be
   // multiplied in reverse order so that they are applied to the vector image

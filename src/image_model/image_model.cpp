@@ -38,7 +38,8 @@ cv::SparseMat ImageModel::GetModelMatrix(
   for (int i = 1; i < num_operators; ++i) {
     const cv::SparseMat next_matrix =
         degradation_operators_[i]->GetOperatorMatrix(image_size, index);
-    //model_matrix = next_matrix * model_matrix; // TODO: need multiplication
+    // TODO: multiplication doesn't work with this SparseMat representation.
+    // model_matrix = next_matrix * model_matrix;
   }
   return model_matrix;
 }

@@ -114,38 +114,7 @@ TEST(ImageModel, MotionModule) {
 }
 
 TEST(ImageModel, PsfBlurModule) {
-//  super_resolution::PsfBlurModule blur_module(3, 1);
-//  const cv::Mat blur_matrix =
-//      blur_module.GetOperatorMatrix(kSmallTestImageSize, 0);
-//
-//  super_resolution::ImageData image_data(kSmallTestImage);
-//  const cv::Mat normalized_test_image = image_data.GetChannelImage(0).clone();
-//  blur_module.ApplyToImage(&image_data, 0);
-//  const cv::Mat expected_blurred_image = image_data.GetChannelImage(0);
-//  const cv::Mat expected_vector = expected_blurred_image.reshape(1, 24);
-//
-//  const cv::Mat test_image_vector = normalized_test_image.reshape(1, 24);
-//  EXPECT_TRUE(AreMatricesEqual(
-//      blur_matrix * test_image_vector, expected_vector));
-
-  // TODO: remove
-//  std::cout << "about to load" << std::endl;
-//  const cv::Mat image = cv::imread("../data/ostrich.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-//  std::cout << "loaded" << std::endl;
-//  super_resolution::PsfBlurModule blur_module(25, 10);
-//  const cv::SparseMat blur_matrix =
-//      blur_module.GetOperatorMatrix(image.size(), 0);
-//  std::cout << "got kernel" << std::endl;
-//
-//  super_resolution::ImageData image_data(image);
-//  cv::Mat normalized_image = image_data.GetChannelImage(0);
-//  const cv::Size image_size = image.size();
-//  const int npixels = image_size.width * image_size.height;
-//  normalized_image = normalized_image.reshape(1, npixels);
-//  cv::Mat blurred_image = blur_matrix * normalized_image;
-//  blurred_image = blurred_image.reshape(1, image_size.height);
-//  cv::imshow("test", blurred_image);
-//  cv::waitKey(0);
+  // TODO: implement
 }
 
 TEST(ImageModel, TestGetOperatorMatrix) {
