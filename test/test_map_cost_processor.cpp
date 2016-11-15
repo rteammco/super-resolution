@@ -8,7 +8,9 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+using testing::Each;
 using testing::ElementsAre;
+using testing::SizeIs;
 
 // Verifies that the correct residuals are returned for an image.
 TEST(MapCostProcessor, ComputeDataTermResiduals) {
@@ -45,16 +47,26 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
     0.5, 0.5, 0.5
   };
 
-  // Channel 1 and hr pixels are identical, so expect all zeros.
+  // (Image 1, Channel 1) and hr pixels are identical, so expect all zeros.
   std::vector<double> residuals_channel_1 =
       map_cost_processor.ComputeDataTermResiduals(0, 0, hr_pixel_values);
-  EXPECT_THAT(residuals_channel_1, ElementsAre(0, 0, 0, 0, 0, 0, 0, 0, 0));
+  EXPECT_THAT(residuals_channel_1, SizeIs(9));
+  EXPECT_THAT(residuals_channel_1, Each(0));
 
-  // Channel 2 residuals should be different at each pixel.
+  // (Image 1, Channel 2) residuals should be different at each pixel.
   std::vector<double> residuals_channel_2 =
       map_cost_processor.ComputeDataTermResiduals(0, 1, hr_pixel_values);
   EXPECT_THAT(residuals_channel_2, ElementsAre(
       -0.5,  0.0,  0.5,
        0.25, 0.0, -0.25,
       -0.5,  0.5, -0.5));
+
+  // (Image 2, channel 1) ("channel_3") should all be -0.5.
+  std::vector<double> residuals_channel_3 =
+      map_cost_processor.ComputeDataTermResiduals(1, 0, hr_pixel_values);
+  EXPECT_THAT(residuals_channel_3, SizeIs(9));
+  EXPECT_THAT(residuals_channel_3, Each(-0.5));
+
+  // TODO: Mock the ImageModel and make sure the residuals are computed
+  // correctly if the HR image is degraded first.
 }
