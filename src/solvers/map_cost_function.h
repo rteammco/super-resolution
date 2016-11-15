@@ -27,15 +27,23 @@ struct MapCostFunction {
   template <typename T>
   bool operator() (const T* const high_res_image_estimate, T* residuals) const {
     // TODO: maybe we only need to do this once per solver iteration? Check.
-    std::vector<double> pixel_values;
-    pixel_values.reserve(num_pixels_);
+    std::vector<double> estimated_pixel_values;
+    estimated_pixel_values.reserve(num_pixels_);
     for (int i = 0; i < num_pixels_; ++i) {
       // TODO: it's a bit annoying to convert it to the same Jet type explicity
       // before getting out the double, but it won't compile otherwise.
-      pixel_values.push_back(
+      estimated_pixel_values.push_back(
           ceres::Jet<double, 1>(high_res_image_estimate[i]).a);
     }
-    residuals[0] = T(0.0);
+    const std::vector<double> computed_residuals =
+        map_cost_processor_.ComputeDataTermResiduals(
+            image_index_, channel_index_, estimated_pixel_values);
+    for (int i = 0; i < num_pixels_; ++i) {
+      residuals[i] = T(computed_residuals[i]);
+    }
+
+    // TODO: use trust region to force all pixel values between 0 and 1. Will
+    // that work or will it over-complicate the system?
     return true;
   }
 
