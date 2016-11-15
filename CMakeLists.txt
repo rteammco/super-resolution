@@ -63,6 +63,7 @@ add_executable(
 target_link_libraries(
   Test
   LibSuperResolution
+  Ceres
   glog
   gmock
   gmock_main
@@ -106,6 +107,7 @@ add_executable(
 target_link_libraries(
   SuperResolution
   LibSuperResolution
+  Ceres
   glog
   gflags
   ${OpenCV_LIBS}

@@ -32,14 +32,19 @@ struct MapCostFunction {
     for (int i = 0; i < num_pixels_; ++i) {
       // TODO: it's a bit annoying to convert it to the same Jet type explicity
       // before getting out the double, but it won't compile otherwise.
-      estimated_pixel_values.push_back(
-          ceres::Jet<double, 1>(high_res_image_estimate[i]).a);
+      const double pixel_value =
+          ceres::Jet<double, 1>(high_res_image_estimate[i]).a;
+      if (pixel_value < 0 || pixel_value > 1.0) {
+        return false;
+      }
+      estimated_pixel_values.push_back(pixel_value);
     }
     const std::vector<double> computed_residuals =
         map_cost_processor_.ComputeDataTermResiduals(
             image_index_, channel_index_, estimated_pixel_values);
     for (int i = 0; i < num_pixels_; ++i) {
-      residuals[i] = T(computed_residuals[i]);
+      const double residual = computed_residuals[i];
+      residuals[i] = T(residual * residual);  // squared, because L2 norm.
     }
 
     // TODO: use trust region to force all pixel values between 0 and 1. Will

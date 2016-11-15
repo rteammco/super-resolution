@@ -8,6 +8,8 @@ namespace super_resolution {
 
 class MapSolver : public Solver {
  public:
+  using Solver::Solver;  // Inherit Solver constructor.
+
   // Solves the problem using the MAP (maximum a posteriori) formulation.
   virtual ImageData Solve(const ImageData& initial_estimate) const;
 };

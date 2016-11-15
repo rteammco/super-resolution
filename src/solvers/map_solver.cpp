@@ -11,6 +11,8 @@
 
 #include "ceres/ceres.h"
 
+#include "glog/logging.h"
+
 namespace super_resolution {
 
 // TODO: this should only update W. Fix.
@@ -33,10 +35,14 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const MapCostProcessor map_cost_processor(
       low_res_images_, image_model_, hr_image_size);
 
+  LOG(INFO) << "Created MapCostProc";
+
   ImageData estimated_image = initial_estimate;
 
   const int num_channels = low_res_images_[0].GetNumChannels();
   const int num_images = low_res_images_.size();
+
+  LOG(INFO) << "Ready to build problem";
 
   ceres::Problem problem;
   // TODO: currently solves independently for each channel.
@@ -47,10 +53,13 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
       problem.AddResidualBlock(
           cost_function,
           NULL,  // basic loss
-          // TODO: pointer to the whole image, not one pixel!
+          // TODO: pointer to the whole image, not one pixel! This will work if
+          // index at 0 though...
           estimated_image.GetMutableDataPointer(channel_index, 0));
     }
   }
+
+  LOG(INFO) << "Problem done.";
 
   // TODO: handle regularization.
 
@@ -62,8 +71,10 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   options.minimizer_progress_to_stdout = true;
 
   // Solve.
+  LOG(INFO) << "About to solve.";
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
+  LOG(INFO) << "SOLVED.";
   std::cout << summary.FullReport() << std::endl;
 
   return estimated_image;
