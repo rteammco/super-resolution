@@ -47,6 +47,17 @@ TEST(ImageData, AddAndAccessImageData) {
   EXPECT_NEAR(image_data.GetPixelValue(0, 8), 0.45, kPixelErrorTolerance);
   EXPECT_NEAR(image_data.GetPixelValue(0, 11), 0.65, kPixelErrorTolerance);
 
+  // Check that another ImageData created with pre-normalized values (between 0
+  // and 1 instead of between 0 and 255) will have identical data.
+  ImageData image_data2(channel_0);  // channel_0 is NOT converted.
+  const int num_pixels = num_test_rows * num_test_cols;
+  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+    EXPECT_NEAR(
+        image_data.GetPixelValue(0, pixel_index),  // channel 0, pixel_index
+        image_data2.GetPixelValue(0, pixel_index),
+        kPixelErrorTolerance);
+  }
+
   // Check that the returned channel image matches.
   cv::Mat returned_channel_0 = image_data.GetChannelImage(0);
   for (int row = 0; row < num_test_rows; ++row) {
@@ -55,7 +66,8 @@ TEST(ImageData, AddAndAccessImageData) {
           returned_channel_0.at<double>(row, col),
           channel_0.at<double>(row, col),
           kPixelErrorTolerance);
-    } }
+    }
+  }
 
   // Check data pointer access.
   double* pixel_ptr = image_data.GetMutableDataPointer(0, 0);

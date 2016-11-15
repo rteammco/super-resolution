@@ -48,7 +48,7 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
   residuals.reserve(num_pixels);
   for (int i = 0; i < num_pixels; ++i) {
     const double difference =
-        degraded_hr_image.GetPixelValue(channel_index, i) -
+        degraded_hr_image.GetPixelValue(0, i) -  // TODO: channel 0 hardcoded
         observations_.at(image_index).GetPixelValue(channel_index, i);
     residuals.push_back(difference);
   }

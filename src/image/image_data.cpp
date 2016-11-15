@@ -25,17 +25,38 @@ ImageData::ImageData(const ImageData& other) : image_size_(other.image_size_) {
 
 // Constructor from OpenCV image.
 ImageData::ImageData(const cv::Mat& image) {
+  // Make sure all pixels are within some valid range.
+  double min_pixel_value, max_pixel_value;
+  cv::minMaxLoc(image, &min_pixel_value, &max_pixel_value);
+  CHECK_GE(min_pixel_value, 0)
+      << "Invalid pixel range in given image: values cannot be negative.";
+  CHECK_LE(max_pixel_value, 255)
+      << "Invalid pixel range in given image: values cannot exceed 255.";
+
   image_size_ = image.size();
   cv::split(image, channels_);  // cv::split copies the data.
 
-  // Make sure the channels are all scaled between 0 and 1.
+  // Scale pixels between 0 and 1 if they are in the 0-255 range instead. Always
+  // convert to the standard Matrix type in any case.
   for (int i = 0; i < channels_.size(); ++i) {
-    // TODO: this only works if the given pixel values are 0 to 255.
-    channels_[i].convertTo(channels_[i], util::kOpenCvMatrixType, 1.0 / 255.0);
+    if (max_pixel_value > 1.0) {
+      channels_[i].convertTo(channels_[i], util::kOpenCvMatrixType, 1.0 / 255.0);
+    } else {
+      channels_[i].convertTo(channels_[i], util::kOpenCvMatrixType);
+    }
   }
 }
 
 void ImageData::AddChannel(const cv::Mat& channel_image) {
+  // Make sure all pixels are within some valid range.
+  double min_pixel_value, max_pixel_value;
+  cv::minMaxLoc(channel_image, &min_pixel_value, &max_pixel_value);
+  CHECK_GE(min_pixel_value, 0)
+      << "Invalid pixel range in given image: values cannot be negative.";
+  CHECK_LE(max_pixel_value, 255)
+      << "Invalid pixel range in given image: values cannot exceed 255.";
+
+  // Set or check size for consistency.
   if (channels_.empty()) {
     image_size_ = channel_image.size();
   } else {
@@ -46,10 +67,15 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
         << channel_image.size() << " size given.";
   }
 
-  // TODO: this only works if the given pixel values are 0 to 255.
   cv::Mat converted_image = channel_image.clone();
-  converted_image.convertTo(
-      converted_image, util::kOpenCvMatrixType, 1.0 / 255.0);
+  // Scale pixels between 0 and 1 if they are in the 0-255 range instead. Always
+  // convert to the standard Matrix type in any case.
+  if (max_pixel_value > 1.0) {
+    converted_image.convertTo(
+        converted_image, util::kOpenCvMatrixType, 1.0 / 255.0);
+  } else {
+    converted_image.convertTo(converted_image, util::kOpenCvMatrixType);
+  }
   channels_.push_back(converted_image);
 }
 
