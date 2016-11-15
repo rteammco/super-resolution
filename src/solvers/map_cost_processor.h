@@ -21,9 +21,10 @@ class MapCostProcessor {
   // Stores all of the given parameters. For the given low-resolution images,
   // copies them and stores resized versions to match the high-resolution image
   // size for residual computations at each HR pixel.
-  MapCostProcessor(const std::vector<ImageData>& low_res_images,
-                   const ImageModel& image_model,
-                   const cv::Size& high_res_image_size);
+  MapCostProcessor(
+      const std::vector<ImageData>& low_res_images,
+      const ImageModel& image_model,
+      const cv::Size& high_res_image_size);
 
   // Compares the given high-resolution image to the low-resolution image of
   // the given index (and channel) by applying the ImageModel to the HR image.
@@ -42,6 +43,9 @@ class MapCostProcessor {
   //
   // TODO: the regularization operator should be given as a parameter to the
   // MapCostProcessor object.
+  //
+  // TODO: this part possibly incorporates the W matrix (weights), which needs
+  // to be updated at each iteration.
   std::vector<double> ComputeRegularizationResiduals(
       const int channel_index,
       const std::vector<double>& high_res_image_data) const;

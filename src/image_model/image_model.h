@@ -32,6 +32,9 @@ class ImageModel {
 
   // Apply this forward model to the given image at the given index in the
   // multiframe sequence. The degraded image is returned.
+  //
+  // TODO: for computational efficiency, there should be a version that
+  // modifies the parameter passed in instead of returning a new ImageData.
   ImageData ApplyModel(const ImageData& image_data, const int index) const;
 
   // TODO: This function is yet not fully implemented.
