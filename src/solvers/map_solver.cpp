@@ -5,6 +5,7 @@
 
 #include "image/image_data.h"
 #include "solvers/map_cost_function.h"
+#include "solvers/map_cost_processor.h"
 
 #include "opencv2/core/core.hpp"
 

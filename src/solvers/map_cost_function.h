@@ -14,25 +14,23 @@ namespace super_resolution {
 
 struct MapCostFunction {
   MapCostFunction(
-      const std::vector<ImageData>* observation_estimates,
       const int image_index,
       const int channel_index,
-      const int pixel_index)
-  : observation_estimates_(observation_estimates),
-    image_index_(image_index),
+      const int num_pixels)
+  : image_index_(image_index),
     channel_index_(channel_index),
-    pixel_index_(pixel_index) {}
+    num_pixels_(num_pixels) {}
 
   template <typename T>
-  bool operator() (const T* const ingored_value, T* residual) const {
-    // NOTE: the input parameter is estimate of X. Ignore it, because we need
-    // to use the the estimated Y_i instead which is computed before every
-    // iteration.
-
-    // Get the estimated pixel value.
-    const double estimated_pixel_value =
-        observation_estimates_->at(image_index_).GetPixelValue(
-            channel_index_, pixel_index_);
+  bool operator() (const T* const x, T* residual) const {
+    // TODO: maybe we only need to do this once per solver iteration? Check.
+    std::vector<double> pixel_values;
+    pixel_values.reserve(num_pixels_);
+    for (int i = 0; i < num_pixels_; ++i) {
+      // TODO: it's a bit annoying to convert it to the same Jet type explicity
+      // before getting out the double, but it won't compile otherwise.
+      pixel_values.push_back(ceres::Jet<double, 1>(x[i]).a);
+    }
 
     residual[0] = T(0.0);
     return true;
@@ -43,20 +41,16 @@ struct MapCostFunction {
       const int image_index,
       const int channel_index,
       const int pixel_index) {
+    const int num_pixels = 1000;  // TODO: argument fix
     // The cost function takes one value - a pixel intensity - and returns the
     // residual between that pixel intensity and the expected observation.
     return (new ceres::AutoDiffCostFunction<MapCostFunction, 1, 1>(
-        new MapCostFunction(
-            observation_estimates,
-            image_index,
-            channel_index,
-            pixel_index)));
+        new MapCostFunction(image_index, channel_index, num_pixels)));
   }
 
-  const std::vector<ImageData>* observation_estimates_;
   const int image_index_;
   const int channel_index_;
-  const int pixel_index_;
+  const int num_pixels_;
 };
 
 }  // namespace super_resolution
