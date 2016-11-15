@@ -18,6 +18,9 @@ namespace super_resolution {
 
 class MapCostProcessor {
  public:
+  // Stores all of the given parameters. For the given low-resolution images,
+  // copies them and stores resized versions to match the high-resolution image
+  // size for residual computations at each HR pixel.
   MapCostProcessor(const std::vector<ImageData>& low_res_images,
                    const ImageModel& image_model,
                    const cv::Size& high_res_image_size);
@@ -39,7 +42,7 @@ class MapCostProcessor {
   //
   // TODO: the regularization operator should be given as a parameter to the
   // MapCostProcessor object.
-  std::vector<double> ComputeregularizationResiduals(
+  std::vector<double> ComputeRegularizationResiduals(
       const int channel_index,
       const std::vector<double>& high_res_image_data) const;
 
