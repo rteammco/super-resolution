@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "image/image_data.h"
-#include "solvers/map_cost_function.h"
+#include "solvers/map_cost_functor.h"
 #include "solvers/map_cost_processor.h"
 
 #include "opencv2/core/core.hpp"
@@ -50,7 +50,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   // TODO: currently solves independently for each channel.
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     for (int image_index = 0; image_index < num_images; ++image_index) {
-      ceres::CostFunction* cost_function = MapCostFunction::Create(
+      ceres::CostFunction* cost_function = MapCostFunctor::Create(
           image_index, channel_index, num_hr_pixels, map_cost_processor);
       problem.AddResidualBlock(
           cost_function,

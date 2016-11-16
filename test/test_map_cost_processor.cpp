@@ -41,7 +41,7 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
   super_resolution::MapCostProcessor map_cost_processor(
       low_res_images, empty_image_model, image_size);
 
-  std::vector<double> hr_pixel_values = {
+  const double hr_pixel_values[9] = {
     0.5, 0.5, 0.5,
     0.5, 0.5, 0.5,
     0.5, 0.5, 0.5

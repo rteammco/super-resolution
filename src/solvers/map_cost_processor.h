@@ -24,19 +24,16 @@ class MapCostProcessor {
   MapCostProcessor(
       const std::vector<ImageData>& low_res_images,
       const ImageModel& image_model,
-      const cv::Size& high_res_image_size);
+      const cv::Size& image_size);
 
   // Compares the given high-resolution image to the low-resolution image of
   // the given index (and channel) by applying the ImageModel to the HR image.
   // The returned values will be the residuals (the difference in pixel
   // intensity) at each pixel of the HR image.
-  //
-  // TODO: high_res_image_data should be cached so it doesn't need to be
-  // re-created (converted to double) more than once per iteration.
   std::vector<double> ComputeDataTermResiduals(
       const int image_index,
       const int channel_index,
-      const std::vector<double>& high_res_image_data) const;
+      const double* estimated_image_data) const;
 
   // Computes the regularization term residuals at each pixel of the given HR
   // image.
@@ -48,7 +45,7 @@ class MapCostProcessor {
   // to be updated at each iteration.
   std::vector<double> ComputeRegularizationResiduals(
       const int channel_index,
-      const std::vector<double>& high_res_image_data) const;
+      const double* estimated_image_data) const;
 
  private:
   // Stores the low-resolution images as observations that were scaled up to
@@ -59,7 +56,7 @@ class MapCostProcessor {
   const ImageModel& image_model_;
 
   // The dimensions (width, height) of the high-resoltion image.
-  const cv::Size& high_res_image_size_;
+  const cv::Size& image_size_;
 };
 
 }  // namespace super_resolution
