@@ -4,6 +4,7 @@
 #ifndef SRC_SOLVERS_MAP_COST_FUNCTION_H_
 #define SRC_SOLVERS_MAP_COST_FUNCTION_H_
 
+#include <iostream> // TODO: remove
 #include <vector>
 
 #include "image/image_data.h"
@@ -33,8 +34,10 @@ struct MapCostFunction {
       // TODO: it's a bit annoying to convert it to the same Jet type explicity
       // before getting out the double, but it won't compile otherwise.
       const double pixel_value =
-          ceres::Jet<double, 1>(high_res_image_estimate[i]).a;
-      if (pixel_value < 0 || pixel_value > 1.0) {
+          ceres::Jet<double, 16>(high_res_image_estimate[i]).a;
+      std::cout << "PIXEL: " << pixel_value << std::endl;
+      if (pixel_value < 0.0 || pixel_value > 1.0) {
+        std::cout << "TERMINATED ITERATION (OUT OF BOUNDS)" << std::endl;
         return false;
       }
       estimated_pixel_values.push_back(pixel_value);
@@ -44,11 +47,11 @@ struct MapCostFunction {
             image_index_, channel_index_, estimated_pixel_values);
     for (int i = 0; i < num_pixels_; ++i) {
       const double residual = computed_residuals[i];
-      residuals[i] = T(residual * residual);  // squared, because L2 norm.
+      residuals[i] = T(residual);  // TODO: squared? abs?
+      std::cout << residuals[i] << std::endl;
     }
 
-    // TODO: use trust region to force all pixel values between 0 and 1. Will
-    // that work or will it over-complicate the system?
+    std::cout << "END OF ITERATION" << std::endl;
     return true;
   }
 
@@ -59,7 +62,7 @@ struct MapCostFunction {
       const MapCostProcessor& map_cost_processor) {
     // The cost function takes one value - a pixel intensity - and returns the
     // residual between that pixel intensity and the expected observation.
-    return (new ceres::AutoDiffCostFunction<MapCostFunction, 1, 1>(
+    return (new ceres::AutoDiffCostFunction<MapCostFunction, 16, 16>(
         new MapCostFunction(
             image_index, channel_index, num_pixels, map_cost_processor)));
   }

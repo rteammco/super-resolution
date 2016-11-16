@@ -8,6 +8,8 @@
 
 #include "opencv2/core/core.hpp"
 
+#include "glog/logging.h"
+
 namespace super_resolution {
 
 MapCostProcessor::MapCostProcessor(
@@ -50,6 +52,8 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
     const double difference =
         degraded_hr_image.GetPixelValue(0, i) -  // TODO: channel 0 hardcoded
         observations_.at(image_index).GetPixelValue(channel_index, i);
+    LOG(INFO) << "channel " << channel_index
+              << ", pixel " << i << " = " << difference;
     residuals.push_back(difference);
   }
   return residuals;
