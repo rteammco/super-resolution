@@ -40,7 +40,7 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
   // TODO: this currently assumes there is only one channel in the image.
   // TODO: would be nice if we can build ImageData directly from an array,
   //       skipping the above step.
-  const ImageData hr_image_data(hr_image_estimate);
+  const ImageData hr_image_data(hr_image_estimate, false);  // do not normalize
   ImageData degraded_hr_image =
       image_model_.ApplyModel(hr_image_data, image_index);
   degraded_hr_image.ResizeImage(image_size_, cv::INTER_AREA);
@@ -53,8 +53,8 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
     const double difference =
         degraded_hr_image.GetPixelValue(0, i) -  // TODO: channel 0 hardcoded
         observations_.at(image_index).GetPixelValue(channel_index, i);
-    LOG(INFO) << "channel " << channel_index
-              << ", pixel " << i << " = " << difference; // TODO: remove
+    //LOG(INFO) << "channel " << channel_index
+    //          << ", pixel " << i << " = " << difference; // TODO: remove
     residuals.push_back(difference);
   }
   return residuals;

@@ -36,7 +36,7 @@ TEST(MapSolver, SmallDataTest) {
   });
   std::unique_ptr<super_resolution::DegradationOperator> motion_module(
       new super_resolution::MotionModule(motion_shift_sequence));
-  image_model.AddDegradationOperator(std::move(motion_module));
+  //image_model.AddDegradationOperator(std::move(motion_module));
   // Downsampling:
   std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
       new super_resolution::DownsamplingModule(2));
