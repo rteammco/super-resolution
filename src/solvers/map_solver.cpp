@@ -43,7 +43,6 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const int num_images = low_res_images_.size();
 
   ceres::Problem problem;
-  double* data_ptr = estimated_image.GetMutableDataPointer(0, 0);
   // TODO: currently solves independently for each channel.
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     for (int image_index = 0; image_index < num_images; ++image_index) {
@@ -54,8 +53,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
           NULL,  // basic loss
           // TODO: pointer to the whole image, not one pixel! This will work if
           // index at 0 though...
-          // estimated_image.GetMutableDataPointer(channel_index, 0));
-          data_ptr);
+          estimated_image.GetMutableDataPointer(channel_index, 0));
     }
   }
 
@@ -73,11 +71,6 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
-
-  // TODO: remove, this is only for debugging.
-  for (int i = 0; i < num_hr_pixels; ++i) {
-    LOG(INFO) << "Final pixel: " << data_ptr[i];
-  }
 
   return estimated_image;
 }
