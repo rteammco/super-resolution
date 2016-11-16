@@ -20,6 +20,9 @@ void InitializeFromImage(
     cv::Size* image_size,
     std::vector<cv::Mat>* channels) {
 
+  CHECK_NOTNULL(image_size);
+  CHECK_NOTNULL(channels);
+
   *image_size = image.size();
   cv::split(image, *channels);
   for (int i = 0; i < channels->size(); ++i) {

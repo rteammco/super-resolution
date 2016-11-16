@@ -21,7 +21,8 @@ class ApplyModelCallback : public ceres::IterationCallback {
   // Called after each iteration.
   ceres::CallbackReturnType operator() (
       const ceres::IterationSummary& summary) {
-    // TODO: implement
+    // TODO: implement computing W matrix.
+    // TODO: remove logging here.
     LOG(INFO) << "CALLBACK";
     return ceres::SOLVER_CONTINUE;
   }
@@ -36,14 +37,10 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const MapCostProcessor map_cost_processor(
       low_res_images_, image_model_, hr_image_size);
 
-  LOG(INFO) << "Created MapCostProc";
-
   ImageData estimated_image = initial_estimate;
 
   const int num_channels = low_res_images_[0].GetNumChannels();
   const int num_images = low_res_images_.size();
-
-  LOG(INFO) << "Ready to build problem";
 
   ceres::Problem problem;
   double* data_ptr = estimated_image.GetMutableDataPointer(0, 0);
@@ -57,12 +54,10 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
           NULL,  // basic loss
           // TODO: pointer to the whole image, not one pixel! This will work if
           // index at 0 though...
+          // estimated_image.GetMutableDataPointer(channel_index, 0));
           data_ptr);
-          //estimated_image.GetMutableDataPointer(channel_index, 0));
     }
   }
-
-  LOG(INFO) << "Problem done.";
 
   // TODO: handle regularization.
 
@@ -75,12 +70,11 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   options.minimizer_progress_to_stdout = true;
 
   // Solve.
-  LOG(INFO) << "About to solve.";
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
-  LOG(INFO) << "SOLVED.";
   std::cout << summary.FullReport() << std::endl;
 
+  // TODO: remove, this is only for debugging.
   for (int i = 0; i < num_hr_pixels; ++i) {
     LOG(INFO) << "Final pixel: " << data_ptr[i];
   }

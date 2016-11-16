@@ -30,6 +30,8 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
     const int channel_index,
     const double* estimated_image_data) const {
 
+  CHECK_NOTNULL(estimated_image_data);
+
   // Convert the pixel data into an OpenCV image.
   const cv::Mat hr_image_estimate(
       image_size_,
@@ -53,8 +55,6 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
     const double difference =
         degraded_hr_image.GetPixelValue(0, i) -  // TODO: channel 0 hardcoded
         observations_.at(image_index).GetPixelValue(channel_index, i);
-    //LOG(INFO) << "channel " << channel_index
-    //          << ", pixel " << i << " = " << difference; // TODO: remove
     residuals.push_back(difference);
   }
   return residuals;
@@ -63,6 +63,8 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
 std::vector<double> MapCostProcessor::ComputeRegularizationResiduals(
     const int channel_index,
     const double* estimated_image_data) const {
+
+  CHECK_NOTNULL(estimated_image_data);
 
   // TODO: implement
   const int num_pixels = image_size_.width * image_size_.height;

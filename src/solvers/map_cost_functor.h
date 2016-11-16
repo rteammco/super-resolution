@@ -4,7 +4,6 @@
 #ifndef SRC_SOLVERS_MAP_COST_FUNCTOR_H_
 #define SRC_SOLVERS_MAP_COST_FUNCTOR_H_
 
-#include <iostream> // TODO: remove
 #include <vector>
 
 #include "image/image_data.h"
@@ -27,28 +26,24 @@ struct MapCostFunctor {
     num_pixels_(num_pixels),
     map_cost_processor_(map_cost_processor) {}
 
+  // The actual cost function, computes the residuals. x is the estimated HR
+  // image vector and residuals are set after processing the estimate with the
+  // image model through the given MapCostProcessor.
   bool operator() (const double* const x, double* residuals) const {
-    // Check that all values are between 0 and 1, otherwise it's outside of the
-    // trust region.
-    //for (int i = 0; i < num_pixels_; ++i) {
-    //  if (x[i] < 0.0 || x[i] > 1.0) {
-    //    return false;
-    //  }
-    //}
+    // TODO: do we need to check that all values are between 0 and 1? Or leave
+    // it to figure out on its own? Or an extra regularization term?
 
     const std::vector<double> computed_residuals =
         map_cost_processor_.ComputeDataTermResiduals(
             image_index_, channel_index_, x);
-    //std::cout << "Residuals = ";
     for (int i = 0; i < num_pixels_; ++i) {
       residuals[i] = computed_residuals[i];  // TODO: squared? abs?
-      //std::cout << computed_residuals[i] << ", ";
     }
-    //std::cout << std::endl;
-    //std::cout << "END OF ITERATION" << std::endl;
+
     return true;
   }
 
+  // Constructor
   static ceres::CostFunction* Create(
       const int image_index,
       const int channel_index,

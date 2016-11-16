@@ -29,6 +29,7 @@ TEST(MapSolver, SmallDataTest) {
   // Create an empty image model.
   super_resolution::ImageModel image_model;
   // Motion:
+  // TODO: doesn't work, won't get good solution, at least with this example.
   super_resolution::MotionShiftSequence motion_shift_sequence;
   motion_shift_sequence.SetMotionSequence({
     super_resolution::MotionShift(0, 0),
@@ -36,7 +37,7 @@ TEST(MapSolver, SmallDataTest) {
   });
   std::unique_ptr<super_resolution::DegradationOperator> motion_module(
       new super_resolution::MotionModule(motion_shift_sequence));
-  //image_model.AddDegradationOperator(std::move(motion_module));
+  // image_model.AddDegradationOperator(std::move(motion_module));
   // Downsampling:
   std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
       new super_resolution::DownsamplingModule(2));
@@ -60,13 +61,6 @@ TEST(MapSolver, SmallDataTest) {
       //   1, 1, 1, 1,
       //   1, 1, 1, 1);
   ImageData initial_estimate(initial_estimate_matrix);
-
-  //ImageData comp1 = image_model.ApplyModel(initial_estimate, 0);
-  //comp1.ResizeImage(initial_estimate.GetImageSize());
-  //std::cout << comp1.GetChannelImage(0) << std::endl;
-  //ImageData comp2 = image_model.ApplyModel(initial_estimate, 1);
-  //comp2.ResizeImage(initial_estimate.GetImageSize());
-  //std::cout << comp2.GetChannelImage(0) << std::endl;
 
   ImageData result = solver.Solve(initial_estimate);
   std::cout << result.GetChannelImage(0) << std::endl;
