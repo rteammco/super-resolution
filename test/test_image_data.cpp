@@ -176,6 +176,20 @@ TEST(ImageData, CopyConstructor) {
 TEST(ImageData, FromOpenCvImageConstructor) {
   // TODO: implement.
   // ImageData(const cv::Mat& image)
+
+  /* Verify the functionality of the manual normalization constructor. */
+
+  const cv::Mat invalid_image = (cv::Mat_<double>(3, 3)
+      << 0.5, 1.5,  100,
+         -25, 0.0,  -30,
+         55,  1.98, 1000);
+  ImageData image_data_not_normalized(invalid_image, false);
+  for (int i = 0; i < 9; ++i) {
+    EXPECT_NEAR(
+        invalid_image.at<double>(i),
+        image_data_not_normalized.GetPixelValue(0, i),
+        std::numeric_limits<double>::epsilon());
+  }
 }
 
 // This test verifies that the image is correctly resized, with one or more

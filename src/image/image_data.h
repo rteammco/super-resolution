@@ -25,11 +25,27 @@ class ImageData {
 
   // Pass in an OpenCV Mat to create an ImageData object out of that. If the
   // given image has multiple channels, they will all be added independently.
+  // If the image is given in a non-normalized range (0-255 pixel values), it
+  // will automatically be normalized to values between 0 and 1. All images
+  // will be cloned and converted to a standard Mat type.
   explicit ImageData(const cv::Mat& image);
+
+  // Same as the ImageData(const cv::Mat&) constructor, but does not
+  // automatically normalize the values between 0 and 1. Instead, the user
+  // explicitly indicates if the values should be normalized.
+  //
+  // Furthermore, this constructor allows pixel values in any range, even if
+  // they are invalid (e.g. negative pixel values are allowed).
+  //
+  // TODO: for now it always assumes a range of 0-255 but that might not always
+  // be the case.
+  ImageData(const cv::Mat& image, const bool normalize);
 
   // Appends a channel (band) to the image. Each new channel will be added as
   // the last index. Channel images should be single-band OpenCV images. The
   // added channel must have the same dimensions as the rest of the image.
+  // Images given in a non-normalized range (0-255 pixel values) will
+  // automatically be noramlized to values between 0 and 1.
   void AddChannel(const cv::Mat& channel_image);
 
   // Resizes this image to the given Size. The given Size must be valid (i.e.

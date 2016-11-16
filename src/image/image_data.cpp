@@ -11,6 +11,29 @@
 
 namespace super_resolution {
 
+// The actual implementation used by constructors ImageData(const cv::Mat&) and
+// ImageData(const cv::Mat&, const bool). The channels parameter should be the
+// channels_ class variable.
+void InitializeFromImage(
+    const cv::Mat& image,
+    const bool normalize,
+    cv::Size* image_size,
+    std::vector<cv::Mat>* channels) {
+
+  *image_size = image.size();
+  cv::split(image, *channels);
+  for (int i = 0; i < channels->size(); ++i) {
+    if (normalize) {
+      (*channels)[i].convertTo(
+          (*channels)[i],
+          util::kOpenCvMatrixType,
+          1.0 / 255.0);
+    } else {
+      (*channels)[i].convertTo((*channels)[i], util::kOpenCvMatrixType);
+    }
+  }
+}
+
 // Default constructor.
 ImageData::ImageData() {
   image_size_ = cv::Size(0, 0);
@@ -33,18 +56,12 @@ ImageData::ImageData(const cv::Mat& image) {
   CHECK_LE(max_pixel_value, 255)
       << "Invalid pixel range in given image: values cannot exceed 255.";
 
-  image_size_ = image.size();
-  cv::split(image, channels_);  // cv::split copies the data.
+  const bool normalize = max_pixel_value > 1.0;
+  InitializeFromImage(image, normalize, &image_size_, &channels_);
+}
 
-  // Scale pixels between 0 and 1 if they are in the 0-255 range instead. Always
-  // convert to the standard Matrix type in any case.
-  for (int i = 0; i < channels_.size(); ++i) {
-    if (max_pixel_value > 1.0) {
-      channels_[i].convertTo(channels_[i], util::kOpenCvMatrixType, 1.0 / 255.0);
-    } else {
-      channels_[i].convertTo(channels_[i], util::kOpenCvMatrixType);
-    }
-  }
+ImageData::ImageData(const cv::Mat& image, const bool normalize) {
+  InitializeFromImage(image, normalize, &image_size_, &channels_);
 }
 
 void ImageData::AddChannel(const cv::Mat& channel_image) {
