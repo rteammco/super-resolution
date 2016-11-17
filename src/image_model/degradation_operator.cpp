@@ -7,19 +7,34 @@
 
 #include "opencv2/core/core.hpp"
 
+#include "glog/logging.h"
+
 namespace super_resolution {
 
-cv::SparseMat DegradationOperator::ConvertKernelToOperatorMatrix(
+// Size limitations for the ConvertKernelToOperator method.
+constexpr int kMaxConvolutionImageSize = 30;
+constexpr int kMaxConvolutionKernelSize = 10;
+
+cv::Mat DegradationOperator::ConvertKernelToOperatorMatrix(
     const cv::Mat& kernel, const cv::Size& image_size) {
+
+  const cv::Size kernel_size = kernel.size();
+  CHECK_LE(kernel_size.width, kMaxConvolutionKernelSize)
+      << "Kernel is too big to convert to matrix form.";
+  CHECK_LE(kernel_size.height, kMaxConvolutionKernelSize)
+      << "Kernel is too big to convert to matrix form.";
+  CHECK_LE(image_size.width, kMaxConvolutionKernelSize)
+      << "Image is too big to compute a kernel matrix.";
+  CHECK_LE(image_size.height, kMaxConvolutionKernelSize)
+      << "Image is too big to compute a kernel matrix.";
 
   // Initialize a zero matrix for the operator.
   const int num_pixels = image_size.width * image_size.height;
-  const int size[] = {num_pixels, num_pixels};
-  cv::SparseMat operator_matrix(2, size, util::kOpenCvMatrixType);  // 2D
+  cv::Mat operator_matrix =
+      cv::Mat::zeros(num_pixels, num_pixels, util::kOpenCvMatrixType);
 
   // Compute kernel offsets. These are all the relative indices where the
   // convolution kernel intersects the 2D image at every pixel.
-  const cv::Size kernel_size = kernel.size();
   const int kernel_mid_row = kernel_size.height / 2;
   const int kernel_mid_col = kernel_size.width / 2;
   std::vector<std::pair<int, int>> kernel_offsets;
@@ -45,7 +60,7 @@ cv::SparseMat DegradationOperator::ConvertKernelToOperatorMatrix(
           const int kernel_row = offset.first + kernel_mid_row;
           const int kernel_col = offset.second + kernel_mid_col;
           const int image_index = image_row * image_size.width + image_col;
-          operator_matrix.ref<double>(next_row, image_index) =
+          operator_matrix.at<double>(next_row, image_index) =
               kernel.at<double>(kernel_row, kernel_col);
         }
       }
@@ -55,12 +70,11 @@ cv::SparseMat DegradationOperator::ConvertKernelToOperatorMatrix(
   return operator_matrix;
 }
 
-cv::SparseMat DegradationOperator::GetOperatorMatrix(
+cv::Mat DegradationOperator::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 
   const int num_pixels = image_size.width * image_size.height;
-  const int size[] = {num_pixels, num_pixels};
-  return cv::SparseMat(1, size, util::kOpenCvMatrixType);
+  return cv::Mat::eye(num_pixels, num_pixels, util::kOpenCvMatrixType);
 }
 
 }  // namespace super_resolution

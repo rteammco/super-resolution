@@ -53,11 +53,9 @@ TEST(ImageModel, DegradationOperator) {
   const cv::Mat test_image = (cv::Mat_<double>(2, 3)
       << 1, 3, 5,
          9, 5, 2);
-  const cv::SparseMat sparse_operator_matrix =
+  const cv::Mat operator_matrix =
       super_resolution::DegradationOperator::ConvertKernelToOperatorMatrix(
           kernel, test_image.size());
-  cv::Mat operator_matrix;
-  sparse_operator_matrix.copyTo(operator_matrix);
 
   // Make sure we get the correct kernel.
   const cv::Mat expected_matrix = (cv::Mat_<double>(6, 6)
@@ -84,10 +82,8 @@ TEST(ImageModel, AdditiveNoiseModule) {
 
 TEST(ImageModel, DownsamplingModule) {
   super_resolution::DownsamplingModule downsampling_module(2);
-  const cv::SparseMat sparse_downsampling_matrix =
+  const cv::Mat downsampling_matrix =
       downsampling_module.GetOperatorMatrix(kSmallTestImageSize, 0);
-  cv::Mat downsampling_matrix;
-  sparse_downsampling_matrix.copyTo(downsampling_matrix);
 
   // 24 pixels in high-res input, 6 (= 24 / 2*2) pixels in downsampled output.
   const cv::Mat expected_matrix = (cv::Mat_<double>(6, 24) <<
@@ -117,6 +113,7 @@ TEST(ImageModel, PsfBlurModule) {
   // TODO: implement
 }
 
-TEST(ImageModel, TestGetOperatorMatrix) {
-  // TODO: implement
+TEST(ImageModel, GetModelMatrix) {
+  // TODO: implement, check that the whole ImageModel can return the correct
+  // degradation operator matrix.
 }

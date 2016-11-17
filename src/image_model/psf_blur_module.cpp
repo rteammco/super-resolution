@@ -36,7 +36,7 @@ void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
   }
 }
 
-cv::SparseMat PsfBlurModule::GetOperatorMatrix(
+cv::Mat PsfBlurModule::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 
   return ConvertKernelToOperatorMatrix(blur_kernel_, image_size);

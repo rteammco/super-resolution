@@ -22,13 +22,13 @@ void DownsamplingModule::ApplyToImage(
   image_data->ResizeImage(scale_factor, cv::INTER_NEAREST);
 }
 
-cv::SparseMat DownsamplingModule::GetOperatorMatrix(
+cv::Mat DownsamplingModule::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 
   const int num_high_res_pixels = image_size.width * image_size.height;
   const int num_low_res_pixels = num_high_res_pixels / (scale_ * scale_);
-  const int size[] = {num_low_res_pixels, num_high_res_pixels};
-  cv::SparseMat downsampling_matrix(2, size, util::kOpenCvMatrixType);  // 2D
+  cv::Mat downsampling_matrix = cv::Mat::zeros(
+      num_low_res_pixels, num_high_res_pixels, util::kOpenCvMatrixType);
 
   int next_row = 0;
   for (int row = 0; row < image_size.height; ++row) {
@@ -40,7 +40,7 @@ cv::SparseMat DownsamplingModule::GetOperatorMatrix(
         continue;
       }
       const int index = row * image_size.width + col;
-      downsampling_matrix.ref<double>(next_row, index) = 1;
+      downsampling_matrix.at<double>(next_row, index) = 1;
       next_row++;
     }
   }

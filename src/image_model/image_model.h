@@ -39,10 +39,9 @@ class ImageModel {
   // ImageData instead of returning a modified copy.
   void ApplyModel(ImageData* image_data, const int index) const;
 
-  // TODO: This function is yet not fully implemented.
-  //
   // NOTE: This function is very slow, and its only purpose is to test solver
-  // implementations on very small data sets.
+  // implementations on very small data sets. Some operators may not support
+  // parameters exceeding a certain matrix size.
   //
   // Returns the combined matrix representation of the image model by
   // multiplying all of the operator matrices. These operators will be
@@ -58,7 +57,7 @@ class ImageModel {
   //
   // At least one DegradationOperator must be available, otherwise this will
   // cause a check fail.
-  cv::SparseMat GetModelMatrix(
+  cv::Mat GetModelMatrix(
       const cv::Size& image_size, const int index) const;
 
  private:

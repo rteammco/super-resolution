@@ -32,20 +32,20 @@ void ImageModel::ApplyModel(ImageData* image_data, const int index) const {
   }
 }
 
-cv::SparseMat ImageModel::GetModelMatrix(
+cv::Mat ImageModel::GetModelMatrix(
     const cv::Size& image_size, const int index) const {
 
   const int num_operators = degradation_operators_.size();
   CHECK_GT(num_operators, 0)
       << "Cannot build a model matrix with no degradation operators.";
 
-  cv::SparseMat model_matrix =
+  cv::Mat model_matrix =
       degradation_operators_[0]->GetOperatorMatrix(image_size, index);
   for (int i = 1; i < num_operators; ++i) {
-    const cv::SparseMat next_matrix =
+    const cv::Mat next_matrix =
         degradation_operators_[i]->GetOperatorMatrix(image_size, index);
     // TODO: multiplication doesn't work with this SparseMat representation.
-    // model_matrix = next_matrix * model_matrix;
+    model_matrix = next_matrix * model_matrix;
   }
   return model_matrix;
 }
