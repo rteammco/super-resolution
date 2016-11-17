@@ -132,6 +132,45 @@ TEST(ImageData, AddAndAccessImageData) {
   // TODO: check that we can manipulate the data pointer in each channel.
 }
 
+// Checks that the ImageData(const double*, const cv::Size&) constructor
+// correctly builds the ImageData from the pixel value array and copies the
+// data so that modifying the ImageData won't change the original array.
+TEST(ImageData, PixelArrayConstructor) {
+  const double pixel_values[9] = {
+     1.0, 0.5, 0.9,
+     100,   0, -50,
+    -0.1, 0.0,   1
+  };
+  const cv::Size size(3, 3);
+  ImageData image_data(pixel_values, size);
+
+  /* Verify image details. */
+
+  EXPECT_EQ(image_data.GetNumChannels(), 1);
+  EXPECT_EQ(image_data.GetImageSize(), cv::Size(3, 3));
+  EXPECT_EQ(image_data.GetNumPixels(), 9);
+
+  /* Verify that the data is identical. */
+
+  for (int i = 0; i < 9; ++i) {
+    EXPECT_NEAR(
+        image_data.GetPixelValue(0, i),
+        pixel_values[i],
+        std::numeric_limits<double>::epsilon());
+  }
+
+  /* Verify that changing the image doesn't change the original data. */
+
+  double* image_data_ptr = image_data.GetMutableDataPointer(0);
+  image_data_ptr[0] = 0.0;
+  image_data_ptr[3] = 1.0;
+  image_data_ptr[8] = -500;
+
+  EXPECT_EQ(pixel_values[0], 1.0);
+  EXPECT_EQ(pixel_values[3], 100);
+  EXPECT_EQ(pixel_values[8], 1);
+}
+
 // This test verifies that the copy constructor works as expected.
 TEST(ImageData, CopyConstructor) {
   // Create an ImageData object with 10 channels.

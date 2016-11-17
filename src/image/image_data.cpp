@@ -11,9 +11,13 @@
 
 namespace super_resolution {
 
-// The actual implementation used by constructors ImageData(const cv::Mat&) and
-// ImageData(const cv::Mat&, const bool). The channels parameter should be the
-// channels_ class variable.
+// The actual implementation used by constructors ImageData(const cv::Mat&),
+// ImageData(const cv::Mat&, const bool), and
+// ImageData(const double*, const cv::Size&). The channels parameter should be
+// the channels_ class variable.
+//
+// This method makes a copy of the given image data, so the original data or
+// image is not modified when this ImageData is modified.
 void InitializeFromImage(
     const cv::Mat& image,
     const bool normalize,
@@ -24,7 +28,7 @@ void InitializeFromImage(
   CHECK_NOTNULL(channels);
 
   *image_size = image.size();
-  cv::split(image, *channels);
+  cv::split(image, *channels);  // makes a copy, even if just one channel
   for (int i = 0; i < channels->size(); ++i) {
     if (normalize) {
       (*channels)[i].convertTo(
@@ -65,6 +69,14 @@ ImageData::ImageData(const cv::Mat& image) {
 
 ImageData::ImageData(const cv::Mat& image, const bool normalize) {
   InitializeFromImage(image, normalize, &image_size_, &channels_);
+}
+
+ImageData::ImageData(const double* pixel_values, const cv::Size& size) {
+  const cv::Mat image(
+      size,
+      util::kOpenCvMatrixType,
+      const_cast<void*>(reinterpret_cast<const void*>(pixel_values)));
+  InitializeFromImage(image, false, &image_size_, &channels_);  // copies data
 }
 
 void ImageData::AddChannel(const cv::Mat& channel_image) {

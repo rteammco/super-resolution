@@ -32,28 +32,22 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
 
   CHECK_NOTNULL(estimated_image_data);
 
-  // Convert the pixel data into an OpenCV image.
-  const cv::Mat hr_image_estimate(
-      image_size_,
-      util::kOpenCvMatrixType,
-      const_cast<void*>(reinterpret_cast<const void*>(estimated_image_data)));
-
   // Degrade (and re-upsample) the HR estimate with the image model.
-  // TODO: this currently assumes there is only one channel in the image.
-  // TODO: would be nice if we can build ImageData directly from an array,
-  //       skipping the above step.
-  const ImageData hr_image_data(hr_image_estimate, false);  // do not normalize
+  const ImageData hr_image_data(estimated_image_data, image_size_);
   ImageData degraded_hr_image =
       image_model_.ApplyModel(hr_image_data, image_index);
   degraded_hr_image.ResizeImage(image_size_, cv::INTER_AREA);
 
-  // Compute the residuals by comparing.
+  // Compute the residuals by comparing pixel values.
   const int num_pixels = image_size_.width * image_size_.height;
   std::vector<double> residuals;
   residuals.reserve(num_pixels);
   for (int i = 0; i < num_pixels; ++i) {
+    // Pixel value is taken at channel 0 of the degraded_hr_image because the
+    // hr images are estimated one channel at a time; hence, there is only one
+    // channel in the estimated HR image.
     const double difference =
-        degraded_hr_image.GetPixelValue(0, i) -  // TODO: channel 0 hardcoded
+        degraded_hr_image.GetPixelValue(0, i) -
         observations_.at(image_index).GetPixelValue(channel_index, i);
     residuals.push_back(difference);
   }

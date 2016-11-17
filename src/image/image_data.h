@@ -41,6 +41,14 @@ class ImageData {
   // be the case.
   ImageData(const cv::Mat& image, const bool normalize);
 
+  // Builds the ImageData directly from the given pixel value array, so the
+  // user doesn't have to explicitly build a cv::Mat beforehand. The number of
+  // pixels must match the given size width * height.
+  //
+  // This constructor does not adjust the given pixel values in any way, so no
+  // normalization happens.
+  ImageData(const double* pixel_values, const cv::Size& size);
+
   // Appends a channel (band) to the image. Each new channel will be added as
   // the last index. Channel images should be single-band OpenCV images. The
   // added channel must have the same dimensions as the rest of the image.
