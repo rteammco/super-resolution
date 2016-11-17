@@ -31,11 +31,13 @@ class ImageModel {
       std::unique_ptr<DegradationOperator> degradation_operator);
 
   // Apply this forward model to the given image at the given index in the
-  // multiframe sequence. The degraded image is returned.
-  //
-  // TODO: for computational efficiency, there should be a version that
-  // modifies the parameter passed in instead of returning a new ImageData.
+  // multiframe sequence. The degraded image is returned as a new image, with
+  // the original ImageData being unaffected.
   ImageData ApplyModel(const ImageData& image_data, const int index) const;
+
+  // Same as the above ApplyModel, but this version modifies the given
+  // ImageData instead of returning a modified copy.
+  void ApplyModel(ImageData* image_data, const int index) const;
 
   // TODO: This function is yet not fully implemented.
   //

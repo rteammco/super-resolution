@@ -26,6 +26,12 @@ ImageData ImageModel::ApplyModel(
   return degraded_image;
 }
 
+void ImageModel::ApplyModel(ImageData* image_data, const int index) const {
+  for (const auto& degradation_operator : degradation_operators_) {
+    degradation_operator->ApplyToImage(image_data, index);
+  }
+}
+
 cv::SparseMat ImageModel::GetModelMatrix(
     const cv::Size& image_size, const int index) const {
 

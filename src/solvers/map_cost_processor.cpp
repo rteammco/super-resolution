@@ -33,9 +33,8 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
   CHECK_NOTNULL(estimated_image_data);
 
   // Degrade (and re-upsample) the HR estimate with the image model.
-  const ImageData hr_image_data(estimated_image_data, image_size_);
-  ImageData degraded_hr_image =
-      image_model_.ApplyModel(hr_image_data, image_index);
+  ImageData degraded_hr_image(estimated_image_data, image_size_);
+  image_model_.ApplyModel(&degraded_hr_image, image_index);
   degraded_hr_image.ResizeImage(image_size_, cv::INTER_AREA);
 
   // Compute the residuals by comparing pixel values.
