@@ -56,20 +56,20 @@ TEST(MapSolver, SmallDataTest) {
       new super_resolution::DownsamplingModule(2));
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
-  /* Verify that the image model produces the correct LR observations. */
-
   const cv::Mat ground_truth_matrix = (cv::Mat_<double>(4, 4)
     << 0.4, 0.2, 0.4, 0.2,
        0.0, 1.0, 0.0, 1.0,
        0.4, 0.2, 0.4, 0.2,
        0.0, 1.0, 0.0, 1.0);
   const ImageData ground_truth_image(ground_truth_matrix);
+
+  /* Verify that the image model produces the correct LR observations. */
+
+  // TODO: remove
   ImageData lr_simulated_1 = image_model.ApplyModel(ground_truth_image, 0);
   ImageData lr_simulated_2 = image_model.ApplyModel(ground_truth_image, 1);
   ImageData lr_simulated_3 = image_model.ApplyModel(ground_truth_image, 2);
   ImageData lr_simulated_4 = image_model.ApplyModel(ground_truth_image, 3);
-
-  // TODO: remove
   //std::cout << lr_simulated_1.GetChannelImage(0) << std::endl;
   //std::cout << lr_simulated_2.GetChannelImage(0) << std::endl;
   //std::cout << lr_simulated_3.GetChannelImage(0) << std::endl;
@@ -84,24 +84,15 @@ TEST(MapSolver, SmallDataTest) {
          0.0, 0.0, 0.0, 0.0,
          0.0, 0.0, 0.0, 0.0,
          0.0, 0.0, 0.0, 0.0);
-      //<< 0.5, 0.5, 0.5, 0.5,
-      //   0.5, 0.5, 0.5, 0.5,
-      //   0.5, 0.5, 0.5, 0.5,
-      //   0.5, 0.5, 0.5, 0.5);
-      //<< 1, 1, 1, 1,
-      //   1, 1, 1, 1,
-      //   1, 1, 1, 1,
-      //   1, 1, 1, 1);
   ImageData initial_estimate(initial_estimate_matrix);
 
-  ImageData result = solver.Solve(initial_estimate);
+  /* Verify solver gets a near-perfect solution for this trivial case. */
 
+  ImageData result = solver.Solve(initial_estimate);
   for (int pixel_index = 0; pixel_index < 16; ++pixel_index) {
     EXPECT_NEAR(
         result.GetPixelValue(0, pixel_index),
         ground_truth_image.GetPixelValue(0, pixel_index),
         kSolverResultErrorTolerance);
   }
-  // TODO: remove
-  //std::cout << result.GetChannelImage(0) << std::endl;
 }

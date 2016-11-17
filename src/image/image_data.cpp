@@ -156,18 +156,13 @@ double ImageData::GetPixelValue(
       image_coordinates.first, image_coordinates.second);
 }
 
-double* ImageData::GetMutableDataPointer(
-    const int channel_index, const int pixel_index) const {
-
+double* ImageData::GetMutableDataPointer(const int channel_index) const {
   CHECK_GE(channel_index, 0) << "Channel index must be at least 0.";
   CHECK_LT(channel_index, channels_.size()) << "Channel index out of bounds.";
-  CHECK_GE(pixel_index, 0) << "Pixel index must be at least 0.";
-  CHECK_LT(pixel_index, GetNumPixels()) << "Pixel index was out of bounds.";
 
   // TODO: verify that this is the correct approach of getting the data array.
   // static_cast doesn't work here because the data is apparently uchar*.
-  double* pixel_data = (double*)(channels_[channel_index].data);  // NOLINT
-  return pixel_data + pixel_index;
+  return (double*)(channels_[channel_index].data);  // NOLINT
 }
 
 cv::Mat ImageData::GetVisualizationImage() const {

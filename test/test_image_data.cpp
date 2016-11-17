@@ -70,21 +70,17 @@ TEST(ImageData, AddAndAccessImageData) {
   }
 
   // Check data pointer access.
-  double* pixel_ptr = image_data.GetMutableDataPointer(0, 0);
+  double* pixel_ptr = image_data.GetMutableDataPointer(0);
   EXPECT_NEAR(pixel_ptr[0], 0.1, kPixelErrorTolerance);
-  pixel_ptr = image_data.GetMutableDataPointer(0, 3);
-  EXPECT_NEAR(pixel_ptr[0], 0.4, kPixelErrorTolerance);
-  pixel_ptr = image_data.GetMutableDataPointer(0, 4);
-  EXPECT_NEAR(pixel_ptr[0], 0.5, kPixelErrorTolerance);
-  pixel_ptr = image_data.GetMutableDataPointer(0, 14);
-  EXPECT_NEAR(pixel_ptr[0], 0.8, kPixelErrorTolerance);
+  EXPECT_NEAR(pixel_ptr[3], 0.4, kPixelErrorTolerance);
+  EXPECT_NEAR(pixel_ptr[4], 0.5, kPixelErrorTolerance);
+  EXPECT_NEAR(pixel_ptr[14], 0.8, kPixelErrorTolerance);
 
   // Check data manipulation through the pointers works as expected.
   // Change all pixel values to 0.33 and expect the image to be updated.
   const double new_pixel_value = 0.33;
   for (int i = 0; i < num_test_rows * num_test_cols; ++i) {
-    pixel_ptr = image_data.GetMutableDataPointer(0, i);
-    pixel_ptr[0] = new_pixel_value;
+    pixel_ptr[i] = new_pixel_value;
   }
   // Check that all returned pixel values are updated.
   for (int i = 0; i < num_test_rows * num_test_cols; ++i) {

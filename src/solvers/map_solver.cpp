@@ -51,9 +51,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
       problem.AddResidualBlock(
           cost_function,
           NULL,  // basic loss
-          // TODO: pointer to the whole image, not one pixel! This will work if
-          // index at 0 though...
-          estimated_image.GetMutableDataPointer(channel_index, 0));
+          estimated_image.GetMutableDataPointer(channel_index));
     }
   }
 
