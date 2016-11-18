@@ -16,6 +16,9 @@ namespace super_resolution {
 
 class DegradationOperator {
  public:
+  // Define virtual destructor so we can mock this class in testing.
+  virtual ~DegradationOperator() {}
+
   // Converts the given kernel to an operator matrix that can be applied to a
   // vectorized version of an image of the given size.
   //

@@ -1,4 +1,5 @@
 #include <iostream> // TODO REMOVE
+#include <memory>
 #include <vector>
 
 #include "image/image_data.h"

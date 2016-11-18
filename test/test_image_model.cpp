@@ -1,4 +1,6 @@
 #include <iostream>
+#include <memory>
+#include <vector>
 
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
@@ -13,12 +15,27 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+using testing::Return;
+
 const cv::Mat kSmallTestImage = (cv::Mat_<double>(4, 6)
     << 1, 2, 3, 4, 5, 6,
        7, 8, 9, 0, 1, 2,
        9, 7, 5, 4, 2, 1,
        2, 4, 6, 8, 0, 1);
 const cv::Size kSmallTestImageSize = cv::Size(6, 4);  // 24 pixels total
+
+// Mock the DegradationOperator
+class MockDegradationOperator : public super_resolution::DegradationOperator {
+ public:
+  // We have to mock this because it's pure virtual.
+  MOCK_CONST_METHOD2(
+      ApplyToImage,
+      void(super_resolution::ImageData* image_data, const int index));
+
+  // Returns a cv::Mat degradation operator in matrix form.
+  MOCK_CONST_METHOD2(
+      GetOperatorMatrix, cv::Mat(const cv::Size& image_size, const int index));
+};
 
 // Returns true if the two given matrices contain identical values.
 // Source:
@@ -184,4 +201,20 @@ TEST(ImageModel, PsfBlurModule) {
 TEST(ImageModel, GetModelMatrix) {
   // TODO: implement, check that the whole ImageModel can return the correct
   // degradation operator matrix.
+  super_resolution::ImageModel image_model;
+  const cv::Size image_size(2, 2);
+
+  const cv::Mat operator_matrix_1 = (cv::Mat_<double>(4, 4)
+      << 0, 0, 0, 0,
+         0, 0, 0, 0,
+         0, 0, 0, 0,
+         0, 0, 0, 0);
+  std::unique_ptr<MockDegradationOperator> mock_operator_1(
+      new MockDegradationOperator());
+  EXPECT_CALL(*mock_operator_1, GetOperatorMatrix(image_size, 0))
+      .WillOnce(Return(operator_matrix_1));
+
+  image_model.AddDegradationOperator(std::move(mock_operator_1));
+  cv::Mat returned_operator_matrix = image_model.GetModelMatrix(image_size, 0);
+  EXPECT_TRUE(AreMatricesEqual(returned_operator_matrix, operator_matrix_1));
 }
