@@ -65,7 +65,8 @@ class ImageData {
       const int interpolation_method = cv::INTER_NEAREST);
 
   // Resizes this image by the given scale factor, in the same manner as
-  // ResizeImage(size). The given scale factor must be larger than 0.
+  // ResizeImage(size). The new dimensions will be (width * scale_factor,
+  // height * scale_factor). The given scale factor must be larger than 0.
   void ResizeImage(
       const double scale_factor,
       const int interpolation_method = cv::INTER_NEAREST);

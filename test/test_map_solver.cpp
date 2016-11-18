@@ -1,4 +1,3 @@
-#include <iostream>  // TODO: remove
 #include <vector>
 
 #include "image/image_data.h"
@@ -11,9 +10,14 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
 using super_resolution::ImageData;
 
 constexpr double kSolverResultErrorTolerance = 0.001;
+
+static const std::string kTestIconPath = "../test_data/fb.png";
 
 TEST(MapSolver, SmallDataTest) {
   // Create the low-res test images.
@@ -40,8 +44,7 @@ TEST(MapSolver, SmallDataTest) {
   super_resolution::ImageModel image_model;
 
   // Add motion:
-  super_resolution::MotionShiftSequence motion_shift_sequence;
-  motion_shift_sequence.SetMotionSequence({
+  super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
     super_resolution::MotionShift(-1, 0),
     super_resolution::MotionShift(0, -1),
@@ -65,16 +68,6 @@ TEST(MapSolver, SmallDataTest) {
 
   /* Verify that the image model produces the correct LR observations. */
 
-  // TODO: remove
-  ImageData lr_simulated_1 = image_model.ApplyModel(ground_truth_image, 0);
-  ImageData lr_simulated_2 = image_model.ApplyModel(ground_truth_image, 1);
-  ImageData lr_simulated_3 = image_model.ApplyModel(ground_truth_image, 2);
-  ImageData lr_simulated_4 = image_model.ApplyModel(ground_truth_image, 3);
-  //std::cout << lr_simulated_1.GetChannelImage(0) << std::endl;
-  //std::cout << lr_simulated_2.GetChannelImage(0) << std::endl;
-  //std::cout << lr_simulated_3.GetChannelImage(0) << std::endl;
-  //std::cout << lr_simulated_4.GetChannelImage(0) << std::endl;
-
   // Create the solver for the model and low-res images.
   super_resolution::MapSolver solver(image_model, low_res_images);
 
@@ -95,4 +88,62 @@ TEST(MapSolver, SmallDataTest) {
         ground_truth_image.GetPixelValue(0, pixel_index),
         kSolverResultErrorTolerance);
   }
+}
+
+TEST(MapSolver, RealIconDataTest) {
+  const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
+  const ImageData ground_truth(image);
+
+  // Build the image model.
+  super_resolution::ImageModel image_model;
+
+  // Motion.
+  super_resolution::MotionShiftSequence motion_shift_sequence({
+    super_resolution::MotionShift(0, 0),
+    super_resolution::MotionShift(-1, 0),
+    super_resolution::MotionShift(0, -1),
+    super_resolution::MotionShift(-1, -1)
+  });
+  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
+      new super_resolution::MotionModule(motion_shift_sequence));
+  image_model.AddDegradationOperator(std::move(motion_module));
+
+  // Blur. TODO!
+  // image_model.AddDegradationOperator(blur_module);
+
+  // 2x downsampling.
+  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
+      new super_resolution::DownsamplingModule(2));
+  image_model.AddDegradationOperator(std::move(downsampling_module));
+
+  // Generate the low-res images using the image model.
+  std::vector<ImageData> low_res_images {
+    image_model.ApplyModel(ground_truth, 0),
+    image_model.ApplyModel(ground_truth, 1),
+    image_model.ApplyModel(ground_truth, 2),
+    image_model.ApplyModel(ground_truth, 3)
+  };
+
+  // Set the initial estimate as the upsampling of the referece image, in this
+  // case lr_image_1, since it has no motion shift.
+  ImageData initial_estimate = low_res_images[0];
+  initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
+  
+  // Create the solver and attempt to solve.
+  super_resolution::MapSolver solver(image_model, low_res_images);
+  ImageData result = solver.Solve(initial_estimate);
+
+  ImageData disp_lr_1 = low_res_images[0];
+  disp_lr_1.ResizeImage(cv::Size(1024, 1024));
+  cv::imshow("upsampled lr 1", disp_lr_1.GetVisualizationImage());
+
+  ImageData disp_ground_truth = ground_truth;
+  disp_ground_truth.ResizeImage(cv::Size(1024, 1024));
+  cv::imshow("ground truth", disp_ground_truth.GetVisualizationImage());
+
+  ImageData disp_result = result;
+  disp_result.ResizeImage(cv::Size(1024, 1024));
+  cv::imshow("super-resolved", disp_result.GetVisualizationImage());
+
+  cv::waitKey(0);
 }
