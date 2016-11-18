@@ -2,7 +2,10 @@
 
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
+#include "image_model/motion_module.h"
 #include "image_model/psf_blur_module.h"
+#include "motion/motion_shift.h"
+#include "util/util.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -106,7 +109,72 @@ TEST(ImageModel, DownsamplingModule) {
 }
 
 TEST(ImageModel, MotionModule) {
-  // TODO: implement
+  super_resolution::MotionShiftSequence motion_shift_sequence({
+    super_resolution::MotionShift(0, 0),
+    super_resolution::MotionShift(1, 1),
+    super_resolution::MotionShift(-1, 0)
+  });
+  const super_resolution::MotionModule motion_module(motion_shift_sequence);
+
+  // Trivial case: MotionShift(0, 0) should be the identity.
+  const cv::Size image_size(3, 3);
+  const cv::Mat motion_matrix_1 =
+      motion_module.GetOperatorMatrix(image_size, 0);
+  const cv::Mat expected_matrix_1 =
+      cv::Mat::eye(9, 9, super_resolution::util::kOpenCvMatrixType);
+  EXPECT_TRUE(AreMatricesEqual(motion_matrix_1, expected_matrix_1));
+
+  // MotionShift(1, 1) should shift every pixel down and to the right, leaving
+  // pixel indices 0, 1, 2, 3, and 6 empty:
+  //
+  //   | a | b | c |      |   |   |   |
+  //   | d | e | f |  =>  |   | a | b |
+  //   | g | h | i |      |   | d | e |
+  //
+  // Hence, given row-first indexing:
+  //   'a' moves from index 0 to 4,
+  //   'b' moves from index 1 to 5,
+  //   'd' moves from index 3 to 7, and
+  //   'a' moves from index 4 to 8.
+  //
+  // The operation matrix represents the pixel value of the output at each
+  // pixel index by row; this rows 0, 1, 2, 3, and 6 are all 0 as they map to
+  // no pixels in the original image. Row 4 has a 1 in column 0 so it gets
+  // the pixel value at index 0 of the original image, and so on.
+  const cv::Mat expected_matrix_2 = (cv::Mat_<double>(9, 9)
+      << 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0,
+         1, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 1, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 1, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 1, 0, 0, 0, 0);
+  const cv::Mat motion_matrix_2 =
+      motion_module.GetOperatorMatrix(image_size, 1);
+  EXPECT_TRUE(AreMatricesEqual(motion_matrix_2, expected_matrix_2));
+
+  // MotionShift(-1, 0) shifts the X axis (columns) by -1 as follows:
+  //
+  //   | a | b | c |      | b | c |   |
+  //   | d | e | f |  =>  | e | f |   |
+  //   | g | h | i |      | h | i |   |
+  //
+  // Thus, the expected matrix is as follows:
+  const cv::Mat expected_matrix_3 = (cv::Mat_<double>(9, 9)
+      << 0, 1, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 1, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 1, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 1, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 1, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 1,
+         0, 0, 0, 0, 0, 0, 0, 0, 0);
+  const cv::Mat motion_matrix_3 =
+      motion_module.GetOperatorMatrix(image_size, 2);
+  EXPECT_TRUE(AreMatricesEqual(motion_matrix_3, expected_matrix_3));
 }
 
 TEST(ImageModel, PsfBlurModule) {

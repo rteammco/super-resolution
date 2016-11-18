@@ -25,12 +25,26 @@ void MotionModule::ApplyToImage(ImageData* image_data, const int index) const {
   }
 }
 
-cv::Mat MotionModule::GetOperationMatrix(
+cv::Mat MotionModule::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 
-  // TODO: implement.
   const int num_pixels = image_size.width * image_size.height;
-  return cv::Mat::zeros(num_pixels, num_pixels, util::kOpenCvMatrixType);
+  cv::Mat motion_matrix =
+      cv::Mat::zeros(num_pixels, num_pixels, util::kOpenCvMatrixType);
+  const MotionShift motion_shift = motion_shift_sequence_[index];
+  for (int row = 0; row < image_size.height; ++row) {
+    for (int col = 0; col < image_size.width; ++col) {
+      const int shifted_row = row - motion_shift.dy;
+      const int shifted_col = col - motion_shift.dx;
+      if (shifted_row >= 0 && shifted_row < image_size.height &&
+          shifted_col >= 0 && shifted_col < image_size.width) {
+        const int index = row * image_size.width + col;
+        const int shifted_index = shifted_row * image_size.width + shifted_col;
+        motion_matrix.at<double>(index, shifted_index) = 1;
+      }
+    }
+  }
+  return motion_matrix;
 }
 
 }  // namespace super_resolution

@@ -18,6 +18,8 @@ using super_resolution::ImageData;
 
 constexpr double kSolverResultErrorTolerance = 0.001;
 
+// NOTE: this image cannot exceed 30x30 because of limitations with computing
+// the degradation matrices.
 static const std::string kTestIconPath = "../test_data/fb.png";
 
 TEST(MapSolver, SmallDataTest) {
@@ -101,9 +103,9 @@ TEST(MapSolver, RealIconDataTest) {
   // Motion.
   super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
-    super_resolution::MotionShift(-1, 0),
-    super_resolution::MotionShift(0, -1),
-    super_resolution::MotionShift(-1, -1)
+    super_resolution::MotionShift(1, 0),
+    super_resolution::MotionShift(0, 1),
+    super_resolution::MotionShift(1, 1)
   });
   std::unique_ptr<super_resolution::DegradationOperator> motion_module(
       new super_resolution::MotionModule(motion_shift_sequence));
