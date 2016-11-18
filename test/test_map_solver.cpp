@@ -1,5 +1,6 @@
 #include <iostream> // TODO REMOVE
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "image/image_data.h"
@@ -132,7 +133,7 @@ TEST(MapSolver, RealIconDataTest) {
   // case lr_image_1, since it has no motion shift.
   ImageData initial_estimate = low_res_images[0];
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
-  
+
   // Create the solver and attempt to solve.
   //TODO put back
   //super_resolution::MapSolver solver(image_model, low_res_images);

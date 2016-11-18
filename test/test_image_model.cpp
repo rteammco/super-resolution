@@ -199,8 +199,6 @@ TEST(ImageModel, PsfBlurModule) {
 }
 
 TEST(ImageModel, GetModelMatrix) {
-  // TODO: implement, check that the whole ImageModel can return the correct
-  // degradation operator matrix.
   super_resolution::ImageModel image_model;
   const cv::Size image_size(2, 2);
 
@@ -233,15 +231,15 @@ TEST(ImageModel, GetModelMatrix) {
   EXPECT_CALL(*mock_operator_3, GetOperatorMatrix(image_size, 0))
       .WillOnce(Return(operator_matrix_3));
 
+  image_model.AddDegradationOperator(std::move(mock_operator_1));
+  image_model.AddDegradationOperator(std::move(mock_operator_2));
+  image_model.AddDegradationOperator(std::move(mock_operator_3));
+
   // op3 * (op2 * op1)
   const cv::Mat expected_result = (cv::Mat_<double>(3, 4)
       << 13, 6, 4, 7,
           8, 4, 6, 8,
           0, 0, 0, 0);
-
-  image_model.AddDegradationOperator(std::move(mock_operator_1));
-  image_model.AddDegradationOperator(std::move(mock_operator_2));
-  image_model.AddDegradationOperator(std::move(mock_operator_3));
   cv::Mat returned_operator_matrix = image_model.GetModelMatrix(image_size, 0);
   EXPECT_TRUE(AreMatricesEqual(returned_operator_matrix, expected_result));
 }
