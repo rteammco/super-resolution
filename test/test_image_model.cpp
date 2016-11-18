@@ -205,16 +205,43 @@ TEST(ImageModel, GetModelMatrix) {
   const cv::Size image_size(2, 2);
 
   const cv::Mat operator_matrix_1 = (cv::Mat_<double>(4, 4)
-      << 0, 0, 0, 0,
-         0, 0, 0, 0,
-         0, 0, 0, 0,
-         0, 0, 0, 0);
+      << 0, 0, 0, -3,
+         4, 3, 2, 1,
+         3, 1, 4, 9,
+         1, 0, 0, 1);
   std::unique_ptr<MockDegradationOperator> mock_operator_1(
       new MockDegradationOperator());
   EXPECT_CALL(*mock_operator_1, GetOperatorMatrix(image_size, 0))
       .WillOnce(Return(operator_matrix_1));
 
+  const cv::Mat operator_matrix_2 = (cv::Mat_<double>(4, 4)
+      << 0, 2, 0, 5,
+         1, 1, 1, 1,
+         0, 0, 0, 0,
+         1, 2, 3, -4);
+  std::unique_ptr<MockDegradationOperator> mock_operator_2(
+      new MockDegradationOperator());
+  EXPECT_CALL(*mock_operator_2, GetOperatorMatrix(image_size, 0))
+      .WillOnce(Return(operator_matrix_2));
+
+  const cv::Mat operator_matrix_3 = (cv::Mat_<double>(3, 4)
+      << 1, 0, 0, 0,
+         0, 1, 0, 0,
+         0, 0, 1, 0);
+  std::unique_ptr<MockDegradationOperator> mock_operator_3(
+      new MockDegradationOperator());
+  EXPECT_CALL(*mock_operator_3, GetOperatorMatrix(image_size, 0))
+      .WillOnce(Return(operator_matrix_3));
+
+  // op3 * (op2 * op1)
+  const cv::Mat expected_result = (cv::Mat_<double>(3, 4)
+      << 13, 6, 4, 7,
+          8, 4, 6, 8,
+          0, 0, 0, 0);
+
   image_model.AddDegradationOperator(std::move(mock_operator_1));
+  image_model.AddDegradationOperator(std::move(mock_operator_2));
+  image_model.AddDegradationOperator(std::move(mock_operator_3));
   cv::Mat returned_operator_matrix = image_model.GetModelMatrix(image_size, 0);
-  EXPECT_TRUE(AreMatricesEqual(returned_operator_matrix, operator_matrix_1));
+  EXPECT_TRUE(AreMatricesEqual(returned_operator_matrix, expected_result));
 }
