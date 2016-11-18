@@ -1,3 +1,4 @@
+#include <iostream> // TODO REMOVE
 #include <vector>
 
 #include "image/image_data.h"
@@ -130,20 +131,58 @@ TEST(MapSolver, RealIconDataTest) {
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
   
   // Create the solver and attempt to solve.
-  super_resolution::MapSolver solver(image_model, low_res_images);
-  ImageData result = solver.Solve(initial_estimate);
+  //TODO put back
+  //super_resolution::MapSolver solver(image_model, low_res_images);
+  //ImageData result = solver.Solve(initial_estimate);
 
-  ImageData disp_lr_1 = low_res_images[0];
-  disp_lr_1.ResizeImage(cv::Size(1024, 1024));
-  cv::imshow("upsampled lr 1", disp_lr_1.GetVisualizationImage());
+  // Compare to a solution using the matrix formulation.
+  const cv::Size image_size = ground_truth.GetImageSize();
+  cv::Mat A1 = image_model.GetModelMatrix(image_size, 0);
+  cv::Mat A2 = image_model.GetModelMatrix(image_size, 1);
+  cv::Mat A3 = image_model.GetModelMatrix(image_size, 2);
+  cv::Mat A4 = image_model.GetModelMatrix(image_size, 3);
+  std::cout << "Get Model matrices done" << std::endl;
+  std::cout << A1 << std::endl;
 
-  ImageData disp_ground_truth = ground_truth;
-  disp_ground_truth.ResizeImage(cv::Size(1024, 1024));
-  cv::imshow("ground truth", disp_ground_truth.GetVisualizationImage());
+  // Linear system: x = Z^ * b, and thus Zx = b.
+  // x = sum(A'A)^ * sum(A'y) (' is transpose, ^ is inverse).
+  cv::Mat Z = A1.t() * A1;
+  Z += A2.t() * A2;
+  Z += A3.t() * A3;
+  Z += A4.t() * A4;
+  // TODO: Z += regularization term
+  std::cout << "Compute Z done" << std::endl;
+  std::cout << Z << std::endl;
 
-  ImageData disp_result = result;
-  disp_result.ResizeImage(cv::Size(1024, 1024));
-  cv::imshow("super-resolved", disp_result.GetVisualizationImage());
+  const int num_pixels = (image_size.width * image_size.height) / 4;
+  cv::Mat b =
+      A1.t() * low_res_images[0].GetChannelImage(0).reshape(1, num_pixels);
+  b +=  A2.t() * low_res_images[1].GetChannelImage(0).reshape(1, num_pixels);
+  b +=  A3.t() * low_res_images[2].GetChannelImage(0).reshape(1, num_pixels);
+  b +=  A4.t() * low_res_images[3].GetChannelImage(0).reshape(1, num_pixels);
+  std::cout << "Compute b done" << std::endl;
+  std::cout << b << std::endl;
+
+  cv::Mat x = Z.inv() * b;
+  std::cout << "Compute x done" << std::endl;
+  x = x.reshape(1, image_size.height);
+  std::cout << x << std::endl;
+
+  ImageData disp_x(x);
+  disp_x.ResizeImage(cv::Size(1024, 1024));
+  cv::imshow("x", disp_x.GetVisualizationImage());
+
+//  ImageData disp_lr_1 = low_res_images[0];
+//  disp_lr_1.ResizeImage(cv::Size(1024, 1024));
+//  cv::imshow("upsampled lr 1", disp_lr_1.GetVisualizationImage());
+//
+//  ImageData disp_ground_truth = ground_truth;
+//  disp_ground_truth.ResizeImage(cv::Size(1024, 1024));
+//  cv::imshow("ground truth", disp_ground_truth.GetVisualizationImage());
+//
+//  ImageData disp_result = result;
+//  disp_result.ResizeImage(cv::Size(1024, 1024));
+//  cv::imshow("super-resolved", disp_result.GetVisualizationImage());
 
   cv::waitKey(0);
 }
