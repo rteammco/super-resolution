@@ -1,4 +1,3 @@
-#include <iostream> // TODO REMOVE
 #include <memory>
 #include <string>
 #include <vector>
@@ -9,6 +8,7 @@
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
 #include "solvers/map_solver.h"
+#include "util/test_util.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -17,6 +17,7 @@
 #include "opencv2/highgui/highgui.hpp"
 
 using super_resolution::ImageData;
+using super_resolution::test::AreMatricesEqual;
 
 constexpr double kSolverResultErrorTolerance = 0.001;
 
@@ -137,7 +138,7 @@ TEST(MapSolver, RealIconDataTest) {
   // Create the solver and attempt to solve.
   //TODO put back
   super_resolution::MapSolver solver(image_model, low_res_images);
-  ImageData result = solver.Solve(initial_estimate);
+  const ImageData solver_result = solver.Solve(initial_estimate);
 
   // Compare to a solution using the matrix formulation.
   const cv::Size image_size = ground_truth.GetImageSize();
@@ -145,8 +146,6 @@ TEST(MapSolver, RealIconDataTest) {
   cv::Mat A2 = image_model.GetModelMatrix(image_size, 1);
   cv::Mat A3 = image_model.GetModelMatrix(image_size, 2);
   cv::Mat A4 = image_model.GetModelMatrix(image_size, 3);
-  std::cout << "Get Model matrices done" << std::endl;
-  //std::cout << A1 << std::endl;
 
   // Linear system: x = Z^ * b, and thus Zx = b.
   // x = sum(A'A)^ * sum(A'y) (' is transpose, ^ is inverse).
@@ -155,8 +154,6 @@ TEST(MapSolver, RealIconDataTest) {
   Z += A3.t() * A3;
   Z += A4.t() * A4;
   // TODO: Z += regularization term
-  std::cout << "Compute Z done" << std::endl;
-  //std::cout << Z << std::endl;
 
   const int num_pixels = (image_size.width * image_size.height) / 4;
   cv::Mat b =
@@ -164,20 +161,13 @@ TEST(MapSolver, RealIconDataTest) {
   b +=  A2.t() * low_res_images[1].GetChannelImage(0).reshape(1, num_pixels);
   b +=  A3.t() * low_res_images[2].GetChannelImage(0).reshape(1, num_pixels);
   b +=  A4.t() * low_res_images[3].GetChannelImage(0).reshape(1, num_pixels);
-  std::cout << "Compute b done" << std::endl;
-  //std::cout << b << std::endl;
 
   cv::Mat Zinv = Z.inv(cv::DECOMP_SVD);
-  std::cout << "Z inverted" << std::endl;
-  //std::cout << Zinv << std::endl;
+  cv::Mat matrix_result = Zinv * b;
+  matrix_result = matrix_result.reshape(1, image_size.height);
 
-  cv::Mat x = Zinv * b;
-  std::cout << "Compute x done" << std::endl;
-  x = x.reshape(1, image_size.height);
-  //std::cout << x << std::endl;
-
-  const cv::Size disp_size(840, 840);
-  ImageData disp_x(x);
+/*  const cv::Size disp_size(840, 840);
+  ImageData disp_x(matrix_result);
   disp_x.ResizeImage(disp_size);
   cv::imshow("x", disp_x.GetVisualizationImage());
 
@@ -189,9 +179,10 @@ TEST(MapSolver, RealIconDataTest) {
   disp_ground_truth.ResizeImage(disp_size);
   cv::imshow("ground truth", disp_ground_truth.GetVisualizationImage());
 
-  ImageData disp_result = result;
+  ImageData disp_result = solver_result;
   disp_result.ResizeImage(disp_size);
   cv::imshow("super-resolved", disp_result.GetVisualizationImage());
 
   cv::waitKey(0);
+  */
 }

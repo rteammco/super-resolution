@@ -5,6 +5,13 @@ project(SuperResolution)
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
 
+# Try to use OpenMP if possible for parallelization.
+find_package(OpenMP)
+if (OPENMP_FOUND)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
