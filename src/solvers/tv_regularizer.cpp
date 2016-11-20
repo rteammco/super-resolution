@@ -12,8 +12,7 @@ std::vector<double> TotalVariationRegularizer::ComputeResiduals(
 
   CHECK_NOTNULL(image_data);
 
-  std::vector<double> residuals;
-  residuals.reserve(image_size_.width * image_size_.height);
+  std::vector<double> residuals(image_size_.width * image_size_.height);
   for (int row = 0; row < image_size_.height; ++row) {
     for (int col = 0; col < image_size_.width; ++col) {
       const int index = row * image_size_.width + col;
