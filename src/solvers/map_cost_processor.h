@@ -7,10 +7,12 @@
 #ifndef SRC_SOLVERS_MAP_COST_PROCESSOR_H_
 #define SRC_SOLVERS_MAP_COST_PROCESSOR_H_
 
+#include <memory>
 #include <vector>
 
 #include "image/image_data.h"
 #include "image_model/image_model.h"
+#include "solvers/regularizer.h"
 
 #include "opencv2/core/core.hpp"
 
@@ -24,7 +26,8 @@ class MapCostProcessor {
   MapCostProcessor(
       const std::vector<ImageData>& low_res_images,
       const ImageModel& image_model,
-      const cv::Size& image_size);
+      const cv::Size& image_size,
+      std::unique_ptr<Regularizer> regularizer);
 
   // Compares the given high-resolution image to the low-resolution image of
   // the given index (and channel) by applying the ImageModel to the HR image.
@@ -38,13 +41,9 @@ class MapCostProcessor {
   // Computes the regularization term residuals at each pixel of the given HR
   // image.
   //
-  // TODO: the regularization operator should be given as a parameter to the
-  // MapCostProcessor object.
-  //
   // TODO: this part possibly incorporates the W matrix (weights), which needs
   // to be updated at each iteration.
   std::vector<double> ComputeRegularizationResiduals(
-      const int channel_index,
       const double* estimated_image_data) const;
 
  private:
@@ -57,6 +56,10 @@ class MapCostProcessor {
 
   // The dimensions (width, height) of the high-resoltion image.
   const cv::Size& image_size_;
+
+  // The regularization term of the cost function, used in the
+  // ComputeRegularizationResiduals function.
+  const std::unique_ptr<Regularizer> regularizer_;
 };
 
 }  // namespace super_resolution

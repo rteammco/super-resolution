@@ -1,11 +1,14 @@
 #include "solvers/map_solver.h"
 
 #include <iostream>
+#include <memory>
 #include <vector>
 
 #include "image/image_data.h"
 #include "solvers/map_data_cost_functor.h"
 #include "solvers/map_cost_processor.h"
+#include "solvers/regularizer.h"
+#include "solvers/tv_regularizer.h"
 
 #include "opencv2/core/core.hpp"
 
@@ -34,8 +37,10 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
 
   const cv::Size hr_image_size = initial_estimate.GetImageSize();
   const int num_hr_pixels = initial_estimate.GetNumPixels();
+  std::unique_ptr<Regularizer> regularizer(
+      new TotalVariationRegularizer(0.1, hr_image_size));
   const MapCostProcessor map_cost_processor(
-      low_res_images_, image_model_, hr_image_size);
+      low_res_images_, image_model_, hr_image_size, std::move(regularizer));
 
   ImageData estimated_image = initial_estimate;
 

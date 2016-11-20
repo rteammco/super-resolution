@@ -1,7 +1,10 @@
+#include <memory>
 #include <vector>
 
 #include "image/image_data.h"
 #include "solvers/map_cost_processor.h"
+#include "solvers/regularizer.h"
+#include "solvers/tv_regularizer.h"
 
 #include "opencv2/core/core.hpp"
 
@@ -38,8 +41,10 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
   };
 
   super_resolution::ImageModel empty_image_model;
+  std::unique_ptr<super_resolution::Regularizer> regularizer(
+      new super_resolution::TotalVariationRegularizer(0.0, image_size));
   super_resolution::MapCostProcessor map_cost_processor(
-      low_res_images, empty_image_model, image_size);
+      low_res_images, empty_image_model, image_size, std::move(regularizer));
 
   const double hr_pixel_values[9] = {
     0.5, 0.5, 0.5,

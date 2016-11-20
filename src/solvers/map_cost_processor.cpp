@@ -1,9 +1,11 @@
 #include "solvers/map_cost_processor.h"
 
+#include <memory>
 #include <vector>
 
 #include "image/image_data.h"
 #include "image_model/image_model.h"
+#include "solvers/regularizer.h"
 #include "util/util.h"
 
 #include "opencv2/core/core.hpp"
@@ -15,8 +17,11 @@ namespace super_resolution {
 MapCostProcessor::MapCostProcessor(
     const std::vector<ImageData>& low_res_images,
     const ImageModel& image_model,
-    const cv::Size& image_size)
-    : image_model_(image_model), image_size_(image_size) {
+    const cv::Size& image_size,
+    std::unique_ptr<Regularizer> regularizer)
+    : image_model_(image_model),
+      image_size_(image_size),
+      regularizer_(std::move(regularizer)) {
 
   for (const ImageData& low_res_image : low_res_images) {
     ImageData observation = low_res_image;  // copy
@@ -54,19 +59,11 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
 }
 
 std::vector<double> MapCostProcessor::ComputeRegularizationResiduals(
-    const int channel_index,
     const double* estimated_image_data) const {
 
   CHECK_NOTNULL(estimated_image_data);
-
-  // TODO: implement
-  const int num_pixels = image_size_.width * image_size_.height;
-  std::vector<double> residuals;
-  residuals.reserve(num_pixels);
-  for (int i = 0; i < num_pixels; ++i) {
-    residuals.push_back(0);
-  }
-  return residuals;
+  // TODO: don't just return residuals, but multiply them by the W weights!
+  return regularizer_->ComputeResiduals(estimated_image_data);
 }
 
 }  // namespace super_resolution
