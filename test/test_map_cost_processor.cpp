@@ -4,18 +4,28 @@
 #include "image/image_data.h"
 #include "solvers/map_cost_processor.h"
 #include "solvers/regularizer.h"
-#include "solvers/tv_regularizer.h"
 
 #include "opencv2/core/core.hpp"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+using testing::ContainerEq;
 using testing::Each;
 using testing::ElementsAre;
+using testing::Return;
 using testing::SizeIs;
 
-// Verifies that the correct residuals are returned for an image.
+class MockRegularizer : public super_resolution::Regularizer {
+ public:
+  // Handle super constructor, since we don't need the image_size_ field.
+  MockRegularizer() : super_resolution::Regularizer(cv::Size(0, 0)) {}
+
+  MOCK_CONST_METHOD1(
+      ComputeResiduals, std::vector<double>(const double* image_data));
+};
+
+// Verifies that the correct data term residuals are returned for an image.
 TEST(MapCostProcessor, ComputeDataTermResiduals) {
   const cv::Size image_size(3, 3);
   const cv::Mat lr_channel_1 = (cv::Mat_<double>(3, 3)
@@ -42,7 +52,7 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
 
   super_resolution::ImageModel empty_image_model;
   std::unique_ptr<super_resolution::Regularizer> regularizer(
-      new super_resolution::TotalVariationRegularizer(image_size));
+      new MockRegularizer());
   super_resolution::MapCostProcessor map_cost_processor(
       low_res_images,
       empty_image_model,
@@ -78,4 +88,31 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
 
   // TODO: Mock the ImageModel and make sure the residuals are computed
   // correctly if the HR image is degraded first.
+}
+
+// Verifies that the correct regularization residuals are returned for an
+// image.  This test does not cover regularization operators; instead, it tests
+// the MapCostProcessor with a mock Regularizer.
+TEST(MapCostProcessor, ComputeRegularizationResiduals) {
+  std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
+  const double image_data[5] = {1, 2, 3, 4, 5};
+  const std::vector<double> residuals = {1, 2, 3, 4, 5};
+  EXPECT_CALL(*mock_regularizer, ComputeResiduals(image_data))
+      .WillOnce(Return(residuals));
+
+  // TODO: this should weight the residuals appropriately. Test it once that is
+  // implemented.
+  std::vector<super_resolution::ImageData> empty_image_vector;
+  super_resolution::ImageModel empty_image_model;
+  super_resolution::MapCostProcessor map_cost_processor(
+      empty_image_vector,
+      empty_image_model,
+      cv::Size(0, 0),
+      std::move(mock_regularizer),
+      0.0);  // TODO: test with this regularization parameter.
+  
+  const std::vector<double> expected_residuals = {1, 2, 3, 4, 5};
+  const std::vector<double> returned_residuals =
+      map_cost_processor.ComputeRegularizationResiduals(image_data);
+  EXPECT_THAT(returned_residuals, ContainerEq(expected_residuals));
 }
