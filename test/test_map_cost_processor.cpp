@@ -44,7 +44,11 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
   std::unique_ptr<super_resolution::Regularizer> regularizer(
       new super_resolution::TotalVariationRegularizer(image_size));
   super_resolution::MapCostProcessor map_cost_processor(
-      low_res_images, empty_image_model, image_size, std::move(regularizer));
+      low_res_images,
+      empty_image_model,
+      image_size,
+      std::move(regularizer),
+      0.0);  // TODO: test with regularizer applied (lambda > 0).
 
   const double hr_pixel_values[9] = {
     0.5, 0.5, 0.5,

@@ -18,10 +18,12 @@ MapCostProcessor::MapCostProcessor(
     const std::vector<ImageData>& low_res_images,
     const ImageModel& image_model,
     const cv::Size& image_size,
-    std::unique_ptr<Regularizer> regularizer)
+    std::unique_ptr<Regularizer> regularizer,
+    const double regularization_parameter)
     : image_model_(image_model),
       image_size_(image_size),
-      regularizer_(std::move(regularizer)) {
+      regularizer_(std::move(regularizer)),
+      regularization_parameter_(regularization_parameter) {
 
   for (const ImageData& low_res_image : low_res_images) {
     ImageData observation = low_res_image;  // copy
@@ -62,8 +64,9 @@ std::vector<double> MapCostProcessor::ComputeRegularizationResiduals(
     const double* estimated_image_data) const {
 
   CHECK_NOTNULL(estimated_image_data);
+
   // TODO: don't just return residuals, but multiply them by the W weights and
-  // the regularization parameter (lambda)!
+  // the regularization parameter (lambda) (regularization_parameter_)!
   return regularizer_->ComputeResiduals(estimated_image_data);
 }
 

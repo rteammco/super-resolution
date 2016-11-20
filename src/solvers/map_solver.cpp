@@ -40,7 +40,11 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   std::unique_ptr<Regularizer> regularizer(
       new TotalVariationRegularizer(hr_image_size));
   const MapCostProcessor map_cost_processor(
-      low_res_images_, image_model_, hr_image_size, std::move(regularizer));
+      low_res_images_,
+      image_model_,
+      hr_image_size,
+      std::move(regularizer),
+      0.0);  // TODO: (lambda) this should be passed in as a user option.
 
   ImageData estimated_image = initial_estimate;
 

@@ -23,13 +23,12 @@ class MapCostProcessor {
   // Stores all of the given parameters. For the given low-resolution images,
   // copies them and stores resized versions to match the high-resolution image
   // size for residual computations at each HR pixel.
-  //
-  // TODO: regularization parameter should be given here.
   MapCostProcessor(
       const std::vector<ImageData>& low_res_images,
       const ImageModel& image_model,
       const cv::Size& image_size,
-      std::unique_ptr<Regularizer> regularizer);
+      std::unique_ptr<Regularizer> regularizer,
+      const double regularization_parameter);
 
   // Compares the given high-resolution image to the low-resolution image of
   // the given index (and channel) by applying the ImageModel to the HR image.
@@ -60,8 +59,10 @@ class MapCostProcessor {
   const cv::Size& image_size_;
 
   // The regularization term of the cost function, used in the
-  // ComputeRegularizationResiduals function.
+  // ComputeRegularizationResiduals function. The regularization parameter is
+  // non-negative, but may be 0.
   const std::unique_ptr<Regularizer> regularizer_;
+  const double regularization_parameter_;
 };
 
 }  // namespace super_resolution
