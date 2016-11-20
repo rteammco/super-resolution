@@ -38,7 +38,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const cv::Size hr_image_size = initial_estimate.GetImageSize();
   const int num_hr_pixels = initial_estimate.GetNumPixels();
   std::unique_ptr<Regularizer> regularizer(
-      new TotalVariationRegularizer(0.1, hr_image_size));
+      new TotalVariationRegularizer(hr_image_size));
   const MapCostProcessor map_cost_processor(
       low_res_images_, image_model_, hr_image_size, std::move(regularizer));
 

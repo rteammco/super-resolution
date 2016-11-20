@@ -42,7 +42,7 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
 
   super_resolution::ImageModel empty_image_model;
   std::unique_ptr<super_resolution::Regularizer> regularizer(
-      new super_resolution::TotalVariationRegularizer(0.0, image_size));
+      new super_resolution::TotalVariationRegularizer(image_size));
   super_resolution::MapCostProcessor map_cost_processor(
       low_res_images, empty_image_model, image_size, std::move(regularizer));
 

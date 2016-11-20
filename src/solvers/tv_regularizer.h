@@ -1,4 +1,7 @@
-// The total variation regularization term.
+// The total variation regularization cost implementation. Total variation is
+// effectively defined as the gradient value at each pixel. Its purpose is to
+// add denoising by imposing smoothness in the estimated image (smaller changes
+// between neighrboing pixels in the x and y directions).
 
 #ifndef SRC_SOLVERS_TV_REGULARIZER_H_
 #define SRC_SOLVERS_TV_REGULARIZER_H_
@@ -13,13 +16,11 @@ namespace super_resolution {
 
 class TotalVariationRegularizer : public Regularizer {
  public:
-  TotalVariationRegularizer(const double lambda, const cv::Size& image_size);
+  using Regularizer::Regularizer;  // Inherit Regularizer constructor.
 
+  // Implementation of total variation regularization.
   virtual std::vector<double> ComputeResiduals(
       const double* image_data) const;
-
- private:
-  const cv::Size image_size_;
 };
 
 }  // namespace super_resolution

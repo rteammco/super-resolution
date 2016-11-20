@@ -23,6 +23,8 @@ class MapCostProcessor {
   // Stores all of the given parameters. For the given low-resolution images,
   // copies them and stores resized versions to match the high-resolution image
   // size for residual computations at each HR pixel.
+  //
+  // TODO: regularization parameter should be given here.
   MapCostProcessor(
       const std::vector<ImageData>& low_res_images,
       const ImageModel& image_model,

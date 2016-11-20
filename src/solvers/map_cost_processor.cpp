@@ -62,7 +62,8 @@ std::vector<double> MapCostProcessor::ComputeRegularizationResiduals(
     const double* estimated_image_data) const {
 
   CHECK_NOTNULL(estimated_image_data);
-  // TODO: don't just return residuals, but multiply them by the W weights!
+  // TODO: don't just return residuals, but multiply them by the W weights and
+  // the regularization parameter (lambda)!
   return regularizer_->ComputeResiduals(estimated_image_data);
 }
 
