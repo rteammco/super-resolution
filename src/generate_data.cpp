@@ -8,6 +8,7 @@
 
 #include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
+#include "image_model/degradation_operator.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
