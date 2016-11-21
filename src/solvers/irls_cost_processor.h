@@ -1,11 +1,11 @@
 // This object provides functionality for doing the actual computation of the
-// MAP objective function. It handles all of the image processing and
-// application of the ImageModel to the high-resolution estimates. This class
-// acts as an interface between the OpenCV image processing code and the Ceres
-// solver code.
+// MAP objective function using the iteratively reweighted least squares (IRLS)
+// formulation. It handles all of the image processing and application of the
+// ImageModel to the high-resolution estimates. This class acts as an interface
+// between the OpenCV image processing code and the Ceres solver code.
 
-#ifndef SRC_SOLVERS_MAP_COST_PROCESSOR_H_
-#define SRC_SOLVERS_MAP_COST_PROCESSOR_H_
+#ifndef SRC_SOLVERS_IRLS_COST_PROCESSOR_H_
+#define SRC_SOLVERS_IRLS_COST_PROCESSOR_H_
 
 #include <memory>
 #include <vector>
@@ -18,7 +18,7 @@
 
 namespace super_resolution {
 
-class MapCostProcessor {
+class IrlsCostProcessor {
  public:
   // Stores all of the given parameters. For the given low-resolution images,
   // copies them and stores resized versions to match the high-resolution image
@@ -28,7 +28,7 @@ class MapCostProcessor {
   // solver and updated in the vector. These weights should be raw weights, NOT
   // the square roots (as that is done in the ComputeRegularizationResiduals
   // function).
-  MapCostProcessor(
+  IrlsCostProcessor(
       const std::vector<ImageData>& low_res_images,
       const ImageModel& image_model,
       const cv::Size& image_size,
@@ -76,4 +76,4 @@ class MapCostProcessor {
 
 }  // namespace super_resolution
 
-#endif  // SRC_SOLVERS_MAP_COST_PROCESSOR_H_
+#endif  // SRC_SOLVERS_IRLS_COST_PROCESSOR_H_

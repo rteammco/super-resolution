@@ -1,4 +1,4 @@
-#include "solvers/map_cost_processor.h"
+#include "solvers/irls_cost_processor.h"
 
 #include <cmath>
 #include <memory>
@@ -15,7 +15,7 @@
 
 namespace super_resolution {
 
-MapCostProcessor::MapCostProcessor(
+IrlsCostProcessor::IrlsCostProcessor(
     const std::vector<ImageData>& low_res_images,
     const ImageModel& image_model,
     const cv::Size& image_size,
@@ -35,7 +35,7 @@ MapCostProcessor::MapCostProcessor(
   }
 }
 
-std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
+std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
     const int image_index,
     const int channel_index,
     const double* estimated_image_data) const {
@@ -63,7 +63,7 @@ std::vector<double> MapCostProcessor::ComputeDataTermResiduals(
   return residuals;
 }
 
-std::vector<double> MapCostProcessor::ComputeRegularizationResiduals(
+std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
     const double* estimated_image_data) const {
 
   CHECK_NOTNULL(estimated_image_data);

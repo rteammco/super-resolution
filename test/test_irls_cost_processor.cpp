@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "image/image_data.h"
-#include "solvers/map_cost_processor.h"
+#include "solvers/irls_cost_processor.h"
 #include "solvers/regularizer.h"
 
 #include "opencv2/core/core.hpp"
@@ -26,7 +26,7 @@ class MockRegularizer : public super_resolution::Regularizer {
 };
 
 // Verifies that the correct data term residuals are returned for an image.
-TEST(MapCostProcessor, ComputeDataTermResiduals) {
+TEST(IrlsCostProcessor, ComputeDataTermResiduals) {
   const cv::Size image_size(3, 3);
   const cv::Mat lr_channel_1 = (cv::Mat_<double>(3, 3)
       << 0.5, 0.5, 0.5,
@@ -54,7 +54,7 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
   std::unique_ptr<super_resolution::Regularizer> regularizer(
       new MockRegularizer());
   const std::vector<double> irls_weights(9);  // empty
-  super_resolution::MapCostProcessor map_cost_processor(
+  super_resolution::IrlsCostProcessor irls_cost_processor(
       low_res_images,
       empty_image_model,
       image_size,
@@ -70,13 +70,13 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
 
   // (Image 1, Channel 1) and hr pixels are identical, so expect all zeros.
   std::vector<double> residuals_channel_1 =
-      map_cost_processor.ComputeDataTermResiduals(0, 0, hr_pixel_values);
+      irls_cost_processor.ComputeDataTermResiduals(0, 0, hr_pixel_values);
   EXPECT_THAT(residuals_channel_1, SizeIs(9));
   EXPECT_THAT(residuals_channel_1, Each(0));
 
   // (Image 1, Channel 2) residuals should be different at each pixel.
   std::vector<double> residuals_channel_2 =
-      map_cost_processor.ComputeDataTermResiduals(0, 1, hr_pixel_values);
+      irls_cost_processor.ComputeDataTermResiduals(0, 1, hr_pixel_values);
   EXPECT_THAT(residuals_channel_2, ElementsAre(
       -0.5,  0.0,  0.5,
        0.25, 0.0, -0.25,
@@ -84,7 +84,7 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
 
   // (Image 2, channel 1) ("channel_3") should all be -0.5.
   std::vector<double> residuals_channel_3 =
-      map_cost_processor.ComputeDataTermResiduals(1, 0, hr_pixel_values);
+      irls_cost_processor.ComputeDataTermResiduals(1, 0, hr_pixel_values);
   EXPECT_THAT(residuals_channel_3, SizeIs(9));
   EXPECT_THAT(residuals_channel_3, Each(-0.5));
 
@@ -94,8 +94,8 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
 
 // Verifies that the correct regularization residuals are returned for an
 // image. This test does not cover regularization operators; instead, it tests
-// the MapCostProcessor with a mock Regularizer.
-TEST(MapCostProcessor, ComputeRegularizationResiduals) {
+// the IrlsCostProcessor with a mock Regularizer.
+TEST(IrlsCostProcessor, ComputeRegularizationResiduals) {
   // Mocked Regularizer.
   std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
   const double image_data[5] = {1, 2, 3, 4, 5};
@@ -111,7 +111,7 @@ TEST(MapCostProcessor, ComputeRegularizationResiduals) {
   std::vector<double> irls_weights = {1, 0.5, 0.25, 0.8, 0.0};
   const double regularization_parameter = 0.5;
 
-  super_resolution::MapCostProcessor map_cost_processor(
+  super_resolution::IrlsCostProcessor irls_cost_processor(
       empty_image_vector,
       empty_image_model,
       cv::Size(0, 0),
@@ -130,13 +130,13 @@ TEST(MapCostProcessor, ComputeRegularizationResiduals) {
     residuals[4] * regularization_parameter * sqrt(irls_weights[4])
   };
   std::vector<double> returned_residuals =
-      map_cost_processor.ComputeRegularizationResiduals(image_data);
+      irls_cost_processor.ComputeRegularizationResiduals(image_data);
   EXPECT_THAT(returned_residuals, ContainerEq(expected_residuals));
 
   // If we update the weights, we should expect the residuals to be updated.
   // In this case, all residuals should be 0.
   std::fill(irls_weights.begin(), irls_weights.end(), 0);
   returned_residuals =
-      map_cost_processor.ComputeRegularizationResiduals(image_data);
+      irls_cost_processor.ComputeRegularizationResiduals(image_data);
   EXPECT_THAT(returned_residuals, Each(0));
 }

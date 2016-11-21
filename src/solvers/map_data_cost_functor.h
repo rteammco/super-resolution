@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "image/image_data.h"
-#include "solvers/map_cost_processor.h"
+#include "solvers/irls_cost_processor.h"
 
 #include "ceres/ceres.h"
 
@@ -20,24 +20,24 @@ struct MapDataCostFunctor {
       const int image_index,
       const int channel_index,
       const int num_pixels,
-      const MapCostProcessor& map_cost_processor)
+      const IrlsCostProcessor& irls_cost_processor)
   : image_index_(image_index),
     channel_index_(channel_index),
     num_pixels_(num_pixels),
-    map_cost_processor_(map_cost_processor) {}
+    irls_cost_processor_(irls_cost_processor) {}
 
   // The actual cost function, computes the residuals. "params" is an array of
   // parameter block arrays. There is only one parameter block for this problem
   // which contains the estimated pixel values for the high-resolution image x.
   // Residuals for x are estimated with the image model through the given
-  // MapCostProcessor.
+  // IrlsCostProcessor.
   //
   // TODO: do we need to check that all values are between 0 and 1? Or leave it
   // to figure out on its own? Or an extra regularization term?
   bool operator() (double const* const* params, double* residuals) const {
     const double* x = params[0];
     const std::vector<double> computed_residuals =
-        map_cost_processor_.ComputeDataTermResiduals(
+        irls_cost_processor_.ComputeDataTermResiduals(
             image_index_, channel_index_, x);
     for (int i = 0; i < num_pixels_; ++i) {
       // TODO: squared? abs? works as is for now...
@@ -52,13 +52,13 @@ struct MapDataCostFunctor {
       const int image_index,
       const int channel_index,
       const int num_pixels,
-      const MapCostProcessor& map_cost_processor) {
+      const IrlsCostProcessor& irls_cost_processor) {
     // The cost function takes the estimated HR image (a vector of num_pixels
     // values) and returns a residual for each pixel.
     ceres::DynamicNumericDiffCostFunction<MapDataCostFunctor>* cost_function =
         new ceres::DynamicNumericDiffCostFunction<MapDataCostFunctor>(
             new MapDataCostFunctor(
-                image_index, channel_index, num_pixels, map_cost_processor));
+                image_index, channel_index, num_pixels, irls_cost_processor));
     cost_function->AddParameterBlock(num_pixels);
     cost_function->SetNumResiduals(num_pixels);
     return cost_function;
@@ -67,7 +67,7 @@ struct MapDataCostFunctor {
   const int image_index_;
   const int channel_index_;
   const int num_pixels_;
-  const MapCostProcessor& map_cost_processor_;
+  const IrlsCostProcessor& irls_cost_processor_;
 };
 
 }  // namespace super_resolution

@@ -7,7 +7,7 @@
 
 #include "image/image_data.h"
 #include "solvers/map_data_cost_functor.h"
-#include "solvers/map_cost_processor.h"
+#include "solvers/irls_cost_processor.h"
 #include "solvers/regularizer.h"
 #include "solvers/tv_regularizer.h"
 
@@ -27,10 +27,10 @@ class IrlsCallback : public ceres::IterationCallback {
  public:
   IrlsCallback(
       const ImageData& estimated_image,
-      const MapCostProcessor& map_cost_processor,
+      const IrlsCostProcessor& irls_cost_processor,
       std::vector<double>* irls_weights)
     : estimated_image_(estimated_image),
-      map_cost_processor_(map_cost_processor),
+      irls_cost_processor_(irls_cost_processor),
       irls_weights_(irls_weights) {}
 
   // Called after each iteration.
@@ -40,7 +40,7 @@ class IrlsCallback : public ceres::IterationCallback {
     // just to be safe.
     // TODO: Channel = 0! Set to appropriate channel!!
     const std::vector<double> regularization_residuals =
-        map_cost_processor_.ComputeRegularizationResiduals(
+        irls_cost_processor_.ComputeRegularizationResiduals(
             estimated_image_.GetMutableDataPointer(0));  // TODO: channel 0!
     CHECK_EQ(regularization_residuals.size(), irls_weights_->size())
         << "Number of residuals does not match number of weights.";
@@ -56,9 +56,9 @@ class IrlsCallback : public ceres::IterationCallback {
   // The data here is updated every time before the callback is called.
   const ImageData& estimated_image_;
 
-  // The MapCostProcessor is used to compute the regularization residuals of
+  // The IrlsCostProcessor is used to compute the regularization residuals of
   // the estimated image after the iteration to use for updating the weights.
-  const MapCostProcessor& map_cost_processor_;
+  const IrlsCostProcessor& irls_cost_processor_;
 
   // The IRLS weights that are updated during the callback using the
   // regularization residuals on the estimated image.
@@ -78,7 +78,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   std::vector<double> irls_weights(num_hr_pixels);
   std::fill(irls_weights.begin(), irls_weights.end(), 1);
 
-  const MapCostProcessor map_cost_processor(
+  const IrlsCostProcessor irls_cost_processor(
       low_res_images_,
       image_model_,
       hr_image_size,
@@ -96,7 +96,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     for (int image_index = 0; image_index < num_images; ++image_index) {
       ceres::CostFunction* cost_function = MapDataCostFunctor::Create(
-          image_index, channel_index, num_hr_pixels, map_cost_processor);
+          image_index, channel_index, num_hr_pixels, irls_cost_processor);
       problem.AddResidualBlock(
           cost_function,
           NULL,  // basic loss
@@ -114,7 +114,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   // Always update parameters because we need to compute the new LR estimates.
   options.update_state_every_iteration = true;
   options.callbacks.push_back(
-      new IrlsCallback(estimated_image, map_cost_processor, &irls_weights));
+      new IrlsCallback(estimated_image, irls_cost_processor, &irls_weights));
   options.minimizer_progress_to_stdout = print_solver_output_;
 
   // Solve.
