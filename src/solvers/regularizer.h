@@ -16,8 +16,8 @@ class Regularizer {
   // know the dimensions of the image.
   explicit Regularizer(const cv::Size& image_size) : image_size_(image_size) {}
 
-  // Define virtual destructor so we can mock this class in testing.
-  virtual ~Regularizer() {}
+  // Virtual destructor for derived classes.
+  virtual ~Regularizer() = default;
 
   // Returns a vector of residuals based on the regularization for each pixel
   // in the given array.
