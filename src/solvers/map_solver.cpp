@@ -6,8 +6,9 @@
 #include <vector>
 
 #include "image/image_data.h"
-#include "solvers/map_data_cost_functor.h"
 #include "solvers/irls_cost_processor.h"
+#include "solvers/map_data_cost_functor.h"
+#include "solvers/map_regularization_cost_functor.h"
 #include "solvers/regularizer.h"
 #include "solvers/tv_regularizer.h"
 
@@ -94,17 +95,24 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   ceres::Problem problem;
   // TODO: currently solves independently for each channel.
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    // Set up the data fidelity cost function per each image.
     for (int image_index = 0; image_index < num_images; ++image_index) {
-      ceres::CostFunction* cost_function = MapDataCostFunctor::Create(
+      ceres::CostFunction* data_cost_function = MapDataCostFunctor::Create(
           image_index, channel_index, num_hr_pixels, irls_cost_processor);
       problem.AddResidualBlock(
-          cost_function,
-          NULL,  // basic loss
+          data_cost_function,
+          NULL,  // basic loss TODO: update?
           estimated_image.GetMutableDataPointer(channel_index));
     }
+    // Set up the regularization cost function for the channel.
+    ceres::CostFunction* regularization_cost_function =
+        MapRegularizationCostFunctor::Create(
+            num_hr_pixels, irls_cost_processor);
+    problem.AddResidualBlock(
+        regularization_cost_function,
+        NULL,  // basic loss TODO: update?
+        estimated_image.GetMutableDataPointer(channel_index));
   }
-
-  // TODO: handle regularization.
 
   // Set the solver options. TODO: figure out what these should be.
   ceres::Solver::Options options;

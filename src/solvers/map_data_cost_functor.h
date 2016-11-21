@@ -1,13 +1,12 @@
-// The super-resolution cost function (defined for Ceres) for the maximum a
-// posteriori formulation data term. A different cost function is used for the
-// regularization term.
+// The data fidelity term of the super-resolution cost function (defined for
+// Ceres) for the maximum a posteriori formulation. A separate cost function is
+// used for the regularization term.
 
 #ifndef SRC_SOLVERS_MAP_DATA_COST_FUNCTOR_H_
 #define SRC_SOLVERS_MAP_DATA_COST_FUNCTOR_H_
 
 #include <vector>
 
-#include "image/image_data.h"
 #include "solvers/irls_cost_processor.h"
 
 #include "ceres/ceres.h"
@@ -39,6 +38,7 @@ struct MapDataCostFunctor {
     const std::vector<double> computed_residuals =
         irls_cost_processor_.ComputeDataTermResiduals(
             image_index_, channel_index_, x);
+    // TODO: try using std::copy instead of for loop copy.
     for (int i = 0; i < num_pixels_; ++i) {
       // TODO: squared? abs? works as is for now...
       residuals[i] = computed_residuals[i];
