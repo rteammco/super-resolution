@@ -5,6 +5,7 @@
 #ifndef SRC_SOLVERS_MAP_DATA_COST_FUNCTOR_H_
 #define SRC_SOLVERS_MAP_DATA_COST_FUNCTOR_H_
 
+#include <algorithm>
 #include <vector>
 
 #include "solvers/irls_cost_processor.h"
@@ -18,11 +19,9 @@ struct MapDataCostFunctor {
   MapDataCostFunctor(
       const int image_index,
       const int channel_index,
-      const int num_pixels,
       const IrlsCostProcessor& irls_cost_processor)
   : image_index_(image_index),
     channel_index_(channel_index),
-    num_pixels_(num_pixels),
     irls_cost_processor_(irls_cost_processor) {}
 
   // The actual cost function, computes the residuals. "params" is an array of
@@ -38,11 +37,7 @@ struct MapDataCostFunctor {
     const std::vector<double> computed_residuals =
         irls_cost_processor_.ComputeDataTermResiduals(
             image_index_, channel_index_, x);
-    // TODO: try using std::copy instead of for loop copy.
-    for (int i = 0; i < num_pixels_; ++i) {
-      // TODO: squared? abs? works as is for now...
-      residuals[i] = computed_residuals[i];
-    }
+    std::copy(computed_residuals.begin(), computed_residuals.end(), residuals);
     return true;
   }
 
@@ -58,7 +53,7 @@ struct MapDataCostFunctor {
     ceres::DynamicNumericDiffCostFunction<MapDataCostFunctor>* cost_function =
         new ceres::DynamicNumericDiffCostFunction<MapDataCostFunctor>(
             new MapDataCostFunctor(
-                image_index, channel_index, num_pixels, irls_cost_processor));
+                image_index, channel_index, irls_cost_processor));
     cost_function->AddParameterBlock(num_pixels);
     cost_function->SetNumResiduals(num_pixels);
     return cost_function;
@@ -66,7 +61,6 @@ struct MapDataCostFunctor {
 
   const int image_index_;
   const int channel_index_;
-  const int num_pixels_;
   const IrlsCostProcessor& irls_cost_processor_;
 };
 

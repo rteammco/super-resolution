@@ -5,6 +5,7 @@
 #ifndef SRC_SOLVERS_MAP_REGULARIZATION_COST_FUNCTOR_H_
 #define SRC_SOLVERS_MAP_REGULARIZATION_COST_FUNCTOR_H_
 
+#include <algorithm>
 #include <vector>
 
 #include "solvers/irls_cost_processor.h"
@@ -26,10 +27,7 @@ struct MapRegularizationCostFunctor {
   bool operator() (double const* const* params, double* residuals) const {
     const std::vector<double> computed_residuals =
         irls_cost_processor_.ComputeRegularizationResiduals(params[0]);
-    // TODO: try using std::copy instead of for loop copy.
-    for (int i = 0; i < computed_residuals.size(); ++i) {
-      residuals[i] = computed_residuals[i];
-    }
+    std::copy(computed_residuals.begin(), computed_residuals.end(), residuals);
     return true;
   }
 
