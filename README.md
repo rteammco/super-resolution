@@ -8,7 +8,7 @@ The goal is to support both ordinary images (grayscale, RGB) as well as hyperspe
 Install Instructions
 --------------------
 
-#### OS X
+#### macOS
 
 First install Homebrew: http://brew.sh/.
 ```
