@@ -24,6 +24,9 @@ constexpr double kMinIrlsWeight = 0.0001;  // Used to avoid division by 0.
 
 // The IRLS callback updates the regularization weights of after each solver
 // iteration.
+//
+// TODO: The regularizer should also indicate its loss type (e.g. L1, L2) and
+// that should influence the weight computation.
 class IrlsCallback : public ceres::IterationCallback {
  public:
   IrlsCallback(
@@ -46,6 +49,7 @@ class IrlsCallback : public ceres::IterationCallback {
     CHECK_EQ(regularization_residuals.size(), irls_weights_->size())
         << "Number of residuals does not match number of weights.";
     for (int i = 0; i < regularization_residuals.size(); ++i) {
+      // TODO: this assumes L1 loss!
       (*irls_weights_)[i] =
           1.0 / std::max(kMinIrlsWeight, regularization_residuals[i]);
     }

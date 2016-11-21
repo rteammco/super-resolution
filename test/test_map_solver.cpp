@@ -76,8 +76,10 @@ TEST(MapSolver, SmallDataTest) {
   /* Verify that the image model produces the correct LR observations. */
 
   // Create the solver for the model and low-res images.
+  super_resolution::MapSolverOptions solver_options;
+  solver_options.regularization_parameter = 0.0;
   super_resolution::MapSolver solver(
-      image_model, low_res_images, kPrintSolverOutput);
+      solver_options, image_model, low_res_images, kPrintSolverOutput);
 
   // Create the high-res initial estimate.
   const cv::Mat initial_estimate_matrix = (cv::Mat_<double>(4, 4)
@@ -138,8 +140,10 @@ TEST(MapSolver, RealIconDataTest) {
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
 
   // Create the solver and attempt to solve.
+  super_resolution::MapSolverOptions solver_options;
+  solver_options.regularization_parameter = 0.0;
   super_resolution::MapSolver solver(
-      image_model, low_res_images, kPrintSolverOutput);
+      solver_options, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
 
   // Compare to a solution using the matrix formulation.

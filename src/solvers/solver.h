@@ -17,10 +17,10 @@ class Solver {
   Solver(
       const ImageModel& image_model,
       const std::vector<ImageData>& low_res_images,
-      const bool print_solver_output = true)
-    : image_model_(image_model),
-      low_res_images_(low_res_images),
-      print_solver_output_(print_solver_output) {}
+      const bool print_solver_output = true) :
+    image_model_(image_model),
+    low_res_images_(low_res_images),
+    print_solver_output_(print_solver_output) {}
 
   // Solves the super-resolution optimization and returns the super-resolved
   // image. The given initial estimate is used as a starting point for
