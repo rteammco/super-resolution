@@ -1,6 +1,10 @@
 Super Resolution
 ================
 
+Super-resolution is the process of increasing the resolvability of details in an image.
+This work-in-progress code is intended to be a framework for multiframe super-resolution, which combines multiple overlapping low-resolution images into a single higher-resolution output.
+The goal is to support both ordinary images (grayscale, RGB) as well as hyperspectral image data which may contain hundreds of channels.
+
 Install Instructions
 --------------------
 
@@ -93,8 +97,38 @@ make
 sudo make install
 ```
 
+Then the standard CMake process:
+```
+mkdir build && cd build
+cmake ..
+make
+```
+
+Build and Run
+--------------------
+
+<b>NOTE:</b> This is still a work-in-progress project, so the main binaries do not work yet, for the most part.
+All code is tested, including cases with real data, through the test framework.
+
+To build the project, make a build directory and run `cmake` followed by `make`:
+```
+mkdir build && cd build
+cmake ..
+make
+```
+It's okay if it doesn't find OpenMP (e.g. as is the case with the default compiler on macOS).
+
+Once everything compiles, make sure it works by running the unit tests. From your `build` directory, or whatever you named it:
+```
+bin/Test
+```
+
 Directory Structure
 --------------------
 Add source files are in `./src`. Most files (classes and utilities) are organized into subdirectories. All files that are compiled into binaries (i.e. "main" files) are in the top level of `./src`.
 
 Tests are included in `./test` and follow a similar directory structure.
+
+The `./scripts` directory contains simple test or data generation scripts.
+
+The `./test_data` directory contains sample data used by the unit tests and otherwise for testing and experimentation.
