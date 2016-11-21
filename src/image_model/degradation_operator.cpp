@@ -23,9 +23,9 @@ cv::Mat DegradationOperator::ConvertKernelToOperatorMatrix(
       << "Kernel is too big to convert to matrix form.";
   CHECK_LE(kernel_size.height, kMaxConvolutionKernelSize)
       << "Kernel is too big to convert to matrix form.";
-  CHECK_LE(image_size.width, kMaxConvolutionKernelSize)
+  CHECK_LE(image_size.width, kMaxConvolutionImageSize)
       << "Image is too big to compute a kernel matrix.";
-  CHECK_LE(image_size.height, kMaxConvolutionKernelSize)
+  CHECK_LE(image_size.height, kMaxConvolutionImageSize)
       << "Image is too big to compute a kernel matrix.";
 
   // Initialize a zero matrix for the operator.
