@@ -76,8 +76,16 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
 
   const cv::Size hr_image_size = initial_estimate.GetImageSize();
   const int num_hr_pixels = initial_estimate.GetNumPixels();
-  std::unique_ptr<Regularizer> regularizer(
-      new TotalVariationRegularizer(hr_image_size));
+
+  // Choose the regularizer according to the option selected.
+  std::unique_ptr<Regularizer> regularizer;
+  switch (solver_options_.regularization_method) {
+    // TV is the default case.
+    case TOTAL_VARIATION:
+    default:
+      regularizer = std::unique_ptr<Regularizer>(
+          new TotalVariationRegularizer(hr_image_size));
+  }
 
   // Initialize all IRLS weights to 1.
   std::vector<double> irls_weights(num_hr_pixels);
@@ -88,7 +96,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
       image_model_,
       hr_image_size,
       std::move(regularizer),
-      0.0,  // TODO: (lambda) this should be passed in as a user option.
+      solver_options_.regularization_parameter,
       &irls_weights);
 
   ImageData estimated_image = initial_estimate;
@@ -118,7 +126,9 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
         estimated_image.GetMutableDataPointer(channel_index));
   }
 
-  // Set the solver options. TODO: figure out what these should be.
+  // Set the solver options.
+  // TODO: figure out what these should be and set (some of) them up in the
+  // MapSolverOptions struct.
   ceres::Solver::Options options;
   // options.linear_solver_type = ceres::DENSE_SCHUR;
   // options.num_threads = 4;
