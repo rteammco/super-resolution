@@ -1,5 +1,6 @@
 #include "solvers/map_cost_processor.h"
 
+#include <cmath>
 #include <memory>
 #include <vector>
 
@@ -19,11 +20,13 @@ MapCostProcessor::MapCostProcessor(
     const ImageModel& image_model,
     const cv::Size& image_size,
     std::unique_ptr<Regularizer> regularizer,
-    const double regularization_parameter)
+    const double regularization_parameter,
+    const std::vector<double>* irls_weights)
     : image_model_(image_model),
       image_size_(image_size),
       regularizer_(std::move(regularizer)),
-      regularization_parameter_(regularization_parameter) {
+      regularization_parameter_(regularization_parameter),
+      irls_weights_(irls_weights) {
 
   for (const ImageData& low_res_image : low_res_images) {
     ImageData observation = low_res_image;  // copy
@@ -65,9 +68,13 @@ std::vector<double> MapCostProcessor::ComputeRegularizationResiduals(
 
   CHECK_NOTNULL(estimated_image_data);
 
-  // TODO: don't just return residuals, but multiply them by the W weights and
-  // the regularization parameter (lambda) (regularization_parameter_)!
-  return regularizer_->ComputeResiduals(estimated_image_data);
+  std::vector<double> residuals =
+      regularizer_->ComputeResiduals(estimated_image_data);
+  for (int i = 0; i < residuals.size(); ++i) {
+    const double weight = sqrt(irls_weights_->at(i));
+    residuals[i] = regularization_parameter_ * weight * residuals[i];
+  }
+  return residuals;
 }
 
 }  // namespace super_resolution

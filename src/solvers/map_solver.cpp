@@ -39,12 +39,18 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const int num_hr_pixels = initial_estimate.GetNumPixels();
   std::unique_ptr<Regularizer> regularizer(
       new TotalVariationRegularizer(hr_image_size));
+
+  // Initialize all IRLS weights to 1.
+  std::vector<double> irls_weights(num_hr_pixels);
+  std::fill(irls_weights.begin(), irls_weights.end(), 1);
+
   const MapCostProcessor map_cost_processor(
       low_res_images_,
       image_model_,
       hr_image_size,
       std::move(regularizer),
-      0.0);  // TODO: (lambda) this should be passed in as a user option.
+      0.0,  // TODO: (lambda) this should be passed in as a user option.
+      &irls_weights);
 
   ImageData estimated_image = initial_estimate;
 

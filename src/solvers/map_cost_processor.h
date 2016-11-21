@@ -28,7 +28,8 @@ class MapCostProcessor {
       const ImageModel& image_model,
       const cv::Size& image_size,
       std::unique_ptr<Regularizer> regularizer,
-      const double regularization_parameter);
+      const double regularization_parameter,
+      const std::vector<double>* irls_weights);
 
   // Compares the given high-resolution image to the low-resolution image of
   // the given index (and channel) by applying the ImageModel to the HR image.
@@ -63,6 +64,10 @@ class MapCostProcessor {
   // non-negative, but may be 0.
   const std::unique_ptr<Regularizer> regularizer_;
   const double regularization_parameter_;
+
+  // The weights for iteratively reweighted least squares, upated by the solver
+  // after every iteration.
+  const std::vector<double>* irls_weights_;
 };
 
 }  // namespace super_resolution

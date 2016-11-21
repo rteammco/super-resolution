@@ -53,12 +53,14 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
   super_resolution::ImageModel empty_image_model;
   std::unique_ptr<super_resolution::Regularizer> regularizer(
       new MockRegularizer());
+  const std::vector<double> irls_weights(9);  // empty
   super_resolution::MapCostProcessor map_cost_processor(
       low_res_images,
       empty_image_model,
       image_size,
       std::move(regularizer),
-      0.0);  // TODO: test with regularizer applied (lambda > 0).
+      0.0,  // We're skipping regularization in this test.
+      &irls_weights);
 
   const double hr_pixel_values[9] = {
     0.5, 0.5, 0.5,
@@ -91,28 +93,50 @@ TEST(MapCostProcessor, ComputeDataTermResiduals) {
 }
 
 // Verifies that the correct regularization residuals are returned for an
-// image.  This test does not cover regularization operators; instead, it tests
+// image. This test does not cover regularization operators; instead, it tests
 // the MapCostProcessor with a mock Regularizer.
 TEST(MapCostProcessor, ComputeRegularizationResiduals) {
+  // Mocked Regularizer.
   std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
   const double image_data[5] = {1, 2, 3, 4, 5};
   const std::vector<double> residuals = {1, 2, 3, 4, 5};
   EXPECT_CALL(*mock_regularizer, ComputeResiduals(image_data))
-      .WillOnce(Return(residuals));
+      .Times(2)  // 2 calls for 2 tests
+      .WillRepeatedly(Return(residuals));
 
-  // TODO: this should weight the residuals appropriately. Test it once that is
-  // implemented.
   std::vector<super_resolution::ImageData> empty_image_vector;
   super_resolution::ImageModel empty_image_model;
+
+  // The IRLS weights and regularization parameter.
+  std::vector<double> irls_weights = {1, 0.5, 0.25, 0.8, 0.0};
+  const double regularization_parameter = 0.5;
+
   super_resolution::MapCostProcessor map_cost_processor(
       empty_image_vector,
       empty_image_model,
       cv::Size(0, 0),
       std::move(mock_regularizer),
-      0.0);  // TODO: test with this regularization parameter.
+      regularization_parameter,
+      &irls_weights);
   
-  const std::vector<double> expected_residuals = {1, 2, 3, 4, 5};
-  const std::vector<double> returned_residuals =
+  // Expected residuals should be the residuals returned by the mocked
+  // Regularizer times the regularization parameter and the square root of the
+  // respective weights.
+  const std::vector<double> expected_residuals = {
+    residuals[0] * regularization_parameter * sqrt(irls_weights[0]),
+    residuals[1] * regularization_parameter * sqrt(irls_weights[1]),
+    residuals[2] * regularization_parameter * sqrt(irls_weights[2]),
+    residuals[3] * regularization_parameter * sqrt(irls_weights[3]),
+    residuals[4] * regularization_parameter * sqrt(irls_weights[4])
+  };
+  std::vector<double> returned_residuals =
       map_cost_processor.ComputeRegularizationResiduals(image_data);
   EXPECT_THAT(returned_residuals, ContainerEq(expected_residuals));
+
+  // If we update the weights, we should expect the residuals to be updated.
+  // In this case, all residuals should be 0.
+  std::fill(irls_weights.begin(), irls_weights.end(), 0);
+  returned_residuals =
+      map_cost_processor.ComputeRegularizationResiduals(image_data);
+  EXPECT_THAT(returned_residuals, Each(0));
 }
