@@ -1,5 +1,6 @@
 #include "solvers/map_solver.h"
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -18,17 +19,50 @@
 
 namespace super_resolution {
 
-// TODO: this should only update W. Fix.
-class ApplyModelCallback : public ceres::IterationCallback {
+constexpr double kMinIrlsWeight = 0.0001;  // Used to avoid division by 0.
+
+// The IRLS callback updates the regularization weights of after each solver
+// iteration.
+class IrlsCallback : public ceres::IterationCallback {
  public:
+  IrlsCallback(
+      const ImageData& estimated_image,
+      const MapCostProcessor& map_cost_processor,
+      std::vector<double>* irls_weights)
+    : estimated_image_(estimated_image),
+      map_cost_processor_(map_cost_processor),
+      irls_weights_(irls_weights) {}
+
   // Called after each iteration.
   ceres::CallbackReturnType operator() (
       const ceres::IterationSummary& summary) {
-    // TODO: implement computing W matrix.
-    // TODO: remove logging here.
-    LOG(INFO) << "CALLBACK";
+    // TODO: make a function exist where you can get a non-mutable data pointer
+    // just to be safe.
+    // TODO: Channel = 0! Set to appropriate channel!!
+    const std::vector<double> regularization_residuals =
+        map_cost_processor_.ComputeRegularizationResiduals(
+            estimated_image_.GetMutableDataPointer(0));  // TODO: channel 0!
+    CHECK_EQ(regularization_residuals.size(), irls_weights_->size())
+        << "Number of residuals does not match number of weights.";
+    for (int i = 0; i < regularization_residuals.size(); ++i) {
+      (*irls_weights_)[i] =
+          1.0 / std::max(kMinIrlsWeight, regularization_residuals[i]);
+    }
     return ceres::SOLVER_CONTINUE;
   }
+
+ private:
+  // The estimated image, updated by the solver after every solver iteration.
+  // The data here is updated every time before the callback is called.
+  const ImageData& estimated_image_;
+
+  // The MapCostProcessor is used to compute the regularization residuals of
+  // the estimated image after the iteration to use for updating the weights.
+  const MapCostProcessor& map_cost_processor_;
+
+  // The IRLS weights that are updated during the callback using the
+  // regularization residuals on the estimated image.
+  std::vector<double>* irls_weights_;
 };
 
 ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
@@ -79,7 +113,8 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   // options.num_linear_solver_threads = 4;
   // Always update parameters because we need to compute the new LR estimates.
   options.update_state_every_iteration = true;
-  options.callbacks.push_back(new ApplyModelCallback());
+  options.callbacks.push_back(
+      new IrlsCallback(estimated_image, map_cost_processor, &irls_weights));
   options.minimizer_progress_to_stdout = true;
 
   // Solve.
