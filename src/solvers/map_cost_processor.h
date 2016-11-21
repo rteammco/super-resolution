@@ -23,6 +23,11 @@ class MapCostProcessor {
   // Stores all of the given parameters. For the given low-resolution images,
   // copies them and stores resized versions to match the high-resolution image
   // size for residual computations at each HR pixel.
+  //
+  // The given IRLS weights should be compuated before each iteration in the
+  // solver and updated in the vector. These weights should be raw weights, NOT
+  // the square roots (as that is done in the ComputeRegularizationResiduals
+  // function).
   MapCostProcessor(
       const std::vector<ImageData>& low_res_images,
       const ImageModel& image_model,
@@ -41,10 +46,8 @@ class MapCostProcessor {
       const double* estimated_image_data) const;
 
   // Computes the regularization term residuals at each pixel of the given HR
-  // image.
-  //
-  // TODO: this part possibly incorporates the W matrix (weights), which needs
-  // to be updated at each iteration.
+  // image. This operation incorporates the IRLS weights and regularization
+  // parameter automatically.
   std::vector<double> ComputeRegularizationResiduals(
       const double* estimated_image_data) const;
 
@@ -66,7 +69,8 @@ class MapCostProcessor {
   const double regularization_parameter_;
 
   // The weights for iteratively reweighted least squares, upated by the solver
-  // after every iteration.
+  // after every iteration. These should be raw weights, NOT modified by the
+  // square root or by the regularization parameter.
   const std::vector<double>* irls_weights_;
 };
 

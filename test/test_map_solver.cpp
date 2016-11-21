@@ -136,7 +136,6 @@ TEST(MapSolver, RealIconDataTest) {
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
 
   // Create the solver and attempt to solve.
-  //TODO put back
   super_resolution::MapSolver solver(image_model, low_res_images);
   const ImageData solver_result = solver.Solve(initial_estimate);
 

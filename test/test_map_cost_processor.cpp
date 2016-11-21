@@ -118,7 +118,7 @@ TEST(MapCostProcessor, ComputeRegularizationResiduals) {
       std::move(mock_regularizer),
       regularization_parameter,
       &irls_weights);
-  
+
   // Expected residuals should be the residuals returned by the mocked
   // Regularizer times the regularization parameter and the square root of the
   // respective weights.
