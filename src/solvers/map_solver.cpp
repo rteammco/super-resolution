@@ -115,12 +115,14 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   options.update_state_every_iteration = true;
   options.callbacks.push_back(
       new IrlsCallback(estimated_image, map_cost_processor, &irls_weights));
-  options.minimizer_progress_to_stdout = true;
+  options.minimizer_progress_to_stdout = print_solver_output_;
 
   // Solve.
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
-  std::cout << summary.FullReport() << std::endl;
+  if (print_solver_output_) {
+    std::cout << summary.FullReport() << std::endl;
+  }
 
   return estimated_image;
 }

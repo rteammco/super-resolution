@@ -19,6 +19,7 @@
 using super_resolution::ImageData;
 using super_resolution::test::AreMatricesEqual;
 
+constexpr bool kPrintSolverOutput = true;
 constexpr double kSolverResultErrorTolerance = 0.001;
 
 // NOTE: this image cannot exceed 30x30 because of limitations with computing
@@ -75,7 +76,8 @@ TEST(MapSolver, SmallDataTest) {
   /* Verify that the image model produces the correct LR observations. */
 
   // Create the solver for the model and low-res images.
-  super_resolution::MapSolver solver(image_model, low_res_images);
+  super_resolution::MapSolver solver(
+      image_model, low_res_images, kPrintSolverOutput);
 
   // Create the high-res initial estimate.
   const cv::Mat initial_estimate_matrix = (cv::Mat_<double>(4, 4)
@@ -136,7 +138,8 @@ TEST(MapSolver, RealIconDataTest) {
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
 
   // Create the solver and attempt to solve.
-  super_resolution::MapSolver solver(image_model, low_res_images);
+  super_resolution::MapSolver solver(
+      image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
 
   // Compare to a solution using the matrix formulation.
