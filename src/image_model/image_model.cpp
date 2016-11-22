@@ -16,7 +16,7 @@ void ImageModel::AddDegradationOperator(
   degradation_operators_.push_back(std::move(degradation_operator));
 }
 
-ImageData ImageModel::ApplyModel(
+ImageData ImageModel::ApplyToImage(
     const ImageData& image_data, const int index) const {
 
   ImageData degraded_image = image_data;
@@ -26,10 +26,19 @@ ImageData ImageModel::ApplyModel(
   return degraded_image;
 }
 
-void ImageModel::ApplyModel(ImageData* image_data, const int index) const {
+void ImageModel::ApplyToImage(ImageData* image_data, const int index) const {
   for (const auto& degradation_operator : degradation_operators_) {
     degradation_operator->ApplyToImage(image_data, index);
   }
+}
+
+double ImageModel::ApplyToPixel(
+    const ImageData& image_data,
+    const int image_index,
+    const int channel_index,
+    const int pixel_index) {
+
+  return 0.0;
 }
 
 cv::Mat ImageModel::GetModelMatrix(

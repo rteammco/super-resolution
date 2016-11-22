@@ -33,11 +33,24 @@ class ImageModel {
   // Apply this forward model to the given image at the given index in the
   // multiframe sequence. The degraded image is returned as a new image, with
   // the original ImageData being unaffected.
-  ImageData ApplyModel(const ImageData& image_data, const int index) const;
+  ImageData ApplyToImage(const ImageData& image_data, const int index) const;
 
-  // Same as the above ApplyModel, but this version modifies the given
+  // Same as the above ApplyToImage, but this version modifies the given
   // ImageData instead of returning a modified copy.
-  void ApplyModel(ImageData* image_data, const int index) const;
+  void ApplyToImage(ImageData* image_data, const int index) const;
+
+  // Return the pixel value at the given channel and pixel index after applying
+  // the image model for the given image_index.
+  //
+  // This method is effectively identical to calling ApplyToImage and then
+  // extracting a single pixel from that result. However, this implementation
+  // is very efficient by only processing pixels of the given image that
+  // influence the pixel in question.
+  double ApplyToPixel(
+      const ImageData& image_data,
+      const int image_index,
+      const int channel_index,
+      const int pixel_index);
 
   // NOTE: This function is very slow, and its only purpose is to test solver
   // implementations on very small data sets. Some operators may not support

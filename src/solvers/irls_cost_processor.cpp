@@ -44,7 +44,7 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
 
   // Degrade (and re-upsample) the HR estimate with the image model.
   ImageData degraded_hr_image(estimated_image_data, image_size_);
-  image_model_.ApplyModel(&degraded_hr_image, image_index);
+  image_model_.ApplyToImage(&degraded_hr_image, image_index);
   degraded_hr_image.ResizeImage(image_size_, cv::INTER_AREA);
 
   // Compute the residuals by comparing pixel values.

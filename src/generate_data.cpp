@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
 
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {
     super_resolution::ImageData low_res_frame =
-        image_model.ApplyModel(image_data, i);
+        image_model.ApplyToImage(image_data, i);
     // Write the file.
     std::string image_path =
         FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";
