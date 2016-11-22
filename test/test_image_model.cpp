@@ -17,6 +17,7 @@
 #include "gmock/gmock.h"
 
 using super_resolution::test::AreMatricesEqual;
+using testing::_;
 using testing::Return;
 
 const cv::Mat kSmallTestImage = (cv::Mat_<double>(4, 6)
@@ -182,6 +183,50 @@ TEST(ImageModel, PsfBlurModule) {
   // TODO: implement
 }
 
+// Tests that both the ApplyToImage and the ApplyToPixel methods correctly
+// return the right values of the degraded image. This does not test the
+// method's efficiency, but verifies its correctness and compares the two
+// functions to make sure they both return the same values.
+TEST(ImageModel, ApplyModel) {
+
+/*
+const cv::Mat kSmallTestImage = (cv::Mat_<double>(4, 6)
+    << 1, 2, 3, 4, 5, 6,
+       7, 8, 9, 0, 1, 2,
+       9, 7, 5, 4, 2, 1,
+       2, 4, 6, 8, 0, 1);
+const cv::Size kSmallTestImageSize = cv::Size(6, 4);  // 24 pixels total */
+
+  super_resolution::ImageData input_image(kSmallTestImage);
+
+  std::unique_ptr<MockDegradationOperator> mock_operator(
+      new MockDegradationOperator());
+  // TODO: do this:
+//  ON_CALL(*mock_operator, ApplyToImage(_, _))
+//        .WillByDefault(Invoke(
+//            mock_operator, &MockDegradationOperator::MockedApplyToImage));
+  // instead of this:
+  EXPECT_CALL(*mock_operator, ApplyToImage(_, 0))
+      .Times(4);  // TODO: this is the current implementation.
+
+  super_resolution::ImageModel image_model;
+  image_model.AddDegradationOperator(std::move(mock_operator));
+
+  const double pixel_0 = image_model.ApplyToPixel(input_image, 0, 0, 0);
+  EXPECT_EQ(pixel_0, input_image.GetPixelValue(0, 0));
+
+  const double pixel_1 = image_model.ApplyToPixel(input_image, 0, 0, 1);
+  EXPECT_EQ(pixel_1, input_image.GetPixelValue(0, 1));
+
+  const double pixel_4 = image_model.ApplyToPixel(input_image, 0, 0, 4);
+  EXPECT_EQ(pixel_4, input_image.GetPixelValue(0, 4));
+
+  const double pixel_9 = image_model.ApplyToPixel(input_image, 0, 0, 9);
+  EXPECT_EQ(pixel_9, input_image.GetPixelValue(0, 9));
+}
+
+// Tests that the GetModelMatrix method correctly returns the appropriately
+// multiplied degradation matrices.
 TEST(ImageModel, GetModelMatrix) {
   super_resolution::ImageModel image_model;
   const cv::Size image_size(2, 2);

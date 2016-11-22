@@ -38,7 +38,9 @@ double ImageModel::ApplyToPixel(
     const int channel_index,
     const int pixel_index) {
 
-  return 0.0;
+  // TODO: implement for real! This is VERY BAD.
+  const ImageData degraded_image = ApplyToImage(image_data, image_index);
+  return degraded_image.GetPixelValue(channel_index, pixel_index);
 }
 
 cv::Mat ImageModel::GetModelMatrix(
