@@ -42,4 +42,14 @@ cv::Mat PsfBlurModule::GetOperatorMatrix(
   return ConvertKernelToOperatorMatrix(blur_kernel_, image_size);
 }
 
+double PsfBlurModule::ApplyToPixel(
+    const ImageData& image_data,
+    const int image_index,
+    const int channel_index,
+    const int pixel_index) const {
+
+  // TODO: implement.
+  return 0.0;
+}
+
 }  // namespace super_resolution

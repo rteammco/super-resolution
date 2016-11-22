@@ -18,6 +18,13 @@ class AdditiveNoiseModule : public DegradationOperator {
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
+  // TODO: implement.
+  virtual double ApplyToPixel(
+    const ImageData& image_data,
+    const int image_index,
+    const int channel_index,
+    const int pixel_index) const;
+
  private:
   const double sigma_;
 };

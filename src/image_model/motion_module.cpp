@@ -47,4 +47,14 @@ cv::Mat MotionModule::GetOperatorMatrix(
   return motion_matrix;
 }
 
+double MotionModule::ApplyToPixel(
+    const ImageData& image_data,
+    const int image_index,
+    const int channel_index,
+    const int pixel_index) const {
+
+  // TODO: implement.
+  return 0.0;
+}
+
 }  // namespace super_resolution

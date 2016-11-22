@@ -24,6 +24,13 @@ class MotionModule : public DegradationOperator {
   virtual cv::Mat GetOperatorMatrix(
       const cv::Size& image_size, const int index) const;
 
+  // TODO: implement.
+  virtual double ApplyToPixel(
+    const ImageData& image_data,
+    const int image_index,
+    const int channel_index,
+    const int pixel_index) const;
+
  private:
   const MotionShiftSequence& motion_shift_sequence_;
 };

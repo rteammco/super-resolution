@@ -36,6 +36,20 @@ class DegradationOperator {
   // in the case of motion).
   virtual void ApplyToImage(ImageData* image_data, const int index) const = 0;
 
+  // Returns the pixel value at the given pixel location. This is effectively
+  // the same as calling ApplyToImage and then extracting the pixel, but should
+  // be implemented in an efficient way so that only the specific pixel values
+  // are computed.
+  //
+  // If the image is resized as a result of this DegradationOperator, the pixel
+  // value returned will be that of whichever pixel would be mapped to the
+  // given pixel index if the image was rescaled to its original size.
+  virtual double ApplyToPixel(
+      const ImageData& image_data,
+      const int image_index,
+      const int channel_index,
+      const int pixel_index) const = 0;
+
   // Returns a Matrix representation of this operator. The matrix is intended
   // to be applied onto a vectorized version of the image, assuming it is a
   // column vector of stacked rows. The image_size parameter is required for

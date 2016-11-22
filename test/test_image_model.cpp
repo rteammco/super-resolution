@@ -34,6 +34,15 @@ class MockDegradationOperator : public super_resolution::DegradationOperator {
       ApplyToImage,
       void(super_resolution::ImageData* image_data, const int index));
 
+  // We also have to mock this because it's pure virtual.
+  MOCK_CONST_METHOD4(
+      ApplyToPixel,
+      double(
+          const super_resolution::ImageData& image_data,
+          const int image_index,
+          const int channel_index,
+          const int pixel_index));
+
   // Returns a cv::Mat degradation operator in matrix form.
   MOCK_CONST_METHOD2(
       GetOperatorMatrix, cv::Mat(const cv::Size& image_size, const int index));
