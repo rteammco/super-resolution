@@ -40,14 +40,17 @@ class IrlsCostProcessor {
   // the given index (and channel) by applying the ImageModel to the HR image.
   // The returned values will be the residuals (the difference in pixel
   // intensity) at each pixel of the HR image.
-  std::vector<double> ComputeDataTermResiduals(
+  // TODO: comment fix.
+  double ComputeDataTermResidual(
       const int image_index,
       const int channel_index,
+      const int pixel_index,
       const double* estimated_image_data) const;
 
   // Computes the regularization term residuals at each pixel of the given HR
   // image. This operation incorporates the IRLS weights and regularization
   // parameter automatically.
+  // TODO: should be per pixel.
   std::vector<double> ComputeRegularizationResiduals(
       const double* estimated_image_data) const;
 

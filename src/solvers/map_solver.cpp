@@ -108,15 +108,22 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   // TODO: currently solves independently for each channel.
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     // Set up the data fidelity cost function per each image.
-    for (int image_index = 0; image_index < num_images; ++image_index) {
-      ceres::CostFunction* data_cost_function = MapDataCostFunctor::Create(
-          image_index, channel_index, num_hr_pixels, irls_cost_processor);
-      problem.AddResidualBlock(
-          data_cost_function,
-          NULL,  // basic loss TODO: update?
-          estimated_image.GetMutableDataPointer(channel_index));
+    for (int pixel_index = 0; pixel_index < num_hr_pixels; ++pixel_index) {
+      for (int image_index = 0; image_index < num_images; ++image_index) {
+        ceres::CostFunction* data_cost_function = MapDataCostFunctor::Create(
+            image_index,
+            channel_index,
+            pixel_index,
+            num_hr_pixels,
+            irls_cost_processor);
+        problem.AddResidualBlock(
+            data_cost_function,
+            NULL,  // basic loss TODO: update?
+            estimated_image.GetMutableDataPointer(channel_index));
+      }
     }
     // Set up the regularization cost function for the channel.
+    // TODO: fix this, too! Should be per pixel (1 for loop up).
     ceres::CostFunction* regularization_cost_function =
         MapRegularizationCostFunctor::Create(
             num_hr_pixels, irls_cost_processor);

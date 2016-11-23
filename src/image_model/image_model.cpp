@@ -36,10 +36,11 @@ double ImageModel::ApplyToPixel(
     const ImageData& image_data,
     const int image_index,
     const int channel_index,
-    const int pixel_index) {
+    const int pixel_index) const {
 
   // TODO: implement for real! This is VERY BAD.
-  const ImageData degraded_image = ApplyToImage(image_data, image_index);
+  ImageData degraded_image = ApplyToImage(image_data, image_index);
+  degraded_image.ResizeImage(image_data.GetImageSize());
   return degraded_image.GetPixelValue(channel_index, pixel_index);
 }
 

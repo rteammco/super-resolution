@@ -25,6 +25,7 @@ struct MapRegularizationCostFunctor {
   // Residuals for x are estimated with the through the given
   // IrlsCostProcessor.
   bool operator() (double const* const* params, double* residuals) const {
+    // TODO: this should be just one residual.
     const std::vector<double> computed_residuals =
         irls_cost_processor_.ComputeRegularizationResiduals(params[0]);
     std::copy(computed_residuals.begin(), computed_residuals.end(), residuals);

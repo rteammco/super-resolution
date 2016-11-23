@@ -62,14 +62,14 @@ class ImageData {
   // rescaled image size. Empty images cannot be resized.
   void ResizeImage(
       const cv::Size& new_size,
-      const int interpolation_method = cv::INTER_NEAREST);
+      const int interpolation_method = cv::INTER_NEAREST); // TODO AREA?
 
   // Resizes this image by the given scale factor, in the same manner as
   // ResizeImage(size). The new dimensions will be (width * scale_factor,
   // height * scale_factor). The given scale factor must be larger than 0.
   void ResizeImage(
       const double scale_factor,
-      const int interpolation_method = cv::INTER_NEAREST);
+      const int interpolation_method = cv::INTER_NEAREST); // TODO: AREA?
 
   // Returns the total number of channels (bands) in this image. Note that this
   // value may be 0.

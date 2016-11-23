@@ -50,7 +50,7 @@ class ImageModel {
       const ImageData& image_data,
       const int image_index,
       const int channel_index,
-      const int pixel_index);
+      const int pixel_index) const;
 
   // NOTE: This function is very slow, and its only purpose is to test solver
   // implementations on very small data sets. Some operators may not support

@@ -35,32 +35,21 @@ IrlsCostProcessor::IrlsCostProcessor(
   }
 }
 
-std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
+double IrlsCostProcessor::ComputeDataTermResidual(
     const int image_index,
     const int channel_index,
+    const int pixel_index,
     const double* estimated_image_data) const {
 
   CHECK_NOTNULL(estimated_image_data);
 
-  // Degrade (and re-upsample) the HR estimate with the image model.
-  ImageData degraded_hr_image(estimated_image_data, image_size_);
-  image_model_.ApplyToImage(&degraded_hr_image, image_index);
-  degraded_hr_image.ResizeImage(image_size_, cv::INTER_AREA);
+  const ImageData degraded_hr_image(estimated_image_data, image_size_);
+  // TODO: assumes a single channel (channel 0).
+  const double pixel_value = image_model_.ApplyToPixel(
+      degraded_hr_image, image_index, 0, pixel_index);
 
-  // Compute the residuals by comparing pixel values.
-  const int num_pixels = image_size_.width * image_size_.height;
-  std::vector<double> residuals;
-  residuals.reserve(num_pixels);
-  for (int i = 0; i < num_pixels; ++i) {
-    // Pixel value is taken at channel 0 of the degraded_hr_image because the
-    // hr images are estimated one channel at a time; hence, there is only one
-    // channel in the estimated HR image.
-    const double difference =
-        degraded_hr_image.GetPixelValue(0, i) -
-        observations_.at(image_index).GetPixelValue(channel_index, i);
-    residuals.push_back(difference);
-  }
-  return residuals;
+  return pixel_value - observations_.at(image_index).GetPixelValue(
+      channel_index, pixel_index);
 }
 
 std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
