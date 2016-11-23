@@ -188,24 +188,10 @@ TEST(ImageModel, PsfBlurModule) {
 // method's efficiency, but verifies its correctness and compares the two
 // functions to make sure they both return the same values.
 TEST(ImageModel, ApplyModel) {
-
-/*
-const cv::Mat kSmallTestImage = (cv::Mat_<double>(4, 6)
-    << 1, 2, 3, 4, 5, 6,
-       7, 8, 9, 0, 1, 2,
-       9, 7, 5, 4, 2, 1,
-       2, 4, 6, 8, 0, 1);
-const cv::Size kSmallTestImageSize = cv::Size(6, 4);  // 24 pixels total */
-
-  super_resolution::ImageData input_image(kSmallTestImage);
+  const super_resolution::ImageData input_image(kSmallTestImage);
 
   std::unique_ptr<MockDegradationOperator> mock_operator(
       new MockDegradationOperator());
-  // TODO: do this:
-//  ON_CALL(*mock_operator, ApplyToImage(_, _))
-//        .WillByDefault(Invoke(
-//            mock_operator, &MockDegradationOperator::MockedApplyToImage));
-  // instead of this:
   EXPECT_CALL(*mock_operator, ApplyToImage(_, 0))
       .Times(4);  // TODO: this is the current implementation.
 
