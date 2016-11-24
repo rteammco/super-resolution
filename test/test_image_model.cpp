@@ -125,7 +125,11 @@ TEST(ImageModel, DownsamplingModule) {
       downsampling_matrix * test_image_vector, expected_downsampled_vector));
 }
 
+// Tests the implemented functionality of the MotionModule.
+// TODO: implement ApplyToImage test.
 TEST(ImageModel, MotionModule) {
+  /* Verify that the returned patch radius is correct. */
+
   // Patch radius even for negative values should always be the max abs shift
   // possible. In this case, -2.2 is the largest, so the shift should round up
   // to 3.
@@ -148,6 +152,55 @@ TEST(ImageModel, MotionModule) {
   // This test motion module should have a patch radius of 1, since 1 is the
   // largest motion shift in either direction.
   EXPECT_EQ(motion_module.GetPixelPatchRadius(), 1);
+
+  /* Verify that ApplyToPatch correctly applies motion as expected. */
+
+  const cv::Mat input_patch_3x3 = (cv::Mat_<double>(3, 3)
+      <<  0.4, 0.75, 0.35,
+         0.85,  0.9, 0.01,
+          0.3, 0.15, 0.55);
+
+  // For motion shift (0, 0), nothing should move. Since radius is 1, expect a
+  // single-value matrix containing the middle element, 0.9.
+  const cv::Mat expected_patch_1 = (cv::Mat_<double>(1, 1) << 0.9);
+  const cv::Mat returned_patch_1 =
+      motion_module.ApplyToPatch(input_patch_3x3, 0, 0, 0);
+  EXPECT_TRUE(AreMatricesEqual(expected_patch_1, returned_patch_1));
+
+  // For motion shift (1, 1), expect the middle pixel to be shifted down from
+  // the top-left corner.
+  const cv::Mat expected_patch_2 = (cv::Mat_<double>(1, 1) << 0.4);
+  const cv::Mat returned_patch_2 =
+      motion_module.ApplyToPatch(input_patch_3x3, 1, 0, 0);
+  EXPECT_TRUE(AreMatricesEqual(expected_patch_2, returned_patch_2));
+
+  const cv::Mat input_patch_5x5 = (cv::Mat_<double>(5, 5)
+      << 0.33,  0.4, 0.75, 0.35,  0.2,
+         0.61, 0.62, 0.63, 0.64, 0.65,
+         0.99, 0.85,  0.9, 0.01, 0.78,
+          0.1,  0.3, 0.15, 0.55,  0.5,
+         0.14, 0.24, 0.34, 0.44, 0.54);
+
+  // Similarly, for (0, 0) expect nothing to move, but this time the returned
+  // patch should be 3x3.
+  const cv::Mat expected_patch_3 = (cv::Mat_<double>(3, 3)
+      << 0.62, 0.63, 0.64,
+         0.85,  0.9, 0.01,
+          0.3, 0.15, 0.55);
+  const cv::Mat returned_patch_3 =
+      motion_module.ApplyToPatch(input_patch_5x5, 0, 0, 0);
+  EXPECT_TRUE(AreMatricesEqual(expected_patch_3, returned_patch_3));
+
+  // And lastly, for the third shift, verify that we get a shift to the left.
+  const cv::Mat expected_patch_4 = (cv::Mat_<double>(3, 3)
+      << 0.63, 0.64, 0.65,
+          0.9, 0.01, 0.78,
+         0.15, 0.55,  0.5);
+  const cv::Mat returned_patch_4 =
+      motion_module.ApplyToPatch(input_patch_5x5, 2, 0, 0);
+  EXPECT_TRUE(AreMatricesEqual(expected_patch_4, returned_patch_4));
+
+  /* Verify that the correct motion operator matrices are returned. */
 
   // Trivial case: MotionShift(0, 0) should be the identity.
   const cv::Size image_size(3, 3);

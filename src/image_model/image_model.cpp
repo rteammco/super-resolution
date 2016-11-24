@@ -48,8 +48,10 @@ double ImageModel::ApplyToPixel(
   // TODO: implement all of this and test it. That's hopefully the solution! :)
   // TODO: if making patches is too inefficient, maybe we can just do this
   // directly (manually) on the array.
+  const int patch_size = patch_radius * 2 + 1;
+  // TODO: channel 0!
   cv::Mat patch = image_data.GetCroppedPatch(
-      0, pixel_index, cv::Size(patch_radius, patch_radius));
+      0, pixel_index, cv::Size(patch_size, patch_size));
   //   OR (since building the image data may be inefficient)
   // cv::Mat patch = (build manually from array values);
 
