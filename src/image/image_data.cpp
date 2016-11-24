@@ -160,12 +160,12 @@ cv::Mat ImageData::GetCroppedPatch(
   const int radius_x = size.width / 2;
   const int radius_y = size.height / 2;
   int corner_x = anchor_coords.x - radius_x;
-  // If the x xadius is even, add 1 to offset the centering towards the left.
+  // If the width is even, add 1 to offset the centering towards the left.
   if (size.width % 2 == 0) {
     corner_x += 1;
   }
   int corner_y = anchor_coords.y - radius_y;
-  // If the y radius is even, add 1 to offset the centering towards the top.
+  // If the height is even, add 1 to offset the centering towards the top.
   if (size.height % 2 == 0) {
     corner_y += 1;
   }
