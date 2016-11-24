@@ -55,16 +55,24 @@ class DegradationOperator {
   //       well, i.e. (x, y, s).
   virtual int GetPixelPatchRadius() const = 0;
 
-  // Returns the pixel value at the given pixel location. This is effectively
-  // the same as calling ApplyToImage and then extracting the pixel, but should
-  // be implemented in an efficient way so that only the specific pixel values
-  // are computed.
+  // Applies the degradation to the given patch, which should be a sub-region
+  // of the whole image. The patch must be at least big enough for the spatial
+  // requirements of this operator (see GetPixelPatchRadius()).
   //
-  // If the image is resized as a result of this DegradationOperator, the pixel
-  // value returned will be that of whichever pixel would be mapped to the
-  // given pixel index if the image was rescaled to its original size.
-  virtual double ApplyToPixel(
-      const ImageData& image_data,
+  // The returned patch will be the degraded version of the given patch, but
+  // smaller by the patch degradation radius. That is, any pixels that only act
+  // as a spatial dependency will not be degraded.
+  //
+  // For example, applying a 3x3 blurring kernel on a 5x5 patch will result in
+  // a blurred 3x3 patch, since the 1-pixel-wide (radius = 1) border of the
+  // image cannot be blurred but is needed to perform blurring of the other
+  // pixels. In other words, the border cases of the degradation are thrown
+  // out.
+  //
+  // This method should verify that the patch is sufficiently large to perform
+  // the degradation.
+  virtual cv::Mat ApplyToPatch(
+      const cv::Mat& patch,
       const int image_index,
       const int channel_index,
       const int pixel_index) const = 0;

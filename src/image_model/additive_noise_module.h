@@ -7,6 +7,8 @@
 #include "image/image_data.h"
 #include "image_model/degradation_operator.h"
 
+#include "opencv2/core/core.hpp"
+
 namespace super_resolution {
 
 class AdditiveNoiseModule : public DegradationOperator {
@@ -25,8 +27,8 @@ class AdditiveNoiseModule : public DegradationOperator {
   }
 
   // TODO: implement.
-  virtual double ApplyToPixel(
-    const ImageData& image_data,
+  virtual cv::Mat ApplyToPatch(
+    const cv::Mat& patch,
     const int image_index,
     const int channel_index,
     const int pixel_index) const;

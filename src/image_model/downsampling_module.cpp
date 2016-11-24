@@ -22,6 +22,18 @@ void DownsamplingModule::ApplyToImage(
   image_data->ResizeImage(scale_factor, cv::INTER_NEAREST); // TODO: area?
 }
 
+cv::Mat DownsamplingModule::ApplyToPatch(
+    const cv::Mat& patch,
+    const int image_index,
+    const int channel_index,
+    const int pixel_index) const {
+
+  // TODO: implement.
+  LOG(WARNING) << "Method not implemented. Returning empty patch.";
+  const cv::Mat empty_patch;
+  return empty_patch;
+}
+
 cv::Mat DownsamplingModule::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 
@@ -45,16 +57,6 @@ cv::Mat DownsamplingModule::GetOperatorMatrix(
     }
   }
   return downsampling_matrix;
-}
-
-double DownsamplingModule::ApplyToPixel(
-    const ImageData& image_data,
-    const int image_index,
-    const int channel_index,
-    const int pixel_index) const {
-
-  // TODO: implement.
-  return 0.0;
 }
 
 }  // namespace super_resolution

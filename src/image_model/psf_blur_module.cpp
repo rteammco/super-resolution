@@ -36,20 +36,22 @@ void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
   }
 }
 
-cv::Mat PsfBlurModule::GetOperatorMatrix(
-    const cv::Size& image_size, const int index) const {
-
-  return ConvertKernelToOperatorMatrix(blur_kernel_, image_size);
-}
-
-double PsfBlurModule::ApplyToPixel(
-    const ImageData& image_data,
+cv::Mat PsfBlurModule::ApplyToPatch(
+    const cv::Mat& patch,
     const int image_index,
     const int channel_index,
     const int pixel_index) const {
 
   // TODO: implement.
-  return 0.0;
+  LOG(WARNING) << "Method not implemented. Returning empty patch.";
+  const cv::Mat empty_patch;
+  return empty_patch;
+}
+
+cv::Mat PsfBlurModule::GetOperatorMatrix(
+    const cv::Size& image_size, const int index) const {
+
+  return ConvertKernelToOperatorMatrix(blur_kernel_, image_size);
 }
 
 }  // namespace super_resolution

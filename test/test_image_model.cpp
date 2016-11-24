@@ -37,9 +37,9 @@ class MockDegradationOperator : public super_resolution::DegradationOperator {
 
   // We also have to mock this because it's pure virtual.
   MOCK_CONST_METHOD4(
-      ApplyToPixel,
-      double(
-          const super_resolution::ImageData& image_data,
+      ApplyToPatch,
+      cv::Mat(
+          const cv::Mat& patch,
           const int image_index,
           const int channel_index,
           const int pixel_index));
@@ -227,6 +227,7 @@ TEST(ImageModel, PsfBlurModule) {
 // method's efficiency, but verifies its correctness and compares the two
 // functions to make sure they both return the same values.
 TEST(ImageModel, ApplyModel) {
+  // TODO: finish implementing this.
   const super_resolution::ImageData input_image(kSmallTestImage);
 
   std::unique_ptr<MockDegradationOperator> mock_operator(

@@ -29,8 +29,8 @@ class MotionModule : public DegradationOperator {
   virtual int GetPixelPatchRadius() const;
 
   // TODO: implement.
-  virtual double ApplyToPixel(
-    const ImageData& image_data,
+  virtual cv::Mat ApplyToPatch(
+    const cv::Mat& patch,
     const int image_index,
     const int channel_index,
     const int pixel_index) const;

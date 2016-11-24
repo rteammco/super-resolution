@@ -44,26 +44,26 @@ double ImageModel::ApplyToPixel(
   for (const auto& degradation_operator : degradation_operators_) {
     patch_radius += degradation_operator->GetPixelPatchRadius();
   }
-  /*
+
   // TODO: implement all of this and test it. That's hopefully the solution! :)
   // TODO: if making patches is too inefficient, maybe we can just do this
   // directly (manually) on the array.
-  cv::Mat patch = image_data.GetCroppedPatch(pixel_index, patch_radius);
-    OR (since building the image data may be inefficient)
-  cv::Mat patch = (build manually from array values);
+  cv::Mat patch = image_data.GetCroppedPatch(
+      0, pixel_index, cv::Size(patch_radius, patch_radius));
+  //   OR (since building the image data may be inefficient)
+  // cv::Mat patch = (build manually from array values);
 
-  // Apply each degradation operator on the patch.
+  // Apply each degradation operator on the patch. The patch gets transformed
+  // and resized after every operator.
   for (const auto& degradation_operator : degradation_operators_) {
-    // TODO: motion module's impelementation (and probably most other
-    // implementations) need only to consider the resulting patch size and use
-    // the given patch for random access lookup as needed.
-    patch = degradation_operator->ApplyToPixel(
+    patch = degradation_operator->ApplyToPatch(
         patch, image_index, channel_index, pixel_index);
   }
 
-  CHECK(patch.size() == cv::Size(1, 1));
-  return patch.at<double>(0);
-  */
+  // The resulting patch should be just a single pixel.
+  // TODO: implement for all of the operators and use this return.
+  // CHECK(patch.size() == cv::Size(1, 1));
+  // return patch.at<double>(0);
 
   // TODO: implement for real! This is VERY BAD.
   ImageData degraded_image = ApplyToImage(image_data, image_index);
