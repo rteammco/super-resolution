@@ -36,6 +36,25 @@ class DegradationOperator {
   // in the case of motion).
   virtual void ApplyToImage(ImageData* image_data, const int index) const = 0;
 
+  // Returns the radius of the patch required to compute the degradation for
+  // single pixel p. For example, a blur degradation with a 5 x 5 kernel needs
+  // to be applied to a patch containing at least 2 pixels to the left, right,
+  // top, and bottom of p. The radius would thus be 2.
+  //
+  // When using ApplyToPixel(), all other operators applied before this
+  // operator must be applied to enough pixels so that the degradation can be
+  // performed on a large enough spatial image patch.
+  //
+  // NOTE: the radius is the number of pixels surrounding the pixel to be
+  // degraded, p. For example, radius 2 would imply a 5 x 5 patch, 2 on all
+  // sides of p; radius 0 means that the operator does not require any spatial
+  // information beyond the value of p itself.
+  //
+  // TODO: For efficiency, it may be useful to consider x, y radii separately.
+  // TODO: Eventually, it may be even better to consider a spectral radius as
+  //       well, i.e. (x, y, s).
+  virtual int GetPixelPatchRadius() const = 0;
+
   // Returns the pixel value at the given pixel location. This is effectively
   // the same as calling ApplyToImage and then extracting the pixel, but should
   // be implemented in an efficient way so that only the specific pixel values

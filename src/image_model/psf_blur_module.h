@@ -20,8 +20,10 @@ class PsfBlurModule : public DegradationOperator {
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
-  virtual cv::Mat GetOperatorMatrix(
-      const cv::Size& image_size, const int index) const;
+  // Depends on the blur radius.
+  virtual int GetPixelPatchRadius() const {
+    return blur_radius_;
+  }
 
   // TODO: implement.
   virtual double ApplyToPixel(
@@ -29,6 +31,9 @@ class PsfBlurModule : public DegradationOperator {
     const int image_index,
     const int channel_index,
     const int pixel_index) const;
+
+  virtual cv::Mat GetOperatorMatrix(
+      const cv::Size& image_size, const int index) const;
 
  private:
   const int blur_radius_;

@@ -18,6 +18,12 @@ class AdditiveNoiseModule : public DegradationOperator {
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
+  // Noise is applied independently per-pixel, so no need for any additional
+  // spatial information.
+  virtual int GetPixelPatchRadius() const {
+    return 0;
+  }
+
   // TODO: implement.
   virtual double ApplyToPixel(
     const ImageData& image_data,

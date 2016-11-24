@@ -1,5 +1,8 @@
 #include "image_model/motion_module.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include "image/image_data.h"
 #include "motion/motion_shift.h"
 #include "util/util.h"
@@ -25,6 +28,28 @@ void MotionModule::ApplyToImage(ImageData* image_data, const int index) const {
   }
 }
 
+int MotionModule::GetPixelPatchRadius() const {
+  int radius = 0;
+  const int num_motion_shifts = motion_shift_sequence_.GetNumMotionShifts();
+  for (int i = 0; i < num_motion_shifts; ++i) {
+    const MotionShift& motion_shift = motion_shift_sequence_[i];
+    const int dx = static_cast<int>(ceil(std::abs(motion_shift.dx)));
+    const int dy = static_cast<int>(ceil(std::abs(motion_shift.dx)));
+    radius = std::max(radius, std::max(dx, dy));
+  }
+  return radius;
+}
+
+double MotionModule::ApplyToPixel(
+    const ImageData& image_data,
+    const int image_index,
+    const int channel_index,
+    const int pixel_index) const {
+
+  // TODO: implement.
+  return 0.0;
+}
+
 cv::Mat MotionModule::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 
@@ -45,16 +70,6 @@ cv::Mat MotionModule::GetOperatorMatrix(
     }
   }
   return motion_matrix;
-}
-
-double MotionModule::ApplyToPixel(
-    const ImageData& image_data,
-    const int image_index,
-    const int channel_index,
-    const int pixel_index) const {
-
-  // TODO: implement.
-  return 0.0;
 }
 
 }  // namespace super_resolution

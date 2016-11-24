@@ -1,7 +1,7 @@
-#include <iostream>
 #include <memory>
 #include <vector>
 
+#include "image_model/additive_noise_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
@@ -44,6 +44,9 @@ class MockDegradationOperator : public super_resolution::DegradationOperator {
           const int channel_index,
           const int pixel_index));
 
+  // We also have to mock this because it's pure virtual.
+  MOCK_CONST_METHOD0(GetPixelPatchRadius, int());
+
   // Returns a cv::Mat degradation operator in matrix form.
   MOCK_CONST_METHOD2(
       GetOperatorMatrix, cv::Mat(const cv::Size& image_size, const int index));
@@ -82,10 +85,22 @@ TEST(ImageModel, DegradationOperator) {
 }
 
 TEST(ImageModel, AdditiveNoiseModule) {
-  // TODO: implement
+  // Patch radius for single pixel degradation should be 0 since it only needs
+  // the pixel value itself.
+  const super_resolution::AdditiveNoiseModule additive_noise_module(5);
+  EXPECT_EQ(additive_noise_module.GetPixelPatchRadius(), 0);
+
+  // TODO: implement other tests.
 }
 
 TEST(ImageModel, DownsamplingModule) {
+  // Patch radius for single pixel degradation should be s/2 where s is the
+  // downsampling scale.
+  for (int scale = 1; scale <= 5; ++scale) {
+    const super_resolution::DownsamplingModule downsampling_module(scale);
+    EXPECT_EQ(downsampling_module.GetPixelPatchRadius(), scale / 2);
+  }
+
   super_resolution::DownsamplingModule downsampling_module(2);
   const cv::Mat downsampling_matrix =
       downsampling_module.GetOperatorMatrix(kSmallTestImageSize, 0);
@@ -111,12 +126,28 @@ TEST(ImageModel, DownsamplingModule) {
 }
 
 TEST(ImageModel, MotionModule) {
+  // Patch radius even for negative values should always be the max abs shift
+  // possible. In this case, -2.2 is the largest, so the shift should round up
+  // to 3.
+  super_resolution::MotionShiftSequence radius_test_motion_shift_sequence({
+    super_resolution::MotionShift(1, 1),
+    super_resolution::MotionShift(1, -1),
+    super_resolution::MotionShift(-2.2, -1)
+  });
+  const super_resolution::MotionModule radius_test_motion_module(
+      radius_test_motion_shift_sequence);
+  EXPECT_EQ(radius_test_motion_module.GetPixelPatchRadius(), 3);
+
   super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
     super_resolution::MotionShift(1, 1),
     super_resolution::MotionShift(-1, 0)
   });
   const super_resolution::MotionModule motion_module(motion_shift_sequence);
+
+  // This test motion module should have a patch radius of 1, since 1 is the
+  // largest motion shift in either direction.
+  EXPECT_EQ(motion_module.GetPixelPatchRadius(), 1);
 
   // Trivial case: MotionShift(0, 0) should be the identity.
   const cv::Size image_size(3, 3);
@@ -180,7 +211,15 @@ TEST(ImageModel, MotionModule) {
 }
 
 TEST(ImageModel, PsfBlurModule) {
-  // TODO: implement
+  // Patch radius for single pixel degradation should be the same size as the
+  // blur kernel radius. Note that radius must be odd.
+  for (int blur_radius = 1; blur_radius <= 9; blur_radius += 2) {
+    const double sigma = (blur_radius - 0.5) * 3;  // sigma doesn't matter
+    const super_resolution::PsfBlurModule blur_module(blur_radius, sigma);
+    EXPECT_EQ(blur_module.GetPixelPatchRadius(), blur_radius);
+  }
+
+  // TODO: implement other tests.
 }
 
 // Tests that both the ApplyToImage and the ApplyToPixel methods correctly

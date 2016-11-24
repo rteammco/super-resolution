@@ -124,13 +124,13 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
     }
     // Set up the regularization cost function for the channel.
     // TODO: fix this, too! Should be per pixel (1 for loop up).
-    ceres::CostFunction* regularization_cost_function =
+    /*ceres::CostFunction* regularization_cost_function =
         MapRegularizationCostFunctor::Create(
             num_hr_pixels, irls_cost_processor);
     problem.AddResidualBlock(
         regularization_cost_function,
         NULL,  // basic loss TODO: update?
-        estimated_image.GetMutableDataPointer(channel_index));
+        estimated_image.GetMutableDataPointer(channel_index));*/
   }
 
   // Set the solver options.
