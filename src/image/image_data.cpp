@@ -1,5 +1,6 @@
 #include "image/image_data.h"
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -150,6 +151,57 @@ int ImageData::GetNumPixels() const {
   return image_size_.width * image_size_.height;  // (0, 0) if image is empty.
 }
 
+cv::Mat ImageData::GetCroppedPatch(
+    const int channel_index,
+    const int pixel_index,
+    const cv::Size& size) const {
+
+  cv::Point anchor_coords = GetPixelCoordinatesFromIndex(pixel_index);
+  const int radius_x = size.width / 2;
+  const int radius_y = size.height / 2;
+  int corner_x = anchor_coords.x - radius_x;
+  // If the x xadius is even, add 1 to offset the centering towards the left.
+  if (size.width % 2 == 0) {
+    corner_x += 1;
+  }
+  int corner_y = anchor_coords.y - radius_y;
+  // If the y radius is even, add 1 to offset the centering towards the top.
+  if (size.height % 2 == 0) {
+    corner_y += 1;
+  }
+
+  const cv::Mat channel_image = GetChannelImage(channel_index);
+  // If the patch extends outside of the image, deal with that situation.
+  if (corner_x < 0 ||
+      corner_y < 0 ||
+      (corner_x + size.width) >= image_size_.width ||
+      (corner_y + size.height) >= image_size_.height) {
+    // Crop everything that's possible from the original image, cutting off the
+    // crop at the image borders.
+    const cv::Rect image_crop_region(
+        std::max(0, corner_x),
+        std::max(0, corner_y),
+        std::min(corner_x + size.width, image_size_.width - corner_x),
+        std::min(corner_y + size.height, image_size_.height - corner_y));
+    const cv::Mat sub_patch = channel_image(image_crop_region);
+
+    // Set up the patch region, anchored top-left at either at 0 or offset to
+    // the right and/or down.
+    const int patch_x = (corner_x < 0) ? -corner_x : 0;
+    const int patch_y = (corner_y < 0) ? -corner_y : 0;
+    const cv::Rect patch_region(
+        patch_x, patch_y, image_crop_region.width, image_crop_region.height);
+
+    // Copy the image sub-patch to the full patch in the appropriate region.
+    // Everything not filled in will be padded with zeros.
+    cv::Mat patch = cv::Mat::zeros(size, util::kOpenCvMatrixType);
+    sub_patch.copyTo(patch(patch_region));
+    return patch;
+  }
+  // Otherwise if the patch completely overlaps the image, just return that.
+  return channel_image(cv::Rect(corner_x, corner_y, size.width, size.height));
+}
+
 cv::Mat ImageData::GetChannelImage(const int index) const {
   CHECK_GE(index, 0) << "Channel index must be at least 0.";
   CHECK_LT(index, channels_.size()) << "Channel index out of bounds.";
@@ -162,10 +214,10 @@ double ImageData::GetPixelValue(
   CHECK_GE(channel_index, 0) << "Channel index must be at least 0.";
   CHECK_LT(channel_index, channels_.size()) << "Channel index out of bounds.";
 
-  const std::pair<int, int> image_coordinates =
+  const cv::Point image_coordinates =
       GetPixelCoordinatesFromIndex(pixel_index);  // Checks pixel index range.
   return channels_[channel_index].at<double>(
-      image_coordinates.first, image_coordinates.second);
+      image_coordinates.y, image_coordinates.x);
 }
 
 double* ImageData::GetMutableDataPointer(const int channel_index) const {
@@ -203,15 +255,13 @@ cv::Mat ImageData::GetVisualizationImage() const {
   return visualization_image;
 }
 
-std::pair<int, int> ImageData::GetPixelCoordinatesFromIndex(
-    const int index) const {
-
+cv::Point ImageData::GetPixelCoordinatesFromIndex(const int index) const {
   CHECK_GE(index, 0) << "Pixel index must be at least 0.";
   CHECK_LT(index, GetNumPixels()) << "Pixel index was out of bounds.";
 
-  const int row = index / image_size_.width;
-  const int col = index % image_size_.width;
-  return std::make_pair(row, col);
+  const int x = index % image_size_.width;  // col
+  const int y = index / image_size_.width;  // row
+  return cv::Point(x, y);
 }
 
 }  // namespace super_resolution

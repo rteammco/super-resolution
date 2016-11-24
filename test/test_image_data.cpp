@@ -1,6 +1,7 @@
 #include <limits>
 
 #include "image/image_data.h"
+#include "util/test_util.h"
 
 #include "opencv2/core/core.hpp"
 
@@ -8,6 +9,7 @@
 #include "gmock/gmock.h"
 
 using super_resolution::ImageData;
+using super_resolution::test::AreMatricesEqual;
 
 constexpr double kPixelErrorTolerance = 1.0 / 255.0;
 
@@ -232,6 +234,64 @@ TEST(ImageData, FromOpenCvImageConstructor) {
 TEST(ImageData, ResizeImage) {
   // TODO: implement.
   // ResizeImage(scale, interp.meth)
+}
+
+// This test verifies that the GetCroppedPatch method correctly returns cropped
+// patches of the image at the right location with the right values, and also
+// checks that the borders are correctly zero-padded if the center is near the
+// edge of the image.
+TEST(ImageData, GetCroppedPatch) {
+  const cv::Mat test_image_matrix = (cv::Mat_<double>(10, 10)
+      <<  0.1,  0.2,  0.3,  0.4,  0.5,  0.6,  0.7,  0.8,  0.9,  1.0,
+         0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21,
+          1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.4,  0.3,  0.2,  0.1,
+          1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
+         0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95,
+          0.4,  0.1,  0.2,  0.5, 0.15, 0.19, 0.22,  0.8, 0.33, 0.99,
+          0.1,  0.2,  0.3,  0.4,  0.5,  0.6,  0.7,  0.8,  0.9,  1.0,
+         0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.21,
+          1.0,  0.9,  0.8,  0.7,  0.6,  0.5,  0.4,  0.3,  0.2,  0.1,
+          1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0);
+  const ImageData test_image(test_image_matrix);
+
+  // Index 45 is pixel Mat(4, 5) = 0.55. A 3x3 crop centered there should be:
+  const cv::Mat expected_crop_1 = (cv::Mat_<double>(3, 3)
+      <<  1.0,  1.0,  1.0,
+         0.45, 0.55, 0.65,
+         0.15, 0.19, 0.22);
+  const cv::Mat crop_1 = test_image.GetCroppedPatch(0, 45, cv::Size(3, 3));
+  EXPECT_TRUE(AreMatricesEqual(crop_1, expected_crop_1));
+
+  // Index 65 is pixel Mat(6, 5) = 0.6. A 6x4 (width, height) crop centered
+  // there should be (not perfectly centered since the size is even):
+  const cv::Mat expected_crop_2 = (cv::Mat_<double>(4, 6)  // 4 rows, 6 cols
+      <<  0.5, 0.15, 0.19, 0.22,  0.8, 0.33,
+          0.4,  0.5,  0.6,  0.7,  0.8,  0.9,
+         0.14, 0.15, 0.16, 0.17, 0.18, 0.19,
+          0.7,  0.6,  0.5,  0.4,  0.3,  0.2);
+  const cv::Mat crop_2 = test_image.GetCroppedPatch(0, 65, cv::Size(6, 4));
+  EXPECT_TRUE(AreMatricesEqual(crop_2, expected_crop_2));
+
+  // Now check top-left corner case. Index 0 is pixel Mat(0, 0) = 0.1. A 3x3
+  // crop centered there should look like this:
+  const cv::Mat expected_crop_3 = (cv::Mat_<double>(3, 3)
+      << 0.0,  0.0,  0.0,
+         0.0,  0.1,  0.2,
+         0.0, 0.11, 0.12);
+  const cv::Mat crop_3 = test_image.GetCroppedPatch(0, 0, cv::Size(3, 3));
+  EXPECT_TRUE(AreMatricesEqual(crop_3, expected_crop_3));
+
+  // Similarly, check the bottom-right corner case, this time with a 6x6 patch
+  // surrounding pixel at index 88, which is Mat(8, 8) = 0.2.
+  const cv::Mat expected_crop_4 = (cv::Mat_<double>(6, 6)
+      <<  0.7,  0.8,  0.9,  1.0, 0.0, 0.0,
+         0.17, 0.18, 0.19, 0.21, 0.0, 0.0,
+          0.4,  0.3,  0.2,  0.1, 0.0, 0.0,
+          1.0,  1.0,  1.0,  1.0, 0.0, 0.0,
+          0.0,  0.0,  0.0,  0.0, 0.0, 0.0,
+          0.0,  0.0,  0.0,  0.0, 0.0, 0.0);
+  const cv::Mat crop_4 = test_image.GetCroppedPatch(0, 88, cv::Size(6, 6));
+  EXPECT_TRUE(AreMatricesEqual(crop_4, expected_crop_4));
 }
 
 // This test verifies that the correct visualization image is returned for

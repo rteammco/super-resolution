@@ -87,6 +87,26 @@ class ImageData {
   // has the same number of pixels. If the image is empty, 0 will be returned.
   int GetNumPixels() const;
 
+  // Returns a cropped patch of the channel image centered at the given pixel
+  // index. The given cv::Size will be the width and height of the patch.
+  //
+  // The patch will be center-anchored at the given pixel_index. If the width
+  // or height of the size is even, the patch (still anchored at the
+  // pixel_index) anchor will be off-center to the top/left. For example, a 4x4
+  // patch would be anchored at pixel "x" where "x" is at pixel_index:
+  //   |   |   |   |   |
+  //   |   | x |   |   |
+  //   |   |   |   |   |
+  //   |   |   |   |   |
+  //
+  // If the patch is centered near the edge of the image (i.e. part of the crop
+  // extends beyond the border of the image), the outside pixels will be set to
+  // 0.
+  cv::Mat GetCroppedPatch(
+      const int channel_index,
+      const int pixel_index,
+      const cv::Size& size) const;
+
   // Returns the channel image (OpenCV Mat) at the given index. Error if index
   // is out of bounds. Use GetNumChannels() to get a valid range. Note that the
   // number of channels may be 0 for an empty image.
@@ -122,8 +142,8 @@ class ImageData {
   //
   // Pixels are accessed row-by-row: all pixels in the first row of the image,
   // followed by all pixels in the second row, etc. The returned coordinates
-  // are (row, col).
-  std::pair<int, int> GetPixelCoordinatesFromIndex(const int index) const;
+  // are (x [col], y [row]).
+  cv::Point GetPixelCoordinatesFromIndex(const int index) const;
 
   // The size of the image (width and height) is set when the first channel is
   // added. The size is guaranteed to be consistent between all channels in the
