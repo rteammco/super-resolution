@@ -63,14 +63,17 @@ double ImageModel::ApplyToPixel(
   }
 
   // The resulting patch should be just a single pixel.
-  // TODO: implement for all of the operators and use this return.
-  // CHECK(patch.size() == cv::Size(1, 1));
-  // return patch.at<double>(0);
+  // TODO: doesn't return the right values.
+  CHECK(patch.size() == cv::Size(1, 1));
+  return patch.at<double>(0);
 
-  // TODO: implement for real! This is VERY BAD.
-  ImageData degraded_image = ApplyToImage(image_data, image_index);
-  degraded_image.ResizeImage(image_data.GetImageSize());
-  return degraded_image.GetPixelValue(channel_index, pixel_index);
+//  // TODO: implement for real! This is VERY BAD.
+//  ImageData degraded_image = ApplyToImage(image_data, image_index);
+//  degraded_image.ResizeImage(image_data.GetImageSize());
+//  const double pixel_value =
+//      degraded_image.GetPixelValue(channel_index, pixel_index);
+//  //CHECK_NEAR(patch.at<double>(0), pixel_value, 0.0001);
+//  return pixel_value;
 }
 
 cv::Mat ImageModel::GetModelMatrix(

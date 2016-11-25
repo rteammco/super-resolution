@@ -57,7 +57,8 @@ int main(int argc, char** argv) {
 
   // Create the forward image model degradation components.
   std::unique_ptr<DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(3));
+      new super_resolution::DownsamplingModule(
+          3, cv::Size(100, 100)));  // TODO: use the real image size.
   std::unique_ptr<DegradationOperator> motion_module(
       new super_resolution::MotionModule(motion_shift_sequence));
   std::unique_ptr<DegradationOperator> blur_module(

@@ -30,7 +30,7 @@ IrlsCostProcessor::IrlsCostProcessor(
 
   for (const ImageData& low_res_image : low_res_images) {
     ImageData observation = low_res_image;  // copy
-    observation.ResizeImage(image_size_, cv::INTER_AREA);
+    observation.ResizeImage(image_size_, cv::INTER_NEAREST);
     observations_.push_back(observation);
   }
 }

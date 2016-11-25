@@ -66,11 +66,6 @@ cv::Mat MotionModule::ApplyToPatch(
   const int degraded_patch_height = patch_size.height - (patch_radius * 2);
   return degraded_patch(cv::Rect(
       patch_radius, patch_radius, degraded_patch_width, degraded_patch_height));
-
-//  // TODO: implement.
-//  LOG(WARNING) << "Method not implemented. Returning empty patch.";
-//  const cv::Mat empty_patch;
-//  return empty_patch;
 }
 
 cv::Mat MotionModule::GetOperatorMatrix(

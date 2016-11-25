@@ -60,16 +60,21 @@ class ImageData {
   // positive values for width and height). All channels will be resized
   // equally. Any new channels added to this image must be the same size as the
   // rescaled image size. Empty images cannot be resized.
+  //
+  // NOTE: INTER_NEAREST is the "trivial" interpolation method which will just
+  // select the nearest pixel to the downsampled pixel without doing any actual
+  // interpolation (combining nearby pixel values). This method is preferable
+  // for super-resolution downsampling to create the aliasing effect.
   void ResizeImage(
       const cv::Size& new_size,
-      const int interpolation_method = cv::INTER_NEAREST); // TODO AREA?
+      const int interpolation_method = cv::INTER_NEAREST);
 
   // Resizes this image by the given scale factor, in the same manner as
   // ResizeImage(size). The new dimensions will be (width * scale_factor,
   // height * scale_factor). The given scale factor must be larger than 0.
   void ResizeImage(
       const double scale_factor,
-      const int interpolation_method = cv::INTER_NEAREST); // TODO: AREA?
+      const int interpolation_method = cv::INTER_NEAREST);
 
   // Returns the total number of channels (bands) in this image. Note that this
   // value may be 0.

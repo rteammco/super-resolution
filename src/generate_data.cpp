@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
   REQUIRE_ARG(FLAGS_output_image_dir);
 
   const cv::Mat image = cv::imread(FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
-  super_resolution::ImageData image_data(image);
+  const super_resolution::ImageData image_data(image);
 
   // Set up a motion sequence from a file if the user specified one.
   super_resolution::MotionShiftSequence motion_shift_sequence;
@@ -83,7 +83,8 @@ int main(int argc, char** argv) {
 
   // Add downsampling.
   std::unique_ptr<DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(FLAGS_downsampling_scale));
+      new super_resolution::DownsamplingModule(
+          FLAGS_downsampling_scale, image_data.GetImageSize()));
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
   // Add additive noise if the parameter was specified.
@@ -94,7 +95,7 @@ int main(int argc, char** argv) {
   }
 
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {
-    super_resolution::ImageData low_res_frame =
+    const super_resolution::ImageData low_res_frame =
         image_model.ApplyToImage(image_data, i);
     // Write the file.
     std::string image_path =

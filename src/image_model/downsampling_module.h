@@ -17,20 +17,20 @@ class DownsamplingModule : public DegradationOperator {
  public:
   // The given scale parameter is the scale by which the resized image will
   // be modified. The scale should be greater than or equal to 1.
-  explicit DownsamplingModule(const int scale);
+  explicit DownsamplingModule(const int scale, const cv::Size& image_size);
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
   // The radius depends on the scale. For example, a 2x downsampling requires
-  // at least a 2 x 2 grid to produce one pixel; hence, a radius of at least 1
-  // (a 3x3 grid). A 3x downsampling operator would require a 3x3 grid, hence
-  // the radius would be 1 also. A 4x downsampling would need a 4x4 grid,
-  // resulting in a radius of 2, and same for 5x downsampling.
+  // at least 2 pixels - the center pixel and one other in any direction to
+  // account for different subsampling shifts. Hence, a radius of at least 1 is
+  // required. A 3x downsampling operator would require 2 pixels on either side
+  // of the center pixel, so the radius would be 2.
   virtual int GetPixelPatchRadius() const {
-    return scale_ / 2;
+    return scale_  - 1;
   }
 
-  // TODO: implement.
+  // TODO: implementation only works for scale = 2 and 3x3 patches for now.
   virtual cv::Mat ApplyToPatch(
     const cv::Mat& patch,
     const int image_index,
@@ -41,7 +41,12 @@ class DownsamplingModule : public DegradationOperator {
       const cv::Size& image_size, const int index) const;
 
  private:
+  // The downsampling scale.
   const int scale_;
+
+  // The size of the image being downsampled. This is required for ApplyToPatch
+  // method to compute the pixel's row and col from its index.
+  const cv::Size image_size_;
 };
 
 }  // namespace super_resolution

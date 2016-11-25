@@ -94,14 +94,39 @@ TEST(ImageModel, AdditiveNoiseModule) {
 }
 
 TEST(ImageModel, DownsamplingModule) {
+  const cv::Size image_size(5, 5);
+
+  /* Verify functionality of downsampling a single patch. */
+
   // Patch radius for single pixel degradation should be s/2 where s is the
   // downsampling scale.
   for (int scale = 1; scale <= 5; ++scale) {
-    const super_resolution::DownsamplingModule downsampling_module(scale);
-    EXPECT_EQ(downsampling_module.GetPixelPatchRadius(), scale / 2);
+    const super_resolution::DownsamplingModule downsampling_module(
+        scale, image_size);
+    const int expected_radius = scale - 1;
+    EXPECT_EQ(downsampling_module.GetPixelPatchRadius(), expected_radius);
   }
 
-  super_resolution::DownsamplingModule downsampling_module(2);
+  super_resolution::DownsamplingModule downsampling_module(2, image_size);
+
+  // Check that we can downsample a 3x3 patch correctly with different image
+  // indices.
+  // TODO: support for patches larger than 3x3 or downsampling scales other
+  // than 2 are not yet implemented and will need testing later.
+  const cv::Mat test_patch = (cv::Mat_<double>(3, 3)
+      << 0.2, 0.5, 0.7,
+         0.1, 0.4, 0.1,
+         0.9, 0.8, 0.6);
+
+  // Downsampling at index 6 = position (1, 1) should result in pixel 0.2 being
+  // selected as it is at an even x, y coordinate.
+  const cv::Mat expected_patch_1 = (cv::Mat_<double>(1, 1) << 0.2);
+  const cv::Mat output_patch_1 =
+      downsampling_module.ApplyToPatch(test_patch, 0, 0, 6);
+  EXPECT_TRUE(AreMatricesEqual(output_patch_1, expected_patch_1));
+
+  /* Verify that the returned operator matrix is correct. */
+
   const cv::Mat downsampling_matrix =
       downsampling_module.GetOperatorMatrix(kSmallTestImageSize, 0);
 
