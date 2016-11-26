@@ -118,12 +118,74 @@ TEST(ImageModel, DownsamplingModule) {
          0.1, 0.4, 0.1,
          0.9, 0.8, 0.6);
 
-  // Downsampling at index 6 = position (1, 1) should result in pixel 0.2 being
-  // selected as it is at an even x, y coordinate.
+  // Downsampling at index 6 = position (1, 1) of the 5x5 image should result
+  // in pixel 0.2 being selected as it is at an even x, y coordinate.
+  //
+  // See below, the pixel at index 6 is the "?" which the 3x3 patch is centered
+  // on. Thus, the closest downsampling sample pixel is the "x" in the top-left
+  // corner of the patch, which has a value of 0.2. The "x" pixels are every 2
+  // pixels starting at (0, 0) since the downsampling process chooses every
+  // other pixel when scale = 2.
+  //   # X |   | x #   | x |
+  //   #   | ? |   #   |   |
+  //   # x |   | x #   | x |
+  //   |   |   |   |   |   |
+  //   | x |   | x |   | x |
   const cv::Mat expected_patch_1 = (cv::Mat_<double>(1, 1) << 0.2);
   const cv::Mat output_patch_1 =
       downsampling_module.ApplyToPatch(test_patch, 0, 0, 6);
   EXPECT_TRUE(AreMatricesEqual(output_patch_1, expected_patch_1));
+
+  // Try index 0 = position (0, 0); should be 0.4 (center pixel), since that
+  // pixel is the first sample pixel. This also verifies the edge case.
+  const cv::Mat expected_patch_2 = (cv::Mat_<double>(1, 1) << 0.4);
+  const cv::Mat output_patch_2 =
+      downsampling_module.ApplyToPatch(test_patch, 0, 0, 0);
+  EXPECT_TRUE(AreMatricesEqual(output_patch_2, expected_patch_2));
+
+  // Try index 8 = position (1, 3); should be 0.2.
+  //   | x |   # X |   | x #
+  //   |   |   #   | ? |   #
+  //   | x |   # x |   | x #
+  //   |   |   |   |   |   |
+  //   | x |   | x |   | x |
+  const cv::Mat expected_patch_3 = (cv::Mat_<double>(1, 1) << 0.2);
+  const cv::Mat output_patch_3 =
+      downsampling_module.ApplyToPatch(test_patch, 0, 0, 8);
+  EXPECT_TRUE(AreMatricesEqual(output_patch_3, expected_patch_3));
+
+  // Try index 13 = position (2, 3); should be 0.1. Note that the closest "x"
+  // (downsampling sample pixel) to the center pixel "?" is the center-left
+  // pixel, which has a value of 0.1 in the patch.
+  //   | x |   | x |   | x |
+  //   |   |   #   |   |   #
+  //   | x |   # X | ? | x #
+  //   |   |   #   |   |   #
+  //   | x |   | x |   | x |
+  const cv::Mat expected_patch_4 = (cv::Mat_<double>(1, 1) << 0.1);
+  const cv::Mat output_patch_4 =
+      downsampling_module.ApplyToPatch(test_patch, 0, 0, 13);
+  EXPECT_TRUE(AreMatricesEqual(output_patch_4, expected_patch_4));
+
+  // Try index 17 = position (3, 2); should be 0.5 since the nearest sample "x"
+  // is the top-center pixel, which has a value in the patch of 0.5.
+  //   | x |   | x |   | x |
+  //   |   |   |   |   |   |
+  //   | x #   | X |   # x |
+  //   |   #   | ? |   #   |
+  //   | x #   | x |   # x |
+  const cv::Mat expected_patch_5 = (cv::Mat_<double>(1, 1) << 0.5);
+  const cv::Mat output_patch_5 =
+      downsampling_module.ApplyToPatch(test_patch, 0, 0, 17);
+  EXPECT_TRUE(AreMatricesEqual(output_patch_5, expected_patch_5));
+
+  // Finally, try index 24 = position (4, 4); it's centered on a sample pixel,
+  // like (0, 0) so the value should be 0.4. This is also a border condition
+  // check.
+  const cv::Mat expected_patch_6 = (cv::Mat_<double>(1, 1) << 0.4);
+  const cv::Mat output_patch_6 =
+      downsampling_module.ApplyToPatch(test_patch, 0, 0, 24);
+  EXPECT_TRUE(AreMatricesEqual(output_patch_6, expected_patch_6));
 
   /* Verify that the returned operator matrix is correct. */
 

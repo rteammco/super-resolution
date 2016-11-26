@@ -34,10 +34,23 @@ cv::Mat DownsamplingModule::ApplyToPatch(
     const int channel_index,
     const int pixel_index) const {
 
+  // TODO: actual required patch size is only scale_ x scale_, where the pixel
+  // in question is in the bottom right corner.
   const int required_patch_size = 2 * scale_ - 1;
   const cv::Size patch_size = patch.size();
   CHECK_GE(patch_size.width, required_patch_size);
   CHECK_GE(patch_size.height, required_patch_size);
+
+//  const int pixel_x = pixel_index % image_size_.width;
+//  const int pixel_y = pixel_index / image_size_.width;
+//
+//  const int offset_x = pixel_x % scale_;
+//  const int offset_y = pixel_y % scale_;
+//
+//  const int patch_center_x = patch_size.width / 2;
+//  const int patch_center_y = patch_size.height / 2;
+//
+//  cv::Mat returned_patch = 0;
 
   // LOG(INFO) << "Given patch size: " << patch_size.width;
   // LOG(INFO) << "Required patch size: " << required_patch_size;
@@ -47,8 +60,15 @@ cv::Mat DownsamplingModule::ApplyToPatch(
   // downsampling, we sample every 2 pixels - so the offset is either 0 or 1).
   const int pixel_x = pixel_index % image_size_.width;
   const int pixel_y = pixel_index / image_size_.width;
+
+  // LOG(INFO) << "Pixel pos (x, y): " << pixel_x << ", " << pixel_y;
+
   const int patch_left_x = pixel_x - patch_size.width / 2;
   const int patch_top_y = pixel_y - patch_size.height / 2;
+
+  // LOG(INFO) << "Top left pos (x, y): "
+  //           << patch_left_x << ", " << patch_top_y;
+
   const int patch_offset_x = abs(patch_left_x) % scale_;
   const int patch_offset_y = abs(patch_top_y) % scale_;
 
@@ -69,6 +89,7 @@ cv::Mat DownsamplingModule::ApplyToPatch(
       cropped_patch_width,
       cropped_patch_height));
 
+  // LOG(INFO) << "Cropped patch:";
   // LOG(INFO) << cropped_patch;
 
   // Perform standard downsampling on the offset-cropped patch.
@@ -80,7 +101,10 @@ cv::Mat DownsamplingModule::ApplyToPatch(
   // LOG(INFO) << "New patch size: " << new_size.width;
 
   cv::Mat resized_patch;
-  cv::resize(patch, resized_patch, new_size, 0, 0, cv::INTER_NEAREST);
+  cv::resize(cropped_patch, resized_patch, new_size, 0, 0, cv::INTER_NEAREST);
+
+  // LOG(INFO) << "New patch: " << resized_patch;
+
   return resized_patch;
 }
 

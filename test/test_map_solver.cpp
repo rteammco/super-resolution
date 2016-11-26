@@ -98,8 +98,12 @@ TEST(MapSolver, SmallDataTest) {
   /* Verify solver gets a near-perfect solution for this trivial case. */
 
   ImageData result = solver.Solve(initial_estimate);
+
   std::cout << result.GetChannelImage(0) << std::endl;
+  std::cout << " ... vs ..." << std::endl;
+  std::cout << ground_truth_image.GetChannelImage(0) << std::endl;
   return;
+
   for (int pixel_index = 0; pixel_index < 16; ++pixel_index) {
     EXPECT_NEAR(
         result.GetPixelValue(0, pixel_index),
