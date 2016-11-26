@@ -210,6 +210,9 @@ TEST(MapSolver, RealIconDataTest) {
 // while...
 // TODO: fix this test and run it after implementing ImageModel::ApplyToPixel.
 TEST(MapSolver, RealBigImageTest) {
+  // TODO: can't run this test yet, but run it after the speed issue is fixed.
+  return;
+
   const cv::Mat image = cv::imread(kTestImagePath, CV_LOAD_IMAGE_GRAYSCALE);
   ImageData ground_truth(image);
   ground_truth.ResizeImage(cv::Size(100, 100));
