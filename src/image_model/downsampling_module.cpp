@@ -41,16 +41,7 @@ cv::Mat DownsamplingModule::ApplyToPatch(
   CHECK_GE(patch_size.width, required_patch_size);
   CHECK_GE(patch_size.height, required_patch_size);
 
-//  const int pixel_x = pixel_index % image_size_.width;
-//  const int pixel_y = pixel_index / image_size_.width;
-//
-//  const int offset_x = pixel_x % scale_;
-//  const int offset_y = pixel_y % scale_;
-//
-//  const int patch_center_x = patch_size.width / 2;
-//  const int patch_center_y = patch_size.height / 2;
-//
-//  cv::Mat returned_patch = 0;
+  // TODO: remove all the commented LOGGING code once everything is debugged.
 
   // LOG(INFO) << "Given patch size: " << patch_size.width;
   // LOG(INFO) << "Required patch size: " << required_patch_size;

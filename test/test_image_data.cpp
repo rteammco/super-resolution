@@ -292,6 +292,24 @@ TEST(ImageData, GetCroppedPatch) {
           0.0,  0.0,  0.0,  0.0, 0.0, 0.0);
   const cv::Mat crop_4 = test_image.GetCroppedPatch(0, 88, cv::Size(6, 6));
   EXPECT_TRUE(AreMatricesEqual(crop_4, expected_crop_4));
+
+  // Check also the case where just one edge (columns) is out of bounds, but
+  // the other is fine. We surround pixel 30, Mat(3, 0) = 1.0 by a 3x3 patch.
+  const cv::Mat expected_crop_5 = (cv::Mat_<double>(3, 3)
+      << 0.0,  1.0,  0.9,
+         0.0,  1.0,  1.0,
+         0.0, 0.05, 0.15);
+  const cv::Mat crop_5 = test_image.GetCroppedPatch(0, 30, cv::Size(3, 3));
+  EXPECT_TRUE(AreMatricesEqual(crop_5, expected_crop_5));
+
+  // Similarly, check the case where the rows are out of bounds, but the column
+  // edges are fine. We surround pixel 94, Mat(9, 4) = 1.0 by a 3x3 patch.
+  const cv::Mat expected_crop_6 = (cv::Mat_<double>(3, 3)
+      << 0.7, 0.6, 0.5,
+         1.0, 1.0, 1.0,
+         0.0, 0.0, 0.0);
+  const cv::Mat crop_6 = test_image.GetCroppedPatch(0, 94, cv::Size(3, 3));
+  EXPECT_TRUE(AreMatricesEqual(crop_6, expected_crop_6));
 }
 
 // This test verifies that the correct visualization image is returned for

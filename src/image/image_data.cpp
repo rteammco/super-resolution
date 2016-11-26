@@ -171,18 +171,35 @@ cv::Mat ImageData::GetCroppedPatch(
   }
 
   const cv::Mat channel_image = GetChannelImage(channel_index);
-  // If the patch extends outside of the image, deal with that situation.
+  LOG(INFO) << "CORNER: " << corner_x << ", " << corner_y;
+  // If the patch extends outside of the image, crop everything that's possible
+  // from the original image, cutting off the crop at the image borders.
   if (corner_x < 0 ||
       corner_y < 0 ||
       (corner_x + size.width) >= image_size_.width ||
       (corner_y + size.height) >= image_size_.height) {
-    // Crop everything that's possible from the original image, cutting off the
-    // crop at the image borders.
+    // Determine the width and height of the cropped patch.
+    int crop_patch_width = size.width;  // Default width if it's within bounds.
+    if (corner_x < 0) {
+      // Negative x, so take that much away from the width.
+      crop_patch_width = size.width + corner_x;
+    } else if (corner_x + size.width >= image_size_.width) {
+      crop_patch_width = image_size_.width - corner_x;
+    }
+    // Same for the height.
+    int crop_patch_height = size.height;
+    if (corner_y < 0) {
+      crop_patch_height = size.height + corner_y;
+    } else if (corner_y + size.height >= image_size_.height) {
+      crop_patch_height = image_size_.height - corner_y;
+    }
+
     const cv::Rect image_crop_region(
         std::max(0, corner_x),
         std::max(0, corner_y),
-        std::min(corner_x + size.width, image_size_.width - corner_x),
-        std::min(corner_y + size.height, image_size_.height - corner_y));
+        crop_patch_width,
+        crop_patch_height);
+    LOG(INFO) << "Getting subset ROI = " << image_crop_region;
     const cv::Mat sub_patch = channel_image(image_crop_region);
 
     // Set up the patch region, anchored top-left at either at 0 or offset to
@@ -191,14 +208,18 @@ cv::Mat ImageData::GetCroppedPatch(
     const int patch_y = (corner_y < 0) ? -corner_y : 0;
     const cv::Rect patch_region(
         patch_x, patch_y, image_crop_region.width, image_crop_region.height);
+    LOG(INFO) << "Getting embedded patch ROI = " << patch_region << " into";
 
     // Copy the image sub-patch to the full patch in the appropriate region.
     // Everything not filled in will be padded with zeros.
     cv::Mat patch = cv::Mat::zeros(size, util::kOpenCvMatrixType);
+    LOG(INFO) << "\n" << patch;
     sub_patch.copyTo(patch(patch_region));
+    LOG(INFO) << "Patch done...";
     return patch;
   }
   // Otherwise if the patch completely overlaps the image, just return that.
+  LOG(INFO) << "STD patch done...";
   return channel_image(cv::Rect(corner_x, corner_y, size.width, size.height));
 }
 

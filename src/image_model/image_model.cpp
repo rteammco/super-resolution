@@ -38,6 +38,8 @@ double ImageModel::ApplyToPixel(
     const int channel_index,
     const int pixel_index) const {
 
+  LOG(INFO) << "in ApplyToPixel";
+
   // Sum up the patch radii required by each operator and create a patch of
   // that size cropped out from the given image data.
   int patch_radius = 0;
@@ -49,11 +51,11 @@ double ImageModel::ApplyToPixel(
   // TODO: if making patches is too inefficient, maybe we can just do this
   // directly (manually) on the array.
   const int patch_size = patch_radius * 2 + 1;
+  LOG(INFO) << "about to get first patch of size = " << patch_size;
   // TODO: channel 0!
   cv::Mat patch = image_data.GetCroppedPatch(
       0, pixel_index, cv::Size(patch_size, patch_size));
-  //   OR (since building the image data may be inefficient)
-  // cv::Mat patch = (build manually from array values);
+  LOG(INFO) << "woot got it, now applying operators one by one";
 
   // Apply each degradation operator on the patch. The patch gets transformed
   // and resized after every operator.
@@ -62,18 +64,22 @@ double ImageModel::ApplyToPixel(
         patch, image_index, channel_index, pixel_index);
   }
 
-  // The resulting patch should be just a single pixel.
-  // TODO: doesn't return the right values.
-  CHECK(patch.size() == cv::Size(1, 1));
-  return patch.at<double>(0);
+  LOG(INFO) << "done, #slay";
 
-//  // TODO: implement for real! This is VERY BAD.
-//  ImageData degraded_image = ApplyToImage(image_data, image_index);
-//  degraded_image.ResizeImage(image_data.GetImageSize());
-//  const double pixel_value =
-//      degraded_image.GetPixelValue(channel_index, pixel_index);
-//  //CHECK_NEAR(patch.at<double>(0), pixel_value, 0.0001);
+  // The resulting patch should be just a single pixel.
+  CHECK(patch.size() == cv::Size(1, 1));
+
+  // TODO: delete this code once debugging is done.
+  LOG(INFO) << "about to do dumpy comparison...";
+  ImageData degraded_image = ApplyToImage(image_data, image_index);
+  degraded_image.ResizeImage(image_data.GetImageSize());
+  const double pixel_value =
+      degraded_image.GetPixelValue(channel_index, pixel_index);
+  CHECK_NEAR(patch.at<double>(0), pixel_value, 0.0001);
 //  return pixel_value;
+  LOG(INFO) << "done DONE DONE, returning";
+
+  return patch.at<double>(0);
 }
 
 cv::Mat ImageModel::GetModelMatrix(
