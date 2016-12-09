@@ -35,6 +35,31 @@ IrlsCostProcessor::IrlsCostProcessor(
   }
 }
 
+std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
+    const int image_index,
+    const int channel_index,
+    const double* estimated_image_data) const {
+
+  CHECK_NOTNULL(estimated_image_data);
+
+  // Degrade (and re-upsample) the HR estimate with the image model.
+  ImageData degraded_hr_image(estimated_image_data, image_size_);
+  image_model_.ApplyToImage(&degraded_hr_image, image_index);
+  degraded_hr_image.ResizeImage(image_size_, cv::INTER_NEAREST);
+
+  // Compute the residuals by comparing pixel values.
+  const int num_pixels = image_size_.width * image_size_.height;
+  std::vector<double> residuals;
+  residuals.reserve(num_pixels);
+  for (int i = 0; i < num_pixels; ++i) {
+    const double residual =
+        degraded_hr_image.GetPixelValue(0, i) -
+        observations_.at(image_index).GetPixelValue(channel_index, i);
+    residuals.push_back(residual);
+  }
+  return residuals;
+}
+
 double IrlsCostProcessor::ComputeDataTermResidual(
     const int image_index,
     const int channel_index,

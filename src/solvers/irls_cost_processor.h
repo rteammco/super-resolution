@@ -40,7 +40,12 @@ class IrlsCostProcessor {
   // the given index (and channel) by applying the ImageModel to the HR image.
   // The returned values will be the residuals (the difference in pixel
   // intensity) at each pixel of the HR image.
-  // TODO: comment fix.
+  std::vector<double> ComputeDataTermResiduals(
+      const int image_index,
+      const int channel_index,
+      const double* estimated_image_data) const;
+
+  // TODO: comment or remove method.
   double ComputeDataTermResidual(
       const int image_index,
       const int channel_index,
