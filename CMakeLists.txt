@@ -15,6 +15,7 @@ endif()
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 # Default to Release mode.
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
@@ -40,6 +41,7 @@ file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 # Create a library for all of the added Super Resolution dependencies (i.e. all
 # the classes).
+file(GLOB   alglib_SRC        "libs/alglib/src/*.cpp")
 file(GLOB   ftir_SRC          "src/ftir/*.cpp")
 file(GLOB   image_SRC         "src/image/*.cpp")
 file(GLOB   image_model_SRC   "src/image_model/*.cpp")
@@ -50,6 +52,7 @@ file(GLOB   video_SRC         "src/video/*.cpp")
 
 add_library(
   LibSuperResolution
+  ${alglib_SRC}
   ${ftir_SRC}
   ${image_SRC}
   ${image_model_SRC}

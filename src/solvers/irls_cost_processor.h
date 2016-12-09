@@ -2,7 +2,7 @@
 // MAP objective function using the iteratively reweighted least squares (IRLS)
 // formulation. It handles all of the image processing and application of the
 // ImageModel to the high-resolution estimates. This class acts as an interface
-// between the OpenCV image processing code and the Ceres solver code.
+// between the image processing code and the solver library code.
 
 #ifndef SRC_SOLVERS_IRLS_COST_PROCESSOR_H_
 #define SRC_SOLVERS_IRLS_COST_PROCESSOR_H_
