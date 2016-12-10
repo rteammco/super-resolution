@@ -210,9 +210,6 @@ TEST(MapSolver, RealIconDataTest) {
 // while...
 // TODO: fix this test and run it after implementing ImageModel::ApplyToPixel.
 TEST(MapSolver, RealBigImageTest) {
-  // TODO: can't run this test yet, but run it after the speed issue is fixed.
-  return;
-
   const cv::Mat image = cv::imread(kTestImagePath, CV_LOAD_IMAGE_GRAYSCALE);
   ImageData ground_truth(image);
   ground_truth.ResizeImage(cv::Size(100, 100));
@@ -264,7 +261,7 @@ TEST(MapSolver, RealBigImageTest) {
   // scalable.
   // TODO: run some analysis on the code and find out where all the memory is
   // going and where how to make the whole thing way more efficient.
-  /*const ImageData solver_result = solver.Solve(initial_estimate);
+  const ImageData solver_result = solver.Solve(initial_estimate);
 
   std::cout << "Solved." << std::endl;
 
@@ -281,5 +278,5 @@ TEST(MapSolver, RealBigImageTest) {
   disp_result.ResizeImage(disp_size);
   cv::imshow("super-resolved", disp_result.GetVisualizationImage());
 
-  cv::waitKey(0); */
+  cv::waitKey(0);
 }

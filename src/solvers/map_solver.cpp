@@ -25,20 +25,60 @@ namespace super_resolution {
 
 constexpr double kMinIrlsWeight = 0.0001;  // Used to avoid division by 0.
 
-void ObjectiveFunction(
-    const alglib::real_1d_array& x,
-    double& residual_sum,
-    void* ptr) {  // TODO: ptr should be the IrlsCostProcessor ptr!
+// Data struct that gets passed in as the pointer to the objective function and
+// callback for processing the residuals and IRLS weights.
+struct SolverMetaData {
+  SolverMetaData(
+      const IrlsCostProcessor* irls_cost_processor,
+      const int num_low_res_images,
+      const int num_channels,
+      const int num_pixels)
+  : irls_cost_processor(irls_cost_processor),
+    num_low_res_images(num_low_res_images),
+    num_channels(num_channels),
+    num_pixels(num_pixels) {}
 
-  // TODO: implement
+  const IrlsCostProcessor* irls_cost_processor;
+  const int num_low_res_images;
+  const int num_channels;
+  const int num_pixels;
+};
+
+// The objective function used by the solver to compute residuals.
+void ObjectiveFunction(
+    const alglib::real_1d_array& estimated_data,
+    double& residual_sum,
+    void* solver_meta_data_ptr) {
+
+  const SolverMetaData* solver_meta_data =
+      (const SolverMetaData*)(solver_meta_data_ptr);
+
   residual_sum = 0;
+  const int num_images = solver_meta_data->num_low_res_images;
+  for (int image_index = 0; image_index < num_images; ++image_index) {
+    // TODO: only channel 0 is currently supported. For channel 1+ offset data
+    // pointer by num_pixels * channel_index.
+    const int channel_index = 0;
+    // TODO: IrlsCostProcessor should just return the number, no need to get a
+    // vector and loop through it again.
+    const std::vector<double> residuals =
+        solver_meta_data->irls_cost_processor->ComputeDataTermResiduals(
+            image_index, channel_index, estimated_data.getcontent());
+    for (const double residual : residuals) {
+      residual_sum += (residual * residual);
+    }
+    // TODO: also handle regularization cost residuals here.
+  }
 }
 
+// The callback function, called after every solver iteration, which updates
+// the IRLS weights.
 void SolverIterationCallback(
     const alglib::real_1d_array& x,
     double func,
-    void* ptr) {
+    void* solver_meta_data_ptr) {
 
+  // TODO: update IRLS weights.
   LOG(INFO) << "In callback.";
 }
 
@@ -71,30 +111,41 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
       solver_options_.regularization_parameter,
       &irls_weights);
 
-  ImageData estimated_image = initial_estimate;
-
   const int num_channels = low_res_images_[0].GetNumChannels();
   const int num_images = low_res_images_.size();
+  const int num_pixels = initial_estimate.GetNumPixels();
 
   // Set up the optimization code with ALGLIB.
   // TODO: actually implement this correctly.
   const double epsg = 0.0000000001;
-  const double epsf = 0;
-  const double epsx = 0;
+  const double epsf = 0.0;
+  const double epsx = 0.0;
   const double diffstep = 1.0e-6;
+  const alglib::ae_int_t max_num_iterations = 50;  // 0 = infinite.
 
-  alglib::real_1d_array x = "[0, 0, 0, 0, 0]";  // TODO
-  alglib::ae_int_t maxits = 0;
-  alglib::mincgstate state;
-  alglib::mincgreport report;
+  // TODO: multiple channel support.
+  alglib::real_1d_array solver_data;
+  solver_data.setcontent(
+      num_pixels, initial_estimate.GetMutableDataPointer(0));
 
-  alglib::mincgcreatef(x, diffstep, state);
-  alglib::mincgsetcond(state, epsg, epsf, epsx, maxits);
-  alglib::mincgsetxrep(state, true);
+  alglib::mincgstate solver_state;
+  alglib::mincgreport solver_report;
+  alglib::mincgcreatef(solver_data, diffstep, solver_state);
+  alglib::mincgsetcond(solver_state, epsg, epsf, epsx, max_num_iterations);
+  alglib::mincgsetxrep(solver_state, true);
 
-  alglib::mincgoptimize(state, ObjectiveFunction, SolverIterationCallback);
-  alglib::mincgresults(state, x, report);
+  // Solve and get results report.
+  const SolverMetaData solver_meta_data(
+      &irls_cost_processor, num_images, num_channels, num_pixels);
+  alglib::mincgoptimize(
+      solver_state,
+      ObjectiveFunction,
+      SolverIterationCallback,
+      (void*)(&solver_meta_data));
+  alglib::mincgresults(solver_state, solver_data, solver_report);
 
+  const ImageData estimated_image(
+      solver_data.getcontent(), initial_estimate.GetImageSize());
   return estimated_image;
 }
 
