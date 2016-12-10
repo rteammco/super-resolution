@@ -31,7 +31,6 @@ brew install gflags
 brew install glog
 brew install opencv3
 brew install webp
-brew install ceres-solver
 ```
 
 Install gtest:
@@ -83,8 +82,6 @@ sudo apt-get install libgoogle-glog-dev
 
 Install OpenCV 3 by following the instructions here: http://docs.opencv.org/3.0-beta/doc/tutorials/introduction/linux_install/linux_install.html.
 Also probably install the optional stuff.
-
-Install the Ceres solver by following the instructions here: http://ceres-solver.org/building.html#linux. You may need to run CMake as `cmake -DEXPORT_BUILD_DIR=ON ..` (unconfirmed). Use `sudo make install` after running the tests to install it.
 
 Install gtest:
 ```
