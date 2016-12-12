@@ -15,24 +15,32 @@
 
 namespace super_resolution {
 
+// Minimum residual value for computing IRLS weights, used to avoid division by
+// zero.
+constexpr double kMinResidualValue = 0.00001;
+
 IrlsCostProcessor::IrlsCostProcessor(
     const std::vector<ImageData>& low_res_images,
     const ImageModel& image_model,
     const cv::Size& image_size,
     std::unique_ptr<Regularizer> regularizer,
-    const double regularization_parameter,
-    const std::vector<double>* irls_weights)
+    const double regularization_parameter)
     : image_model_(image_model),
       image_size_(image_size),
       regularizer_(std::move(regularizer)),
-      regularization_parameter_(regularization_parameter),
-      irls_weights_(irls_weights) {
+      regularization_parameter_(regularization_parameter) {
 
   for (const ImageData& low_res_image : low_res_images) {
     ImageData observation = low_res_image;  // copy
     observation.ResizeImage(image_size_, cv::INTER_NEAREST);
     observations_.push_back(observation);
   }
+
+  // Initialize all IRLS weights to 1.
+  // TODO: num_weights also depends on the number of channels in the HR image.
+  const int num_weights = image_size_.width * image_size_.height;
+  irls_weights_.resize(num_weights);
+  std::fill(irls_weights_.begin(), irls_weights_.end(), 1);
 }
 
 std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
@@ -68,10 +76,29 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
   std::vector<double> residuals =
       regularizer_->ComputeResiduals(estimated_image_data);
   for (int i = 0; i < residuals.size(); ++i) {
-    const double weight = sqrt(irls_weights_->at(i));
+    const double weight = sqrt(irls_weights_.at(i));
     residuals[i] = regularization_parameter_ * weight * residuals[i];
   }
   return residuals;
+}
+
+void IrlsCostProcessor::UpdateIrlsWeights(const double* estimated_image_data) {
+  CHECK_NOTNULL(estimated_image_data);
+
+  // TODO: the regularizer is assumed to be L1 norm. Scale appropriately to L*
+  // norm based on the regularizer's properties.
+  // TODO: also, this assumes a single regularization term. Maybe we can have
+  // more than one?
+  std::vector<double> regularization_residuals =
+      regularizer_->ComputeResiduals(estimated_image_data);
+  CHECK_EQ(regularization_residuals.size(), irls_weights_.size())
+      << "Number of residuals does not match number of weights.";
+  for (int i = 0; i < regularization_residuals.size(); ++i) {
+    // TODO: this assumes L1 loss!
+    // w = |r|^(p-2)
+    irls_weights_[i] =
+        1.0 / std::max(kMinResidualValue, regularization_residuals[i]);
+  }
 }
 
 }  // namespace super_resolution

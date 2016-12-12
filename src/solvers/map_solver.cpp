@@ -19,13 +19,11 @@
 
 namespace super_resolution {
 
-constexpr double kMinIrlsWeight = 0.0001;  // Used to avoid division by 0.
-
 // Data struct that gets passed in as the pointer to the objective function and
 // callback for processing the residuals and IRLS weights.
 struct SolverMetaData {
   SolverMetaData(
-      const IrlsCostProcessor* irls_cost_processor,
+      IrlsCostProcessor* irls_cost_processor,
       const int num_low_res_images,
       const int num_channels,
       const int num_pixels)
@@ -34,7 +32,7 @@ struct SolverMetaData {
     num_channels(num_channels),
     num_pixels(num_pixels) {}
 
-  const IrlsCostProcessor* irls_cost_processor;
+  IrlsCostProcessor* irls_cost_processor;
   const int num_low_res_images;
   const int num_channels;
   const int num_pixels;
@@ -86,8 +84,11 @@ void SolverIterationCallback(
     double residual_sum,
     void* solver_meta_data_ptr) {
 
-  // TODO: update IRLS weights.
-  LOG(INFO) << "In callback: " << residual_sum;
+  const SolverMetaData* solver_meta_data =
+      reinterpret_cast<const SolverMetaData*>(solver_meta_data_ptr);
+  IrlsCostProcessor* irls_cost_processor =
+      solver_meta_data->irls_cost_processor;
+  irls_cost_processor->UpdateIrlsWeights(estimated_data.getcontent());
 }
 
 ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
@@ -107,17 +108,12 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
           new TotalVariationRegularizer(hr_image_size));
   }
 
-  // Initialize all IRLS weights to 1.
-  std::vector<double> irls_weights(num_hr_pixels);
-  std::fill(irls_weights.begin(), irls_weights.end(), 1);
-
-  const IrlsCostProcessor irls_cost_processor(
+  IrlsCostProcessor irls_cost_processor(
       low_res_images_,
       image_model_,
       hr_image_size,
       std::move(regularizer),
-      solver_options_.regularization_parameter,
-      &irls_weights);
+      solver_options_.regularization_parameter);
 
   const int num_channels = low_res_images_[0].GetNumChannels();
   const int num_images = low_res_images_.size();
