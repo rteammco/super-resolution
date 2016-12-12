@@ -26,7 +26,8 @@ class MockRegularizer : public super_resolution::Regularizer {
 };
 
 // Verifies that the correct data term residuals are returned for an image.
-TEST(IrlsCostProcessor, ComputeDataTermResidual) {
+// TODO: fix.
+TEST(IrlsCostProcessor, ComputeDataTermResiduals) {
   const cv::Size image_size(3, 3);
   const cv::Mat lr_channel_1 = (cv::Mat_<double>(3, 3)
       << 0.5, 0.5, 0.5,
@@ -69,30 +70,21 @@ TEST(IrlsCostProcessor, ComputeDataTermResidual) {
   };
 
   // (Image 1, Channel 1) and hr pixels are identical, so expect all zeros.
-  std::vector<double> residuals_channel_1;
-  for (int i = 0; i < 9; ++i) {
-    residuals_channel_1.push_back(
-        irls_cost_processor.ComputeDataTermResidual(0, 0, i, hr_pixel_values));
-  }
+  std::vector<double> residuals_channel_1 =
+      irls_cost_processor.ComputeDataTermResiduals(0, 0, hr_pixel_values);
   EXPECT_THAT(residuals_channel_1, Each(0));
 
   // (Image 1, Channel 2) residuals should be different at each pixel.
-  std::vector<double> residuals_channel_2;
-  for (int i = 0; i < 9; ++i) {
-    residuals_channel_2.push_back(
-        irls_cost_processor.ComputeDataTermResidual(0, 1, i, hr_pixel_values));
-  }
+  std::vector<double> residuals_channel_2 =
+      irls_cost_processor.ComputeDataTermResiduals(0, 1, hr_pixel_values);
   EXPECT_THAT(residuals_channel_2, ElementsAre(
       -0.5,  0.0,  0.5,
        0.25, 0.0, -0.25,
       -0.5,  0.5, -0.5));
 
   // (Image 2, channel 1) ("channel_3") should all be -0.5.
-  std::vector<double> residuals_channel_3;
-  for (int i = 0; i < 9; ++i) {
-    residuals_channel_3.push_back(
-      irls_cost_processor.ComputeDataTermResidual(1, 0, i, hr_pixel_values));
-  }
+  std::vector<double> residuals_channel_3 =
+      irls_cost_processor.ComputeDataTermResiduals(1, 0, hr_pixel_values);
   EXPECT_THAT(residuals_channel_3, Each(-0.5));
 
   // TODO: Mock the ImageModel and make sure the residuals are computed

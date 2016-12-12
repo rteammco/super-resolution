@@ -60,23 +60,6 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
   return residuals;
 }
 
-double IrlsCostProcessor::ComputeDataTermResidual(
-    const int image_index,
-    const int channel_index,
-    const int pixel_index,
-    const double* estimated_image_data) const {
-
-  CHECK_NOTNULL(estimated_image_data);
-
-  const ImageData degraded_hr_image(estimated_image_data, image_size_);
-  // TODO: assumes a single channel (channel 0).
-  const double pixel_value = image_model_.ApplyToPixel(
-      degraded_hr_image, image_index, 0, pixel_index);
-
-  return pixel_value - observations_.at(image_index).GetPixelValue(
-      channel_index, pixel_index);
-}
-
 std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
     const double* estimated_image_data) const {
 

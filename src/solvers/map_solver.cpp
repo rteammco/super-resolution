@@ -49,8 +49,12 @@ void ObjectiveFunction(
 
   const SolverMetaData* solver_meta_data =
       reinterpret_cast<const SolverMetaData*>(solver_meta_data_ptr);
+  const IrlsCostProcessor* irls_cost_processor =
+      solver_meta_data->irls_cost_processor;
 
   residual_sum = 0;
+
+  // Compute the data fidelity term residuals.
   const int num_images = solver_meta_data->num_low_res_images;
   for (int image_index = 0; image_index < num_images; ++image_index) {
     // TODO: only channel 0 is currently supported. For channel 1+ offset data
@@ -58,25 +62,32 @@ void ObjectiveFunction(
     const int channel_index = 0;
     // TODO: IrlsCostProcessor should just return the number, no need to get a
     // vector and loop through it again.
-    const std::vector<double> residuals =
-        solver_meta_data->irls_cost_processor->ComputeDataTermResiduals(
+    const std::vector<double> data_fidelity_residuals =
+        irls_cost_processor->ComputeDataTermResiduals(
             image_index, channel_index, estimated_data.getcontent());
-    for (const double residual : residuals) {
+    for (const double residual : data_fidelity_residuals) {
       residual_sum += (residual * residual);
     }
-    // TODO: also handle regularization cost residuals here.
+  }
+
+  // Add the regularization term residuals.
+  const std::vector<double> regularization_residuals =
+      irls_cost_processor->ComputeRegularizationResiduals(
+          estimated_data.getcontent());
+  for (const double residual : regularization_residuals) {
+    residual_sum += (residual * residual);
   }
 }
 
 // The callback function, called after every solver iteration, which updates
 // the IRLS weights.
 void SolverIterationCallback(
-    const alglib::real_1d_array& x,
-    double func,
+    const alglib::real_1d_array& estimated_data,
+    double residual_sum,
     void* solver_meta_data_ptr) {
 
   // TODO: update IRLS weights.
-  LOG(INFO) << "In callback.";
+  LOG(INFO) << "In callback: " << residual_sum;
 }
 
 ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
