@@ -74,17 +74,17 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermDerivatives(
 
   CHECK_NOTNULL(residuals);
 
+  ImageData upgraded_residual_image(residuals, image_size_);
+  // TODO: residual_image.ResizeImage(image_size_ * scale_factor);
+  image_model_.ApplyTransposeToImage(&upgraded_residual_image, image_index);
+
   const int num_pixels = image_size_.width * image_size_.height;
   std::vector<double> derivatives;
   derivatives.reserve(num_pixels);
   for (int i = 0; i < num_pixels; ++i) {
-    // TODO:
-    // residuals are computed as
-    //   r = (UAx - Uy)
-    // for LR image y and estimated HR image x. The derivatives are defined as
-    //   d = 2*A'U'r
-    // where A' and U' are the transposes of A and U, respectively.
-    derivatives.push_back(0);
+    const double derivative =
+        2 * upgraded_residual_image.GetPixelValue(0, i);  // Only 1 channel.
+    derivatives.push_back(derivative);
   }
 
   return derivatives;

@@ -39,6 +39,11 @@ class ImageModel {
   // ImageData instead of returning a modified copy.
   void ApplyToImage(ImageData* image_data, const int index) const;
 
+  // Applies the transpose of the operators. For example, if the image model is
+  // defined on as DBM, then the transpose is defined as M'B'D'. Operator
+  // transpose implementations must be defined in every DegradationOperator.
+  void ApplyTransposeToImage(ImageData* image_data, const int index) const;
+
   // Return the pixel value at the given channel and pixel index after applying
   // the image model for the given image_index.
   //

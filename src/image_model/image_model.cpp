@@ -27,9 +27,17 @@ ImageData ImageModel::ApplyToImage(
 }
 
 void ImageModel::ApplyToImage(ImageData* image_data, const int index) const {
+  CHECK_NOTNULL(image_data);
   for (const auto& degradation_operator : degradation_operators_) {
     degradation_operator->ApplyToImage(image_data, index);
   }
+}
+
+void ImageModel::ApplyTransposeToImage(
+    ImageData* image_data, const int index) const {
+
+  CHECK_NOTNULL(image_data);
+  // TODO: impelement.
 }
 
 double ImageModel::ApplyToPixel(
