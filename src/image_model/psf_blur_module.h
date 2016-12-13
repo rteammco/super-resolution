@@ -20,6 +20,9 @@ class PsfBlurModule : public DegradationOperator {
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
+  virtual void ApplyTransposeToImage(
+      ImageData* image_data, const int index) const;
+
   // Depends on the blur radius.
   virtual int GetPixelPatchRadius() const {
     return blur_radius_;

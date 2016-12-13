@@ -21,6 +21,9 @@ class MotionModule : public DegradationOperator {
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
+  virtual void ApplyTransposeToImage(
+      ImageData* image_data, const int index) const;
+
   // The radius is the maximum possible pixel shift in either direction. Rounds
   // up to the nearest whole integer value if the shifts are sub-pixel amounts.
   //

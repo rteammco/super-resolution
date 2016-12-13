@@ -21,6 +21,9 @@ class DownsamplingModule : public DegradationOperator {
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
+  virtual void ApplyTransposeToImage(
+      ImageData* image_data, const int index) const;
+
   // The radius depends on the scale. For example, a 2x downsampling requires
   // at least 2 pixels - the center pixel and one other in any direction to
   // account for different subsampling shifts. Hence, a radius of at least 1 is

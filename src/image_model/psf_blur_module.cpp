@@ -21,6 +21,8 @@ PsfBlurModule::PsfBlurModule(const int blur_radius, const double sigma)
 }
 
 void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
+  CHECK_NOTNULL(image_data);
+
   const cv::Size kernel_size(blur_radius_, blur_radius_);
   int num_image_channels = image_data->GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
@@ -34,6 +36,14 @@ void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
         0,                        // addition to all values (none)
         cv::BORDER_REFLECT_101);  // border mode
   }
+}
+
+void PsfBlurModule::ApplyTransposeToImage(
+      ImageData* image_data, const int index) const {
+
+  CHECK_NOTNULL(image_data);
+
+  // TODO: implement.
 }
 
 cv::Mat PsfBlurModule::ApplyToPatch(

@@ -15,6 +15,8 @@
 namespace super_resolution {
 
 void MotionModule::ApplyToImage(ImageData* image_data, const int index) const {
+  CHECK_NOTNULL(image_data);
+
   const MotionShift motion_shift =
       motion_shift_sequence_.GetMotionShift(index);
   const cv::Mat shift_kernel = (cv::Mat_<double>(2, 3)
@@ -26,6 +28,14 @@ void MotionModule::ApplyToImage(ImageData* image_data, const int index) const {
     cv::Mat channel_image = image_data->GetChannelImage(i);
     cv::warpAffine(channel_image, channel_image, shift_kernel, image_size);
   }
+}
+
+void MotionModule::ApplyTransposeToImage(
+      ImageData* image_data, const int index) const {
+
+  CHECK_NOTNULL(image_data);
+
+  // TODO: implement.
 }
 
 int MotionModule::GetPixelPatchRadius() const {

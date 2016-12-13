@@ -37,7 +37,10 @@ void ImageModel::ApplyTransposeToImage(
     ImageData* image_data, const int index) const {
 
   CHECK_NOTNULL(image_data);
-  // TODO: impelement.
+  const int num_degradation_operators = degradation_operators_.size();
+  for (int i = num_degradation_operators - 1; i >= 0; --i) {
+    degradation_operators_[i]->ApplyTransposeToImage(image_data, index);
+  }
 }
 
 double ImageModel::ApplyToPixel(

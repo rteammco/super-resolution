@@ -22,9 +22,19 @@ DownsamplingModule::DownsamplingModule(
 void DownsamplingModule::ApplyToImage(
     ImageData* image_data, const int index) const {
 
+  CHECK_NOTNULL(image_data);
+
   const double scale_factor = 1.0 / static_cast<double>(scale_);
   // Area interpolation method aliases images by dropping pixels.
   image_data->ResizeImage(scale_factor, cv::INTER_NEAREST);
+}
+
+void DownsamplingModule::ApplyTransposeToImage(
+      ImageData* image_data, const int index) const {
+
+  CHECK_NOTNULL(image_data);
+
+  // TODO: implement.
 }
 
 // TODO: implementation only works for scale = 2 and 3x3 patches for now.

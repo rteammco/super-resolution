@@ -19,6 +19,8 @@ AdditiveNoiseModule::AdditiveNoiseModule(const double sigma) : sigma_(sigma) {
 void AdditiveNoiseModule::ApplyToImage(
     ImageData* image_data, const int index) const {
 
+  CHECK_NOTNULL(image_data);
+
   // The image pixels are scaled between 0 and 1, so scale the sigma also.
   const double scaled_sigma = static_cast<double>(sigma_) / 255.0;
 
@@ -31,6 +33,14 @@ void AdditiveNoiseModule::ApplyToImage(
     cv::Mat channel_image = image_data->GetChannelImage(i);
     channel_image += noise;
   }
+}
+
+void AdditiveNoiseModule::ApplyTransposeToImage(
+      ImageData* image_data, const int index) const {
+
+  CHECK_NOTNULL(image_data);
+
+  // TODO: implement.
 }
 
 cv::Mat AdditiveNoiseModule::ApplyToPatch(

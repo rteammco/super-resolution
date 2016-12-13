@@ -36,6 +36,11 @@ class DegradationOperator {
   // in the case of motion).
   virtual void ApplyToImage(ImageData* image_data, const int index) const = 0;
 
+  // Apply the transpose of this degradation operator to the given image. This
+  // must be implemented to compute the derivatives of the objective function.
+  virtual void ApplyTransposeToImage(
+      ImageData* image_data, const int index) const = 0;
+
   // Returns the radius of the patch required to compute the degradation for
   // single pixel p. For example, a blur degradation with a 5 x 5 kernel needs
   // to be applied to a patch containing at least 2 pixels to the left, right,
@@ -53,6 +58,8 @@ class DegradationOperator {
   // TODO: For efficiency, it may be useful to consider x, y radii separately.
   // TODO: Eventually, it may be even better to consider a spectral radius as
   //       well, i.e. (x, y, s).
+  //
+  // TODO: this may be obsolete due to changes in the solver.
   virtual int GetPixelPatchRadius() const = 0;
 
   // Applies the degradation to the given patch, which should be a sub-region

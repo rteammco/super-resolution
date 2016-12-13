@@ -35,6 +35,11 @@ class MockDegradationOperator : public super_resolution::DegradationOperator {
       ApplyToImage,
       void(super_resolution::ImageData* image_data, const int index));
 
+  // We have to mock this because it's pure virtual.
+  MOCK_CONST_METHOD2(
+      ApplyTransposeToImage,
+      void(super_resolution::ImageData* image_data, const int index));
+
   // We also have to mock this because it's pure virtual.
   MOCK_CONST_METHOD4(
       ApplyToPatch,
