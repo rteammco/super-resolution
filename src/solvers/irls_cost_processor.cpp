@@ -68,6 +68,28 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
   return residuals;
 }
 
+std::vector<double> IrlsCostProcessor::ComputeDataTermDerivatives(
+    const int image_index,
+    const double* residuals) const {
+
+  CHECK_NOTNULL(residuals);
+
+  const int num_pixels = image_size_.width * image_size_.height;
+  std::vector<double> derivatives;
+  derivatives.reserve(num_pixels);
+  for (int i = 0; i < num_pixels; ++i) {
+    // TODO:
+    // residuals are computed as
+    //   r = (UAx - Uy)
+    // for LR image y and estimated HR image x. The derivatives are defined as
+    //   d = 2*A'U'r
+    // where A' and U' are the transposes of A and U, respectively.
+    derivatives.push_back(0);
+  }
+
+  return derivatives;
+}
+
 std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
     const double* estimated_image_data) const {
 

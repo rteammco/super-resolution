@@ -41,6 +41,17 @@ class IrlsCostProcessor {
       const int channel_index,
       const double* estimated_image_data) const;
 
+  // Computes the derivatives of the given residuals using the image model. If
+  // U is an upsampling operator and A is the degradation operator, then the
+  // residuals are computed as
+  //   r = (UAx - Uy)
+  // for LR image y and estimated HR image x. The derivatives are defined as
+  //   d = 2*A'U'r
+  // where A' and U' are the transposes of A and U, respectively.
+  std::vector<double> ComputeDataTermDerivatives(
+      const int image_index,
+      const double* residuals) const;
+
   // Computes the regularization term residuals at each pixel of the given HR
   // image. This operation incorporates the IRLS weights and regularization
   // parameter automatically.

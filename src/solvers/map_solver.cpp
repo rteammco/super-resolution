@@ -43,6 +43,7 @@ struct SolverMetaData {
 void ObjectiveFunction(
     const alglib::real_1d_array& estimated_data,
     double& residual_sum,  // NOLINT
+    alglib::real_1d_array& gradients,  // NOLINT
     void* solver_meta_data_ptr) {
 
   const SolverMetaData* solver_meta_data =
@@ -52,7 +53,13 @@ void ObjectiveFunction(
 
   residual_sum = 0;
 
-  // Compute the data fidelity term residuals.
+  // Initialize the gradients to 0.
+  const int num_pixels = solver_meta_data->num_pixels;
+  for (int i = 0; i < num_pixels; ++i) {
+    gradients[i] = 0;
+  }
+
+  // Compute the data fidelity term residuals and the gradients.
   const int num_images = solver_meta_data->num_low_res_images;
   for (int image_index = 0; image_index < num_images; ++image_index) {
     // TODO: only channel 0 is currently supported. For channel 1+ offset data
@@ -66,6 +73,12 @@ void ObjectiveFunction(
     for (const double residual : data_fidelity_residuals) {
       residual_sum += (residual * residual);
     }
+    const std::vector<double> residual_derivatives =
+        irls_cost_processor->ComputeDataTermDerivatives(
+            image_index, data_fidelity_residuals.data());
+    for (int i = 0; i < num_pixels; ++i) {
+      gradients[i] += residual_derivatives[i];
+    }
   }
 
   // Add the regularization term residuals.
@@ -75,6 +88,8 @@ void ObjectiveFunction(
   for (const double residual : regularization_residuals) {
     residual_sum += (residual * residual);
   }
+  // TODO: manually compute derivatives here too:
+  // irls_cost_processor->ComputeRegularizationDerivatives(...);
 }
 
 // The callback function, called after every solver iteration, which updates
@@ -124,7 +139,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const double epsg = 0.0000000001;
   const double epsf = 0.0;
   const double epsx = 0.0;
-  const double diffstep = 1.0e-6;
+  //const double numerical_differentiation_step = 1.0e-6;
   const alglib::ae_int_t max_num_iterations = 50;  // 0 = infinite.
 
   // TODO: multiple channel support.
@@ -134,7 +149,9 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
 
   alglib::mincgstate solver_state;
   alglib::mincgreport solver_report;
-  alglib::mincgcreatef(solver_data, diffstep, solver_state);
+  //alglib::mincgcreatef(
+  //    solver_data, numerical_differentiation_step, solver_state);
+  alglib::mincgcreate(solver_data, solver_state);
   alglib::mincgsetcond(solver_state, epsg, epsf, epsx, max_num_iterations);
   alglib::mincgsetxrep(solver_state, true);
 
