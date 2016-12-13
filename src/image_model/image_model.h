@@ -46,6 +46,8 @@ class ImageModel {
   // extracting a single pixel from that result. However, this implementation
   // is very efficient by only processing pixels of the given image that
   // influence the pixel in question.
+  //
+  // TODO: this method may be obsolete due to the changes in the solver.
   double ApplyToPixel(
       const ImageData& image_data,
       const int image_index,

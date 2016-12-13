@@ -71,6 +71,8 @@ class DegradationOperator {
   //
   // This method should verify that the patch is sufficiently large to perform
   // the degradation.
+  //
+  // TODO: this may be obsolete due to changes in the solver.
   virtual cv::Mat ApplyToPatch(
       const cv::Mat& patch,
       const int image_index,

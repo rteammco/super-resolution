@@ -107,6 +107,8 @@ class ImageData {
   // If the patch is centered near the edge of the image (i.e. part of the crop
   // extends beyond the border of the image), the outside pixels will be set to
   // 0.
+  //
+  // TODO: this may be obsolete due to changes in the solver.
   cv::Mat GetCroppedPatch(
       const int channel_index,
       const int pixel_index,
