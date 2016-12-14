@@ -44,13 +44,14 @@ make
 make install
 ```
 
-Make sure `/usr/local/lib` is in your library path. If you have Xcode installed, then run
+Make sure `/usr/local/lib` is in your library path. If you have Xcode installed, then if you haven't already, run
 ```
-xcode-select install
+xcode-select --install
 ```
 
-or otherwise, add this to your .bash_profile:
+or otherwise, you may need to add this to your .bash_profile:
 ```
+export CPLUS_INCLUDE_PATH=/usr/local/include
 export LIBRARY_PATH=/usr/local/lib
 ```
 
