@@ -251,6 +251,7 @@ TEST(ImageModel, DownsamplingModule) {
 
 // Tests the implemented functionality of the MotionModule.
 // TODO: implement ApplyToImage test.
+// TODO: implement ApplyTransposeToImage test.
 TEST(ImageModel, MotionModule) {
   /* Verify that the returned patch radius is correct. */
 

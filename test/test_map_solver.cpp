@@ -212,7 +212,7 @@ TEST(MapSolver, RealIconDataTest) {
 TEST(MapSolver, RealBigImageTest) {
   const cv::Mat image = cv::imread(kTestImagePath, CV_LOAD_IMAGE_GRAYSCALE);
   ImageData ground_truth(image);
-  ground_truth.ResizeImage(cv::Size(100, 100));
+  ground_truth.ResizeImage(cv::Size(840, 840));
 
   std::cout << "Loaded image." << std::endl;
 

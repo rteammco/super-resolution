@@ -104,6 +104,7 @@ void SolverIterationCallback(
   IrlsCostProcessor* irls_cost_processor =
       solver_meta_data->irls_cost_processor;
   irls_cost_processor->UpdateIrlsWeights(estimated_data.getcontent());
+  LOG(INFO) << "callback";
 }
 
 ImageData MapSolver::Solve(const ImageData& initial_estimate) const {

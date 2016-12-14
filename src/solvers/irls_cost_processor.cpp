@@ -75,7 +75,9 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermDerivatives(
   CHECK_NOTNULL(residuals);
 
   ImageData upgraded_residual_image(residuals, image_size_);
-  // TODO: residual_image.ResizeImage(image_size_ * scale_factor);
+  // TODO: find appropriate LR image size...
+  const cv::Size lr_image_size(image_size_.width / 2, image_size_.height / 2);
+  upgraded_residual_image.ResizeImage(lr_image_size);
   image_model_.ApplyTransposeToImage(&upgraded_residual_image, image_index);
 
   const int num_pixels = image_size_.width * image_size_.height;
