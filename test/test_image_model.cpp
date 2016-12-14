@@ -112,7 +112,7 @@ TEST(ImageModel, DownsamplingModule) {
     EXPECT_EQ(downsampling_module.GetPixelPatchRadius(), expected_radius);
   }
 
-  super_resolution::DownsamplingModule downsampling_module(2, image_size);
+  const super_resolution::DownsamplingModule downsampling_module(2, image_size);
 
   // Check that we can downsample a 3x3 patch correctly with different image
   // indices.
@@ -215,6 +215,42 @@ TEST(ImageModel, DownsamplingModule) {
          9, 5, 2);
   EXPECT_TRUE(AreMatricesEqual(
       downsampling_matrix * test_image_vector, expected_downsampled_vector));
+
+  /* Verify that the transpose of downsampling results in the valid image. */
+
+  const cv::Mat expected_upsampled_image = (cv::Mat_<double>(8, 12)
+      << 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         7, 0, 8, 0, 9, 0, 0, 0, 1, 0, 2, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         9, 0, 7, 0, 5, 0, 4, 0, 2, 0, 1, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         2, 0, 4, 0, 6, 0, 8, 0, 0, 0, 1, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+  // Use the algorithmic transpose function.
+  super_resolution::ImageData upsampled_image(
+      kSmallTestImage, /* normalize = */ false);
+  downsampling_module.ApplyTransposeToImage(&upsampled_image, 0);
+
+  EXPECT_TRUE(AreMatricesEqual(
+      upsampled_image.GetChannelImage(0), expected_upsampled_image));
+
+  // Compute the upsampling using the matrix transpose.
+  const cv::Mat upsampling_matrix =
+      downsampling_module.GetOperatorMatrix(cv::Size(12, 8), 0).t();
+  EXPECT_EQ(upsampling_matrix.size(), cv::Size(24, 96));  // cols, rows
+
+  cv::Mat matrix_upsampled = upsampling_matrix * test_image_vector;
+  matrix_upsampled = matrix_upsampled.reshape(1, 8);
+
+  EXPECT_TRUE(AreMatricesEqual(
+      matrix_upsampled, expected_upsampled_image));
+
+  // Compare the results of the actual matrix transpose to the practical
+  // implementation.
+  EXPECT_TRUE(AreMatricesEqual(
+      upsampled_image.GetChannelImage(0), matrix_upsampled));
 }
 
 // Tests the implemented functionality of the MotionModule.

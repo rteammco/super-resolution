@@ -34,7 +34,11 @@ void DownsamplingModule::ApplyTransposeToImage(
 
   CHECK_NOTNULL(image_data);
 
-  // TODO: implement.
+  // The transpose of downsampling is trivial upsampling to size * scale_. We
+  // will use non-interpolating upsampling, so the pixels will be mapped to the
+  // higher resolution with zeros padded between them. This is defined in
+  // ImageData::UpsampleImage().
+  image_data->UpsampleImage(scale_);
 }
 
 // TODO: implementation only works for scale = 2 and 3x3 patches for now.

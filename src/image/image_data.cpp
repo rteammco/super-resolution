@@ -147,6 +147,27 @@ void ImageData::ResizeImage(
   ResizeImage(new_size, interpolation_method);
 }
 
+void ImageData::UpsampleImage(const int scale_factor) {
+  const cv::Size new_size = cv::Size(
+      image_size_.width * scale_factor, image_size_.height * scale_factor);
+  const int num_image_channels = channels_.size();
+  for (int i = 0; i < num_image_channels; ++i) {
+    const cv::Mat channel_image = channels_[i];
+    // TODO: do the more efficient implementation here.
+    cv::Mat resized_image = cv::Mat::zeros(new_size, channel_image.type());
+    for (int row = 0; row < image_size_.height; ++row) {
+      for (int col = 0; col < image_size_.width; ++col) {
+        const int new_row = row * scale_factor;
+        const int new_col = col * scale_factor;
+        resized_image.at<double>(new_row, new_col) =
+            channel_image.at<double>(row, col);
+      }
+    }
+    channels_[i] = resized_image;
+  }
+  image_size_ = new_size;
+}
+
 int ImageData::GetNumPixels() const {
   return image_size_.width * image_size_.height;  // (0, 0) if image is empty.
 }
