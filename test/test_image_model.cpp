@@ -228,15 +228,8 @@ TEST(ImageModel, DownsamplingModule) {
          2, 0, 4, 0, 6, 0, 8, 0, 0, 0, 1, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-  // Use the algorithmic transpose function.
-  super_resolution::ImageData upsampled_image(
-      kSmallTestImage, /* normalize = */ false);
-  downsampling_module.ApplyTransposeToImage(&upsampled_image, 0);
-
-  EXPECT_TRUE(AreMatricesEqual(
-      upsampled_image.GetChannelImage(0), expected_upsampled_image));
-
-  // Compute the upsampling using the matrix transpose.
+  // Compute the upsampling using the matrix transpose to verify that the
+  // expected matrix is in fact accurate.
   const cv::Mat upsampling_matrix =
       downsampling_module.GetOperatorMatrix(cv::Size(12, 8), 0).t();
   EXPECT_EQ(upsampling_matrix.size(), cv::Size(24, 96));  // cols, rows
@@ -247,10 +240,13 @@ TEST(ImageModel, DownsamplingModule) {
   EXPECT_TRUE(AreMatricesEqual(
       matrix_upsampled, expected_upsampled_image));
 
-  // Compare the results of the actual matrix transpose to the practical
-  // implementation.
+  // Now test the algorithmic transpose function.
+  super_resolution::ImageData upsampled_image(
+      kSmallTestImage, /* normalize = */ false);
+  downsampling_module.ApplyTransposeToImage(&upsampled_image, 0);
+
   EXPECT_TRUE(AreMatricesEqual(
-      upsampled_image.GetChannelImage(0), matrix_upsampled));
+      upsampled_image.GetChannelImage(0), expected_upsampled_image));
 }
 
 // Tests the implemented functionality of the MotionModule.
