@@ -30,7 +30,7 @@ void DownsamplingModule::ApplyToImage(
 }
 
 void DownsamplingModule::ApplyTransposeToImage(
-      ImageData* image_data, const int index) const {
+    ImageData* image_data, const int index) const {
 
   CHECK_NOTNULL(image_data);
 

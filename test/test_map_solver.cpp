@@ -1,4 +1,3 @@
-#include <iostream> // TODO REMOVE
 #include <memory>
 #include <string>
 #include <vector>
@@ -214,8 +213,6 @@ TEST(MapSolver, RealBigImageTest) {
   ImageData ground_truth(image);
   ground_truth.ResizeImage(cv::Size(840, 840));
 
-  std::cout << "Loaded image." << std::endl;
-
   // Build the image model.
   super_resolution::ImageModel image_model;
 
@@ -235,8 +232,6 @@ TEST(MapSolver, RealBigImageTest) {
       new super_resolution::DownsamplingModule(2, ground_truth.GetImageSize()));
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
-  std::cout << "Built image." << std::endl;
-
   // Generate the low-res images using the image model.
   const std::vector<ImageData> low_res_images {
     image_model.ApplyToImage(ground_truth, 0),
@@ -250,8 +245,6 @@ TEST(MapSolver, RealBigImageTest) {
   ImageData initial_estimate = low_res_images[0];
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
 
-  std::cout << "Created initial estimate." << std::endl;
-
   // Create the solver and attempt to solve.
   super_resolution::MapSolverOptions solver_options;
   solver_options.regularization_parameter = 0.0;
@@ -262,8 +255,6 @@ TEST(MapSolver, RealBigImageTest) {
   // TODO: run some analysis on the code and find out where all the memory is
   // going and where how to make the whole thing way more efficient.
   const ImageData solver_result = solver.Solve(initial_estimate);
-
-  std::cout << "Solved." << std::endl;
 
   const cv::Size disp_size(840, 840);
   ImageData disp_lr_1 = low_res_images[0];

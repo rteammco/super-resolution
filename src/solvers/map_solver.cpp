@@ -104,7 +104,6 @@ void SolverIterationCallback(
   IrlsCostProcessor* irls_cost_processor =
       solver_meta_data->irls_cost_processor;
   irls_cost_processor->UpdateIrlsWeights(estimated_data.getcontent());
-  LOG(INFO) << "callback";
 }
 
 ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
@@ -136,22 +135,19 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const int num_pixels = initial_estimate.GetNumPixels();
 
   // Set up the optimization code with ALGLIB.
-  // TODO: actually implement this correctly.
+  // TODO: set these numbers correctly.
   const double epsg = 0.0000000001;
   const double epsf = 0.0;
   const double epsx = 0.0;
-  //const double numerical_differentiation_step = 1.0e-6;
   const alglib::ae_int_t max_num_iterations = 50;  // 0 = infinite.
 
-  // TODO: multiple channel support.
+  // TODO: multiple channel support?
   alglib::real_1d_array solver_data;
   solver_data.setcontent(
       num_pixels, initial_estimate.GetMutableDataPointer(0));
 
   alglib::mincgstate solver_state;
   alglib::mincgreport solver_report;
-  //alglib::mincgcreatef(
-  //    solver_data, numerical_differentiation_step, solver_state);
   alglib::mincgcreate(solver_data, solver_state);
   alglib::mincgsetcond(solver_state, epsg, epsf, epsx, max_num_iterations);
   alglib::mincgsetxrep(solver_state, true);

@@ -39,7 +39,7 @@ void PsfBlurModule::ApplyToImage(ImageData* image_data, const int index) const {
 }
 
 void PsfBlurModule::ApplyTransposeToImage(
-      ImageData* image_data, const int index) const {
+    ImageData* image_data, const int index) const {
 
   CHECK_NOTNULL(image_data);
 

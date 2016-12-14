@@ -1,5 +1,6 @@
 #include "solvers/irls_cost_processor.h"
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <vector>
