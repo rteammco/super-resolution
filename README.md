@@ -30,7 +30,6 @@ Install required libraries with Homebrew:
 brew install gflags
 brew install glog
 brew install opencv3
-brew install webp
 ```
 
 Install gtest:
