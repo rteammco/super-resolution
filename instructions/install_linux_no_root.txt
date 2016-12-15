@@ -1,0 +1,138 @@
+This file contains notes on how to install all of the required libraries on
+Linux to your local user directory if you don't have root access.
+
+
+Required libraries:
+  - cmake 3+
+  - glog
+  - gflags
+  - opencv3
+  - gtest
+
+
+Replace "PATH/TO/USER/HOME" with your own username, e.g. "/home/yourusername" below.
+
+
+CMAKE 3+
+--------------------------------------------------------------------------------
+wget https://cmake.org/files/v3.7/cmake-3.7.1.tar.gz
+cd cmake-3.7.1/
+mkdir build
+cd build
+cmake ..
+make
+make DESTDIR=/PATH/TO/USER/HOME install
+--------------------------------------------------------------------------------
+
+
+GLOG
+--------------------------------------------------------------------------------
+git clone https://github.com/google/glog.git
+cd glog
+vim configure
+    => set m4 version from 14 to 13
+./configure --prefix=/PATH/TO/USER/HOME/
+make
+make install
+automake --add-missing
+make install
+    => this forced me to reinstall gflags (it was installed before)
+--------------------------------------------------------------------------------
+
+
+GFLAGS
+--------------------------------------------------------------------------------
+git clone https://github.com/gflags/gflags.git
+cd gflags
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/PATH/TO/USER/HOME ..
+vim CMakeCache
+    => change line
+          CMAKE_CXX_FLAGS:STRING=
+       to
+          CMAKE_CXX_FLAGS:STRING=-fPIC
+make test
+make install
+--------------------------------------------------------------------------------
+
+
+GTEST
+--------------------------------------------------------------------------------
+git clone https://github.com/google/googletest.git
+cd googletest
+mkdir build
+cd build
+cmake -D CMAKE_INSTALL_PREFIX=/PATH/TO/USER/HOME ..
+make
+make install
+--------------------------------------------------------------------------------
+
+
+OPENCV 3+
+--------------------------------------------------------------------------------
+wget http://downloads.sourceforge.net/project/opencvlibrary/opencv-unix/3.1.0/opencv-3.1.0.zip
+unzip opencv-3.1.0.zip
+cd opencv-3.1.0
+mkdir release
+cd release
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/PATH/TO/USER/HOME ..
+make
+make install
+--------------------------------------------------------------------------------
+
+
+BASIC TEST (SEE IF EVERYTHING WORKS):
+
+CMakeLists.txt
+ | cmake_minimum_required(VERSION 2.8)
+ | project(Tests)
+ |
+ | find_package(OpenCV REQUIRED)
+ | include_directories(${OpenCV_INCLUDE_DIRS})
+ | 
+ | file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
+ | 
+ | # Require C++ 11.
+ | SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+ | 
+ | add_executable(
+ |   Test
+ |   src/test.cpp
+ | )
+ | target_link_libraries(
+ |   Test
+ |   pthread
+ |   glog
+ |   gflags
+ |   ${OpenCV_LIBS}
+ | )
+
+src/test.cpp:
+ | #include <iostream>
+ | #include "opencv2/core/core.hpp"
+ | #include "gflags/gflags.h"
+ | #include "glog/logging.h"
+ | 
+ | using namespace std;
+ | 
+ | DEFINE_string(testarg, "", "Test argument...");
+ | 
+ | int main(int argc, char** argv) {
+ |   gflags::ParseCommandLineFlags(&argc, &argv, true);
+ |   cout << "Hello, world!" << endl;
+ |   LOG(INFO) << "Argument was: " << FLAGS_testarg;
+ |   cv::Mat m = (cv::Mat_<double>(3, 3)
+ |       << 5, 6, 7,
+ |          8, 9, 0,
+ |          1, 2, 3);
+ |   cout << m << endl;
+ |   return 0;
+ | }
+
+Then the following should work:
+ $ mkdir build
+ $ cd build
+ $ cmake ..
+ $ make
+ $ ./Test

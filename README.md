@@ -70,6 +70,8 @@ make
 
 #### Linux (Ubuntu)
 
+To install on Linux without root, the notes in `instructions/install_linux_no_root.txt` may be helpful.
+
 Make sure you have CMake:
 ```
 sudo apt-get install cmake
