@@ -17,7 +17,7 @@ class DownsamplingModule : public DegradationOperator {
  public:
   // The given scale parameter is the scale by which the resized image will
   // be modified. The scale should be greater than or equal to 1.
-  explicit DownsamplingModule(const int scale, const cv::Size& image_size);
+  DownsamplingModule(const int scale, const cv::Size& image_size);
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 

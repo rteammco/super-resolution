@@ -53,7 +53,8 @@ TEST(MapSolver, SmallDataTest) {
   };
 
   // Create the image model.
-  super_resolution::ImageModel image_model;
+  const int downsampling_scale = 2;
+  super_resolution::ImageModel image_model(downsampling_scale);
 
   // Add motion:
   super_resolution::MotionShiftSequence motion_shift_sequence({
@@ -68,7 +69,8 @@ TEST(MapSolver, SmallDataTest) {
 
   // Add downsampling:
   std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(2, cv::Size(4, 4)));
+      new super_resolution::DownsamplingModule(
+          downsampling_scale, cv::Size(4, 4)));
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
   const cv::Mat ground_truth_matrix = (cv::Mat_<double>(4, 4)
@@ -114,8 +116,9 @@ TEST(MapSolver, RealIconDataTest) {
   const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
   const ImageData ground_truth(image);
 
-  // Build the image model.
-  super_resolution::ImageModel image_model;
+  // Build the image model. 2x downsampling.
+  const int downsampling_scale = 2;
+  super_resolution::ImageModel image_model(downsampling_scale);
 
   // Motion.
   super_resolution::MotionShiftSequence motion_shift_sequence({
@@ -131,9 +134,9 @@ TEST(MapSolver, RealIconDataTest) {
   // Blur. TODO!
   // image_model.AddDegradationOperator(blur_module);
 
-  // 2x downsampling.
   std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(2, ground_truth.GetImageSize()));
+      new super_resolution::DownsamplingModule(
+          downsampling_scale, ground_truth.GetImageSize()));
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
   // Generate the low-res images using the image model.
@@ -213,8 +216,9 @@ TEST(MapSolver, RealBigImageTest) {
   ImageData ground_truth(image);
   ground_truth.ResizeImage(cv::Size(840, 840));
 
-  // Build the image model.
-  super_resolution::ImageModel image_model;
+  // Build the image model. 2x downsampling.
+  const int downsampling_scale = 2;
+  super_resolution::ImageModel image_model(downsampling_scale);
 
   // Motion.
   super_resolution::MotionShiftSequence motion_shift_sequence({
@@ -227,9 +231,9 @@ TEST(MapSolver, RealBigImageTest) {
       new super_resolution::MotionModule(motion_shift_sequence));
   image_model.AddDegradationOperator(std::move(motion_module));
 
-  // 2x downsampling.
   std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(2, ground_truth.GetImageSize()));
+      new super_resolution::DownsamplingModule(
+          downsampling_scale, ground_truth.GetImageSize()));
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
   // Generate the low-res images using the image model.

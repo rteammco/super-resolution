@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
   // Set up the ImageModel with all the parameters specified by the user. This
   // model will be used to generate the degradated images.
-  super_resolution::ImageModel image_model;
+  super_resolution::ImageModel image_model(FLAGS_downsampling_scale);
 
   // Add motion.
   std::unique_ptr<DegradationOperator> motion_module(

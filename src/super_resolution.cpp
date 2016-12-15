@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
       new super_resolution::AdditiveNoiseModule(5.0));
 
   // Create the forward image model: y = DBx + n
-  super_resolution::ImageModel image_model;
+  super_resolution::ImageModel image_model(3);
   image_model.AddDegradationOperator(std::move(motion_module));
   image_model.AddDegradationOperator(std::move(blur_module));
   image_model.AddDegradationOperator(std::move(downsampling_module));

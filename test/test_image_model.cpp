@@ -414,7 +414,7 @@ TEST(ImageModel, ApplyModel) {
   EXPECT_CALL(*mock_operator, ApplyToImage(_, 0))
       .Times(4);  // TODO: this is the current implementation.
 
-  super_resolution::ImageModel image_model;
+  super_resolution::ImageModel image_model(2);
   image_model.AddDegradationOperator(std::move(mock_operator));
 
   const double pixel_0 = image_model.ApplyToPixel(input_image, 0, 0, 0);
@@ -434,7 +434,7 @@ TEST(ImageModel, ApplyModel) {
 // Tests that the GetModelMatrix method correctly returns the appropriately
 // multiplied degradation matrices.
 TEST(ImageModel, GetModelMatrix) {
-  super_resolution::ImageModel image_model;
+  super_resolution::ImageModel image_model(2);
   const cv::Size image_size(2, 2);
 
   const cv::Mat operator_matrix_1 = (cv::Mat_<double>(4, 4)

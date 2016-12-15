@@ -53,7 +53,7 @@ TEST(IrlsCostProcessor, ComputeDataTermResiduals) {
     lr_image_data_2   // 1 channel
   };
 
-  super_resolution::ImageModel empty_image_model;
+  super_resolution::ImageModel empty_image_model(2);
   std::unique_ptr<super_resolution::Regularizer> regularizer(
       new MockRegularizer());
   super_resolution::IrlsCostProcessor irls_cost_processor(
@@ -104,7 +104,7 @@ TEST(IrlsCostProcessor, ComputeRegularizationResiduals) {
       .WillRepeatedly(Return(residuals));
 
   std::vector<super_resolution::ImageData> empty_image_vector;
-  super_resolution::ImageModel empty_image_model;
+  super_resolution::ImageModel empty_image_model(2);
 
   const double regularization_parameter = 0.5;
   super_resolution::IrlsCostProcessor irls_cost_processor(

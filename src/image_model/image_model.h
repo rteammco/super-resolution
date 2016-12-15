@@ -21,6 +21,11 @@ namespace super_resolution {
 
 class ImageModel {
  public:
+  // ImageModel keeps track of downsampling factor (e.g. downsampling_scale = 2
+  // for 2x super-resolution increase). The downsampling operator is NOT
+  // created here and must be added manually with AddDegradationOperator().
+  explicit ImageModel(const int downsampling_scale);
+
   // Adds a DegradationOperator to the model. These operators should be added in
   // the order that they need to be applied. For example, if the image model is
   //    y = DBMx + n
@@ -80,10 +85,18 @@ class ImageModel {
   cv::Mat GetModelMatrix(
       const cv::Size& image_size, const int index) const;
 
+  // Returns the downsampling scale.
+  int GetDownsamplingScale() const {
+    return downsampling_scale_;
+  }
+
  private:
   // An ordered list of degradation operators, to be applied in this order. We
   // keep pointers because the DegradationOperator class is pure virtual.
   std::vector<std::unique_ptr<DegradationOperator>> degradation_operators_;
+
+  // The ImageModel keeps track of the downsampling scale factor.
+  const int downsampling_scale_;
 };
 
 }  // namespace super_resolution

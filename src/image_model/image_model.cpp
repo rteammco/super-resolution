@@ -10,6 +10,13 @@
 
 namespace super_resolution {
 
+ImageModel::ImageModel(const int downsampling_scale)
+    : downsampling_scale_(downsampling_scale) {
+
+  CHECK_GE(downsampling_scale_, 1)
+      << "Downsampling scale must be at least 1. 1 means no downsampling.";
+}
+
 void ImageModel::AddDegradationOperator(
     std::unique_ptr<DegradationOperator> degradation_operator) {
 
