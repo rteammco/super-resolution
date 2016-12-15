@@ -14,20 +14,19 @@
 static const std::string kTestDataPath = "../test_data/ftir_test.txt";
 
 TEST(FtirDataLoader, DataLoaderTest) {
-  super_resolution::ftir::DataLoader ftir_data_loader(kTestDataPath);
+  const super_resolution::ftir::HyperspectralCubeSize data_size(128, 128, 5);
+  super_resolution::ftir::DataLoader ftir_data_loader(kTestDataPath, data_size);
 
-  const int num_spectral_bands = 5;
-  EXPECT_EQ(ftir_data_loader.GetNumSpectralBands(), num_spectral_bands);
+  EXPECT_EQ(ftir_data_loader.GetNumSpectralBands(), data_size.bands);
 
-  const int num_pixels = 128 * 128;
+  const int num_pixels = data_size.rows * data_size.cols;
   const cv::Mat pixels = ftir_data_loader.GetPixelData();
-  const cv::Size pixels_size = pixels.size();
-  EXPECT_EQ(pixels.size(), cv::Size(num_spectral_bands, num_pixels));
+  EXPECT_EQ(pixels.size(), cv::Size(data_size.bands, num_pixels));
 
   cv::Mat band_0_image = ftir_data_loader.GetSpectralBandImage(0);
-  EXPECT_EQ(band_0_image.size(), cv::Size(128, 128));
+  EXPECT_EQ(band_0_image.size(), cv::Size(data_size.cols, data_size.rows));
 
-  for (int b = 0; b < num_spectral_bands; ++b) {
+  for (int b = 0; b < data_size.bands; ++b) {
     cv::imshow("test window", ftir_data_loader.GetSpectralBandImage(b));
     cv::waitKey(0);
   }
