@@ -58,6 +58,16 @@ class IrlsCostProcessor {
   std::vector<double> ComputeRegularizationResiduals(
       const double* estimated_image_data) const;
 
+  // Computes the derivatives of the given residuals using the regularization
+  // term(s). If G is the regularization operator, then the derivative is
+  // defined as
+  //   2r*G'W'WG
+  // where r is the regularization parameter and G' and W' are the transposes
+  // of G and W, respectively. W is the diagonal weight matrix, so W'W is just
+  // the square of all the weights.
+  std::vector<double> ComputeRegularizationDerivatives(
+      const double* residuals) const;
+
   // Updates the IRLS weights for the regularization term by computing the
   // regularization residuals on the given estimated image pixel values and
   // then scaling the weights to make the residuals valid for an L2 norm.

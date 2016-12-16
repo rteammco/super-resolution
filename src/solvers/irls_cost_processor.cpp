@@ -108,6 +108,42 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
   return residuals;
 }
 
+std::vector<double> IrlsCostProcessor::ComputeRegularizationDerivatives(
+    const double* residuals) const {
+
+  CHECK_NOTNULL(residuals);
+
+  // We are computing the derivative
+  //   2r*G'W'WGx
+  // where x is the given residual vector. First we compute the operator on the
+  // given residual values:
+  //   Gx
+  std::vector<double> derivatives =
+      regularizer_->ComputeResiduals(residuals);
+  // TODO: rename to something like regularizer_->ApplyToImage(data);
+
+  // Then on that result, apply the weights W'W. The weights are conisdered as
+  // square roots of the actual computed weights, so we just apply the weights
+  // directly:
+  // W'W(Gx)
+  const int num_pixels = image_size_.width * image_size_.height;
+  for (int i = 0; i < num_pixels; ++i) {
+    derivatives[i] *= irls_weights_.at(i);
+  }
+
+  // Apply the transposed regularization operator on the results:
+  //   G'(W'WGx)
+  // TODO: derivatives = regularizer_->ApplyTranspose(derivatives);
+
+  // Finally multiply everything by 2 * regularization parameter:
+  //   2r*(G'W'WGx)
+  for (int i = 0; i < num_pixels; ++i) {
+    derivatives[i] *= regularization_parameter_ * 2;
+  }
+
+  return derivatives;
+}
+
 void IrlsCostProcessor::UpdateIrlsWeights(const double* estimated_image_data) {
   CHECK_NOTNULL(estimated_image_data);
 
