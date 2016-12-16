@@ -8,11 +8,11 @@
 
 #include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
+#include "image_model/blur_module.h"
 #include "image_model/degradation_operator.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
-#include "image_model/psf_blur_module.h"
 #include "motion/motion_shift.h"
 #include "util/macros.h"
 #include "util/util.h"
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
   // Add blur if the parameters are specified.
   if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
     std::unique_ptr<DegradationOperator> blur_module(
-        new super_resolution::PsfBlurModule(
+        new super_resolution::BlurModule(
             FLAGS_blur_radius, FLAGS_blur_sigma));
     image_model.AddDegradationOperator(std::move(blur_module));
   }

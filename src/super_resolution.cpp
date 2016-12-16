@@ -4,10 +4,10 @@
 
 #include "ftir/data_loader.h"
 #include "image_model/additive_noise_module.h"
+#include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
-#include "image_model/psf_blur_module.h"
 #include "motion/motion_shift.h"
 #include "solvers/map_solver.h"
 #include "util/macros.h"
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
   std::unique_ptr<DegradationOperator> motion_module(
       new super_resolution::MotionModule(motion_shift_sequence));
   std::unique_ptr<DegradationOperator> blur_module(
-      new super_resolution::PsfBlurModule(5, 1.0));
+      new super_resolution::BlurModule(5, 1.0));
   std::unique_ptr<DegradationOperator> noise_module(
       new super_resolution::AdditiveNoiseModule(5.0));
 

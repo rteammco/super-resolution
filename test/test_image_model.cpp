@@ -2,10 +2,10 @@
 #include <vector>
 
 #include "image_model/additive_noise_module.h"
+#include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
-#include "image_model/psf_blur_module.h"
 #include "motion/motion_shift.h"
 #include "util/matrix_util.h"
 #include "util/test_util.h"
@@ -388,12 +388,12 @@ TEST(ImageModel, MotionModule) {
   EXPECT_TRUE(AreMatricesEqual(motion_matrix_3, expected_matrix_3));
 }
 
-TEST(ImageModel, PsfBlurModule) {
+TEST(ImageModel, BlurModule) {
   // Patch radius for single pixel degradation should be the same size as the
   // blur kernel radius. Note that radius must be odd.
   for (int blur_radius = 1; blur_radius <= 9; blur_radius += 2) {
     const double sigma = (blur_radius - 0.5) * 3;  // sigma doesn't matter
-    const super_resolution::PsfBlurModule blur_module(blur_radius, sigma);
+    const super_resolution::BlurModule blur_module(blur_radius, sigma);
     EXPECT_EQ(blur_module.GetPixelPatchRadius(), blur_radius);
   }
 
@@ -404,7 +404,7 @@ TEST(ImageModel, PsfBlurModule) {
   //   | 0.0625 | 0.125  | 0.0625 |     | 1/16 | 1/8  | 1/16 |
   //   | 0.125  |  0.25  | 0.125  |  =  | 1/8  | 1/4  | 1/8  |
   //   | 0.0625 | 0.125  | 0.0625 |     | 1/16 | 1/8  | 1/16 |
-  const super_resolution::PsfBlurModule blur_module(3, 0.849321);
+  const super_resolution::BlurModule blur_module(3, 0.849321);
 
   // The expected kSmallTestImage after being blurred with the standard kernel.
   // This result was generated with a separate script.
