@@ -6,6 +6,7 @@
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
+#include "image_model/psf_blur_module.h"
 #include "motion/motion_shift.h"
 #include "solvers/map_solver.h"
 #include "util/test_util.h"
@@ -115,13 +116,14 @@ TEST(MapSolver, SmallDataTest) {
 TEST(MapSolver, RealIconDataTest) {
   const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
   const ImageData ground_truth(image);
+  const cv::Size image_size = ground_truth.GetImageSize();
 
   // Build the image model. 2x downsampling.
   const int downsampling_scale = 2;
   super_resolution::ImageModel image_model(downsampling_scale);
 
   // Motion.
-  super_resolution::MotionShiftSequence motion_shift_sequence({
+  const super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
     super_resolution::MotionShift(1, 0),
     super_resolution::MotionShift(0, 1),
@@ -129,14 +131,16 @@ TEST(MapSolver, RealIconDataTest) {
   });
   std::unique_ptr<super_resolution::DegradationOperator> motion_module(
       new super_resolution::MotionModule(motion_shift_sequence));
+  // Save the matrix for image 0 to make sure the correct matrix operations are
+  // being performed.
+  const cv::Mat motion_matrix = motion_module->GetOperatorMatrix(image_size, 0);
   image_model.AddDegradationOperator(std::move(motion_module));
 
-  // Blur. TODO!
-  // image_model.AddDegradationOperator(blur_module);
-
+  // Downsampling.
   std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(
-          downsampling_scale, ground_truth.GetImageSize()));
+      new super_resolution::DownsamplingModule(downsampling_scale, image_size));
+  const cv::Mat downsampling_matrix =
+      downsampling_module->GetOperatorMatrix(image_size, 0);
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
   // Generate the low-res images using the image model.
@@ -160,11 +164,14 @@ TEST(MapSolver, RealIconDataTest) {
   const ImageData solver_result = solver.Solve(initial_estimate);
 
   // Compare to a solution using the matrix formulation.
-  const cv::Size image_size = ground_truth.GetImageSize();
-  cv::Mat A1 = image_model.GetModelMatrix(image_size, 0);
-  cv::Mat A2 = image_model.GetModelMatrix(image_size, 1);
-  cv::Mat A3 = image_model.GetModelMatrix(image_size, 2);
-  cv::Mat A4 = image_model.GetModelMatrix(image_size, 3);
+  const cv::Mat A1 = image_model.GetModelMatrix(image_size, 0);
+  const cv::Mat A2 = image_model.GetModelMatrix(image_size, 1);
+  const cv::Mat A3 = image_model.GetModelMatrix(image_size, 2);
+  const cv::Mat A4 = image_model.GetModelMatrix(image_size, 3);
+
+  // Make sure we're getting the right matrices.
+  const cv::Mat expected_A1 = downsampling_matrix * motion_matrix;
+  EXPECT_TRUE(AreMatricesEqual(A1, expected_A1));
 
   // Linear system: x = Z^ * b, and thus Zx = b.
   // x = sum(A'A)^ * sum(A'y) (' is transpose, ^ is inverse).
@@ -181,29 +188,45 @@ TEST(MapSolver, RealIconDataTest) {
   b +=  A3.t() * low_res_images[2].GetChannelImage(0).reshape(1, num_pixels);
   b +=  A4.t() * low_res_images[3].GetChannelImage(0).reshape(1, num_pixels);
 
-  cv::Mat Zinv = Z.inv(cv::DECOMP_SVD);
+  const cv::Mat Zinv = Z.inv(cv::DECOMP_SVD);
   cv::Mat matrix_result = Zinv * b;
   matrix_result = matrix_result.reshape(1, image_size.height);
 
-/*  const cv::Size disp_size(840, 840);
-  ImageData disp_x(matrix_result);
-  disp_x.ResizeImage(disp_size);
-  cv::imshow("x", disp_x.GetVisualizationImage());
+  // Compare the results, but crop out one pixel from the edges to avoid
+  // comparing potentially different border handling methods.
+  const cv::Rect region_of_interest(1, 1, 26, 26);
+  const cv::Mat ground_truth_mat = ground_truth.GetChannelImage(0);
+  const cv::Mat cropped_ground_truth = ground_truth_mat(region_of_interest);
+  const cv::Mat solver_result_mat = solver_result.GetChannelImage(0);
+  const cv::Mat cropped_solver_result = solver_result_mat(region_of_interest);
+  const cv::Mat cropped_matrix_result = matrix_result(region_of_interest);
+  EXPECT_TRUE(AreMatricesEqual(
+      cropped_matrix_result,
+      cropped_ground_truth,
+      kSolverResultErrorTolerance));
+  EXPECT_TRUE(AreMatricesEqual(
+      cropped_solver_result,
+      cropped_ground_truth,
+      kSolverResultErrorTolerance));
 
+  /*const cv::Size disp_size(840, 840);
   ImageData disp_lr_1 = low_res_images[0];
   disp_lr_1.ResizeImage(disp_size);
   cv::imshow("upsampled lr 1", disp_lr_1.GetVisualizationImage());
 
+  ImageData disp_matrix_result(matrix_result);
+  disp_matrix_result.ResizeImage(disp_size);
+  cv::imshow("Matrix Result", disp_matrix_result.GetVisualizationImage());
+
+  ImageData disp_solver_result = solver_result;
+  disp_solver_result.ResizeImage(disp_size);
+  cv::imshow("Solver Result", disp_solver_result.GetVisualizationImage());
+
   ImageData disp_ground_truth = ground_truth;
   disp_ground_truth.ResizeImage(disp_size);
-  cv::imshow("ground truth", disp_ground_truth.GetVisualizationImage());
+  cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
 
-  ImageData disp_result = solver_result;
-  disp_result.ResizeImage(disp_size);
-  cv::imshow("super-resolved", disp_result.GetVisualizationImage());
-
-  cv::waitKey(0);
-  */
+  cv::waitKey(0);*/
 
   // TODO: multichannel test
 }

@@ -8,6 +8,10 @@
 namespace super_resolution {
 namespace test {
 
+// Maximum matrix size (either width or height) to print. Otherwise, it will be
+// considered too big to display.
+constexpr int kMaxMatrixSizeToPrint = 15;
+
 bool AreMatricesEqual(
     const cv::Mat& mat1, const cv::Mat& mat2, const double diff_tolerance) {
 
@@ -35,9 +39,16 @@ bool AreMatricesEqual(
 
   const bool are_equal = (cv::countNonZero(diff) == 0);
   if (!are_equal) {
-    std::cout << "Note: matrices are NOT equal:" << std::endl
-              << mat1 << std::endl << "--- vs. ---" << std::endl
-              << mat2 << std::endl;
+    const cv::Size matrix_size = mat1.size();
+    std::cout << "Note: matrices are NOT equal:" << std::endl;
+    // Show the matrices if they're small enough to be printed.
+    if (matrix_size.width <= kMaxMatrixSizeToPrint &&
+        matrix_size.height <= kMaxMatrixSizeToPrint) {
+      std::cout << mat1 << std::endl << "--- vs. ---" << std::endl
+                << mat2 << std::endl;
+    } else {
+      std::cout << "Matrices are too large to be displayed." << std::endl;
+    }
     if (diff_tolerance > 0) {
       std::cout << "  >> Diff tolerance of " << diff_tolerance
                 << " was exceeded." << std::endl;

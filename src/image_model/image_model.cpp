@@ -95,7 +95,6 @@ cv::Mat ImageModel::GetModelMatrix(
   for (int i = 1; i < num_operators; ++i) {
     const cv::Mat next_matrix =
         degradation_operators_[i]->GetOperatorMatrix(image_size, index);
-    // TODO: multiplication doesn't work with this SparseMat representation.
     model_matrix = next_matrix * model_matrix;
   }
   return model_matrix;
