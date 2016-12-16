@@ -10,7 +10,7 @@
 
 namespace super_resolution {
 
-PsfBlurModule::PsfBlurModule(const int blur_radius, const double sigma) 
+PsfBlurModule::PsfBlurModule(const int blur_radius, const double sigma)
     : blur_radius_(blur_radius) {
 
   CHECK_GE(blur_radius, 1);

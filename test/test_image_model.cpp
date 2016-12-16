@@ -398,7 +398,7 @@ TEST(ImageModel, PsfBlurModule) {
   }
 
   /* Verify that blur operator works as expected. */
-  
+
   // For a 3x3 kernel, a sigma of 0.849321 is almost exactly the "standard"
   // kernel:
   //   | 0.0625 | 0.125  | 0.0625 |     | 1/16 | 1/8  | 1/16 |
