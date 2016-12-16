@@ -11,9 +11,6 @@
 namespace super_resolution {
 namespace util {
 
-// This is the OpenCV matrix format that every matrix should use.
-constexpr int kOpenCvMatrixType = CV_64FC1;
-
 const char kCodeVersion[] = "0.1";
 
 // Initializes the app. Processes all of the command line arguments with gflags

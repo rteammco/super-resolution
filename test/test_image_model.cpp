@@ -7,8 +7,8 @@
 #include "image_model/motion_module.h"
 #include "image_model/psf_blur_module.h"
 #include "motion/motion_shift.h"
+#include "util/matrix_util.h"
 #include "util/test_util.h"
-#include "util/util.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"

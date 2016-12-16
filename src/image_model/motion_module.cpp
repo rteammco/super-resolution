@@ -5,7 +5,7 @@
 
 #include "image/image_data.h"
 #include "motion/motion_shift.h"
-#include "util/util.h"
+#include "util/matrix_util.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
