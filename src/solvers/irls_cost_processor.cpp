@@ -100,7 +100,7 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
   CHECK_NOTNULL(estimated_image_data);
 
   std::vector<double> residuals =
-      regularizer_->ComputeResiduals(estimated_image_data);
+      regularizer_->ApplyToImage(estimated_image_data);
   for (int i = 0; i < residuals.size(); ++i) {
     const double weight = sqrt(irls_weights_.at(i));
     residuals[i] = regularization_parameter_ * weight * residuals[i];
@@ -119,7 +119,7 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationDerivatives(
   // given residual values:
   //   Gx
   std::vector<double> derivatives =
-      regularizer_->ComputeResiduals(residuals);
+      regularizer_->ApplyToImage(residuals);
   // TODO: rename to something like regularizer_->ApplyToImage(data);
 
   // Then on that result, apply the weights W'W. The weights are conisdered as
@@ -152,7 +152,7 @@ void IrlsCostProcessor::UpdateIrlsWeights(const double* estimated_image_data) {
   // TODO: also, this assumes a single regularization term. Maybe we can have
   // more than one?
   std::vector<double> regularization_residuals =
-      regularizer_->ComputeResiduals(estimated_image_data);
+      regularizer_->ApplyToImage(estimated_image_data);
   CHECK_EQ(regularization_residuals.size(), irls_weights_.size())
       << "Number of residuals does not match number of weights.";
   for (int i = 0; i < regularization_residuals.size(); ++i) {

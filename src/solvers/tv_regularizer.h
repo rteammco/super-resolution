@@ -19,7 +19,7 @@ class TotalVariationRegularizer : public Regularizer {
   using Regularizer::Regularizer;  // Inherit Regularizer constructor.
 
   // Implementation of total variation regularization.
-  virtual std::vector<double> ComputeResiduals(
+  virtual std::vector<double> ApplyToImage(
       const double* image_data) const;
 };
 

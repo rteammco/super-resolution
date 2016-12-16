@@ -42,6 +42,6 @@ TEST(TotalVariationRegularizer, ComputeResiduals) {
   };
 
   const std::vector<double> returned_residuals =
-      tv_regularizer.ComputeResiduals(image1_data);
+      tv_regularizer.ApplyToImage(image1_data);
   EXPECT_THAT(returned_residuals, ContainerEq(expected_residuals));
 }

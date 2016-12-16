@@ -40,7 +40,7 @@ bool AreMatricesEqual(
               << mat2 << std::endl;
     if (diff_tolerance > 0) {
       std::cout << "  >> Diff tolerance of " << diff_tolerance
-                <<  " was exceeded." << std::endl;
+                << " was exceeded." << std::endl;
     }
   }
   return are_equal;

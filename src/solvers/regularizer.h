@@ -21,7 +21,7 @@ class Regularizer {
 
   // Returns a vector of residuals based on the regularization for each pixel
   // in the given array.
-  virtual std::vector<double> ComputeResiduals(
+  virtual std::vector<double> ApplyToImage(
       const double* image_data) const = 0;
 
  protected:

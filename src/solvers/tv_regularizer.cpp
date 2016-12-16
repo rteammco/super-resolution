@@ -7,7 +7,7 @@
 
 namespace super_resolution {
 
-std::vector<double> TotalVariationRegularizer::ComputeResiduals(
+std::vector<double> TotalVariationRegularizer::ApplyToImage(
     const double* image_data) const {
 
   CHECK_NOTNULL(image_data);

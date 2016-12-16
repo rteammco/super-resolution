@@ -24,7 +24,7 @@ class MockRegularizer : public super_resolution::Regularizer {
   MockRegularizer() : super_resolution::Regularizer(cv::Size(0, 0)) {}
 
   MOCK_CONST_METHOD1(
-      ComputeResiduals, std::vector<double>(const double* image_data));
+      ApplyToImage, std::vector<double>(const double* image_data));
 };
 
 // Verifies that the correct data term residuals are returned for an image.
@@ -99,7 +99,7 @@ TEST(IrlsCostProcessor, ComputeRegularizationResiduals) {
   std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
   const double image_data[5] = {1, 2, 3, 4, 5};
   const std::vector<double> residuals = {1, 2, 3, 4, 5};
-  EXPECT_CALL(*mock_regularizer, ComputeResiduals(image_data))
+  EXPECT_CALL(*mock_regularizer, ApplyToImage(image_data))
       .Times(3)  // 3 calls: compute residuals, update weights, compute again.
       .WillRepeatedly(Return(residuals));
 
