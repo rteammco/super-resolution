@@ -397,7 +397,29 @@ TEST(ImageModel, PsfBlurModule) {
     EXPECT_EQ(blur_module.GetPixelPatchRadius(), blur_radius);
   }
 
-  // TODO: implement other tests.
+  /* Verify that blur operator works as expected. */
+  
+  // For a 3x3 kernel, a sigma of 0.849321 is almost exactly the "standard"
+  // kernel:
+  //   | 0.0625 | 0.125  | 0.0625 |     | 1/16 | 1/8  | 1/16 |
+  //   | 0.125  |  0.25  | 0.125  |  =  | 1/8  | 1/4  | 1/8  |
+  //   | 0.0625 | 0.125  | 0.0625 |     | 1/16 | 1/8  | 1/16 |
+  const super_resolution::PsfBlurModule blur_module(3, 0.849321);
+
+  // The expected kSmallTestImage after being blurred with the standard kernel.
+  // This result was generated with a separate script.
+  const cv::Mat expected_blurred_image = (cv::Mat_<double>(4, 6)
+      << 1.875,   3.0,    3.125,   2.625,   2.75,    2.4375,
+         4.5625,  6.25,   5.3125,  3.1875,  2.3125,  1.9375,
+         5.0,     6.5,    5.75,    3.875,   1.9375,  0.9375,
+         2.5625,  3.75,   4.3125,  3.6875,  1.6875,  0.5);
+
+  super_resolution::ImageData image_data(kSmallTestImage, false);
+  blur_module.ApplyToImage(&image_data, 0);
+
+  const double diff_tolerance = 0.001;
+  EXPECT_TRUE(AreMatricesEqual(
+      image_data.GetChannelImage(0), expected_blurred_image, diff_tolerance));
 }
 
 // Tests that both the ApplyToImage and the ApplyToPixel methods correctly

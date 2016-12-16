@@ -88,10 +88,17 @@ if __name__ == '__main__':
   #     [-2, 0, 2],
   #     [-1, 0, 1]])
   # Gaussian blur kernel:
-  #kernel = np.matrix(
-  #    [[0.0625, 0.1250, 0.0625],
-  #     [0.1250, 0.2500, 0.1250],
-  #     [0.0625, 0.1250, 0.0625]])
+  blur_kernel = np.matrix(
+      [[0.0625, 0.1250, 0.0625],
+       [0.1250, 0.2500, 0.1250],
+       [0.0625, 0.1250, 0.0625]])
+  I = np.matrix(
+      [[1, 2, 3, 4, 5, 6],
+       [7, 8, 9, 0, 1, 2],
+       [9, 7, 5, 4, 2, 1],
+       [2, 4, 6, 8, 0, 1]])
+  conv_kernel(I, blur_kernel)
+  exit(0)
   # Test tranpose of two kernels:
   kernel = np.matrix(
       [[1, 2, 3],

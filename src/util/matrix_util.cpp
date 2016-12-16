@@ -4,11 +4,15 @@
 
 #include "opencv2/core/core.hpp"
 
+#include "glog/logging.h"
+
 namespace super_resolution {
 namespace util {
 
 void ApplyConvolutionToImage(
     ImageData* image_data, const cv::Mat& kernel, const int border_mode) {
+
+  CHECK_NOTNULL(image_data);
 
   int num_image_channels = image_data->GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {

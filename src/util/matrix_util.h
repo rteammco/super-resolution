@@ -18,7 +18,7 @@ constexpr int kOpenCvMatrixType = CV_64FC1;
 void ApplyConvolutionToImage(
     ImageData* image_data,
     const cv::Mat& kernel,
-    const int border_mode = cv::BORDER_REFLECT_101);
+    const int border_mode = cv::BORDER_CONSTANT);
 
 }  // namespace util
 }  // namespace super_resolution

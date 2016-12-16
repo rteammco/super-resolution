@@ -40,7 +40,6 @@ class PsfBlurModule : public DegradationOperator {
 
  private:
   const int blur_radius_;
-  const double sigma_;
 
   // This kernel is created in the constructor and is used for the blurring
   // convolution and for getting the operator matrix.
