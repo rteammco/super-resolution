@@ -65,6 +65,13 @@ def conv_kernel(image, kernel):
   KIv = K * Iv
   KI = KIv.reshape(nrows, ncols)  # un-vectorize the image back
   print KI
+  print 'Tranposed kernel matrix:'
+  KT = np.transpose(K)
+  print KT
+  print 'Tranpose convolved image:'
+  KTIv = KT * Iv
+  KTI = KTIv.reshape(nrows, ncols)
+  print KTI
 
 if __name__ == '__main__':
   I = np.matrix(
@@ -75,8 +82,25 @@ if __name__ == '__main__':
   print 'Test image:'
   print I
   I = downsample(I, 2)
+  # Gradient operator kernel:
+  #kernel = np.matrix(
+  #    [[-1, 0, 1],
+  #     [-2, 0, 2],
+  #     [-1, 0, 1]])
+  # Gaussian blur kernel:
+  #kernel = np.matrix(
+  #    [[0.0625, 0.1250, 0.0625],
+  #     [0.1250, 0.2500, 0.1250],
+  #     [0.0625, 0.1250, 0.0625]])
+  # Test tranpose of two kernels:
   kernel = np.matrix(
-      [[-1, 0, 1],
-       [-2, 0, 2],
-       [-1, 0, 1]])
+      [[1, 2, 3],
+       [4, 5, 6],
+       [7, 8, 9]])
   conv_kernel(I, kernel)
+  print '---------------'
+  kernel2 = np.matrix(
+      [[9, 8, 7],
+       [6, 5, 4],
+       [3, 2, 1]])
+  conv_kernel(I, kernel2)
