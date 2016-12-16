@@ -420,6 +420,38 @@ TEST(ImageModel, PsfBlurModule) {
   const double diff_tolerance = 0.001;
   EXPECT_TRUE(AreMatricesEqual(
       image_data.GetChannelImage(0), expected_blurred_image, diff_tolerance));
+
+  // Also verify that we get the right results when using the matrix version.
+  const cv::Mat blur_matrix =
+      blur_module.GetOperatorMatrix(kSmallTestImage.size(), 0);
+
+  const cv::Mat test_image_vector = kSmallTestImage.reshape(1, 24);
+  const cv::Mat blurred_test_image_vector = blur_matrix * test_image_vector;
+  const cv::Mat blurred_test_image =
+      blurred_test_image_vector.reshape(1, 4);
+
+  EXPECT_TRUE(AreMatricesEqual(
+      blurred_test_image, expected_blurred_image, diff_tolerance));
+
+  /* Now verify that the transpose operator works as expected. */
+
+  // Since the Gaussian kernel is symmetric, the resulting image should be
+  // the same as the original blurring operation.
+
+  // First check the actual matrix transpose to make sure.
+  const cv::Mat transpose_blurred_test_image_vector =
+      blur_matrix.t() * test_image_vector;
+  const cv::Mat transpose_blurred_test_image =
+      transpose_blurred_test_image_vector.reshape(1, 4);
+  EXPECT_TRUE(AreMatricesEqual(
+      transpose_blurred_test_image, expected_blurred_image, diff_tolerance));
+
+  // Now check that we get the same results if applied to the image using the
+  // convolution operator directly.
+  super_resolution::ImageData image_data2(kSmallTestImage, false);
+  blur_module.ApplyTransposeToImage(&image_data2, 0);
+  EXPECT_TRUE(AreMatricesEqual(
+      image_data2.GetChannelImage(0), expected_blurred_image, diff_tolerance));
 }
 
 // Tests that both the ApplyToImage and the ApplyToPixel methods correctly
