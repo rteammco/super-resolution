@@ -37,4 +37,15 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
   return residuals;
 }
 
+std::vector<double> TotalVariationRegularizer::GetDerivatives(
+      const double* image_data) const {
+
+  CHECK_NOTNULL(image_data);
+
+  std::vector<double> derivatives(image_size_.width * image_size_.height);
+  // TODO: implement.
+
+  return derivatives;
+}
+
 }  // namespace super_resolution

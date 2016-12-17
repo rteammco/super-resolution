@@ -38,9 +38,10 @@ struct SolverMetaData {
   const int num_pixels;
 };
 
-// The objective function used by the solver to compute residuals.
-// TODO: compute derivatives manually since numerical diff takes way too long.
-void ObjectiveFunction(
+// The objective function used by the solver to compute residuals. This version
+// uses analyitical differentiation, meaning that the gradients are computed
+// manually.
+void ObjectiveFunctionAnalyticalDifferentiation(
     const alglib::real_1d_array& estimated_data,
     double& residual_sum,  // NOLINT
     alglib::real_1d_array& gradients,  // NOLINT
@@ -70,26 +71,26 @@ void ObjectiveFunction(
     const std::vector<double> data_fidelity_residuals =
         irls_cost_processor->ComputeDataTermResiduals(
             image_index, channel_index, estimated_data.getcontent());
-    for (const double residual : data_fidelity_residuals) {
-      residual_sum += (residual * residual);
-    }
-    const std::vector<double> residual_derivatives =
+    const std::vector<double> data_fidelity_derivatives =
         irls_cost_processor->ComputeDataTermDerivatives(
             image_index, data_fidelity_residuals.data());
     for (int i = 0; i < num_pixels; ++i) {
-      gradients[i] += residual_derivatives[i];
+      const double residual = data_fidelity_residuals[i];
+      residual_sum += (residual * residual);
+      gradients[i] += data_fidelity_derivatives[i];
     }
   }
 
-  // Add the regularization term residuals.
+  // Add the regularization term residuals and derivatives.
   const std::vector<double> regularization_residuals =
       irls_cost_processor->ComputeRegularizationResiduals(
+          estimated_data.getcontent());
+  const std::vector<double> regularization_derivatives =
+      irls_cost_processor->ComputeRegularizationDerivatives(
           estimated_data.getcontent());
   for (const double residual : regularization_residuals) {
     residual_sum += (residual * residual);
   }
-  // TODO: manually compute derivatives here too:
-  // irls_cost_processor->ComputeRegularizationDerivatives(...);
 }
 
 // The callback function, called after every solver iteration, which updates
@@ -157,7 +158,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
       &irls_cost_processor, num_images, num_channels, num_pixels);
   alglib::mincgoptimize(
       solver_state,
-      ObjectiveFunction,
+      ObjectiveFunctionAnalyticalDifferentiation,
       SolverIterationCallback,
       const_cast<void*>(reinterpret_cast<const void*>(&solver_meta_data)));
   alglib::mincgresults(solver_state, solver_data, solver_report);

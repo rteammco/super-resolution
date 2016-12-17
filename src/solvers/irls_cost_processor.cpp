@@ -75,6 +75,9 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermDerivatives(
 
   CHECK_NOTNULL(residuals);
 
+  // TODO: it would be nice if this could just compute the residuals and
+  // derivatives at the same time.
+
   ImageData upgraded_residual_image(residuals, image_size_);
   const int scale = image_model_.GetDownsamplingScale();
   const cv::Size lr_image_size(
@@ -109,36 +112,32 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
 }
 
 std::vector<double> IrlsCostProcessor::ComputeRegularizationDerivatives(
-    const double* residuals) const {
+    const double* estimated_image_data) const {
 
-  CHECK_NOTNULL(residuals);
+  CHECK_NOTNULL(estimated_image_data);
 
-  // We are computing the derivative
-  //   2r*G'W'WGx
-  // where x is the given residual vector. First we compute the operator on the
-  // given residual values:
-  //   Gx
-  std::vector<double> derivatives =
-      regularizer_->ApplyToImage(residuals);
-  // TODO: rename to something like regularizer_->ApplyToImage(data);
+  // TODO: it would be nice if this could just compute the residuals and
+  // derivatives at the same time.
 
-  // Then on that result, apply the weights W'W. The weights are conisdered as
-  // square roots of the actual computed weights, so we just apply the weights
-  // directly:
-  // W'W(Gx)
+  // We are computing the derivative as
+  //   2r*W'W*g(x)*d(g(x))
+  // so we just need the regularizer to return g(x) and d(g(x)) with respect to
+  // every parameter in x.
+  const std::vector<double> regularizer_values =
+      regularizer_->ApplyToImage(estimated_image_data);
+  const std::vector<double> regularizer_derivatives =
+      regularizer_->GetDerivatives(estimated_image_data);
+
   const int num_pixels = image_size_.width * image_size_.height;
+  std::vector<double> derivatives;
+  derivatives.reserve(num_pixels);
   for (int i = 0; i < num_pixels; ++i) {
-    derivatives[i] *= irls_weights_.at(i);
-  }
-
-  // Apply the transposed regularization operator on the results:
-  //   G'(W'WGx)
-  // TODO: derivatives = regularizer_->ApplyTranspose(derivatives);
-
-  // Finally multiply everything by 2 * regularization parameter:
-  //   2r*(G'W'WGx)
-  for (int i = 0; i < num_pixels; ++i) {
-    derivatives[i] *= regularization_parameter_ * 2;
+    double derivative = 2 * regularization_parameter_;
+    // Multiply by the weights (raw weight is fine because W'W squares the
+    // weights but in the regularization term we're taking the square root).
+    derivative *= irls_weights_.at(i);
+    derivative *= regularizer_values[i];
+    derivative *= regularizer_derivatives[i];
   }
 
   return derivatives;

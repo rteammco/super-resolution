@@ -21,6 +21,9 @@ class TotalVariationRegularizer : public Regularizer {
   // Implementation of total variation regularization.
   virtual std::vector<double> ApplyToImage(
       const double* image_data) const;
+
+  virtual std::vector<double> GetDerivatives(
+      const double* image_data) const;
 };
 
 }  // namespace super_resolution

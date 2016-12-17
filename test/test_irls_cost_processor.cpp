@@ -25,6 +25,9 @@ class MockRegularizer : public super_resolution::Regularizer {
 
   MOCK_CONST_METHOD1(
       ApplyToImage, std::vector<double>(const double* image_data));
+
+  MOCK_CONST_METHOD1(
+      GetDerivatives, std::vector<double>(const double* image_data));
 };
 
 // Verifies that the correct data term residuals are returned for an image.

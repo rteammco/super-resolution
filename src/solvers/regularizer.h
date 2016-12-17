@@ -24,6 +24,11 @@ class Regularizer {
   virtual std::vector<double> ApplyToImage(
       const double* image_data) const = 0;
 
+  // Returns a vector of derivatives of the regularization term with respect to
+  // each parameter in image_data.
+  virtual std::vector<double> GetDerivatives(
+      const double* image_data) const = 0;
+
  protected:
   // The size of the image to be regularized.
   const cv::Size image_size_;
