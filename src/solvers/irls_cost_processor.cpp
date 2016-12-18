@@ -129,15 +129,24 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationDerivatives(
   const int num_pixels = image_size_.width * image_size_.height;
   std::vector<double> partial_const_terms;
   for (int i = 0; i < num_pixels; ++i) {
-    // Each derivative is multiplied by 2*lambda, and each partial derivative
-    // is multiplied by the squared weight. Since the weights are square-rooted
-    // in the residual computation, the raw weight used here.
+    // Each derivative is multiplied by
+    //   2 * lambda * w^2 * reg_i
+    // where 2 comes from the squared norm (L2) term,
+    // lambda is the regularization parameter,
+    // w^2 is the squared weight (since the weights are square-rooted in the
+    //   residual computation, the raw weight is used here),
+    // and reg_i is the value of the regularization term at pixel i.
+    // These constants are multiplied with the partial derivatives at each
+    // pixel w.r.t. all other pixels, which are computed specifically based on
+    // the derivative of the regularizer function.
     partial_const_terms.push_back(
-        2 * regularization_parameter_ * irls_weights_[i]);
-    // TODO: * regularizer_values[i];
+        2 *
+        regularization_parameter_ *
+        irls_weights_[i] *
+        regularizer_values[i]);
   }
   const std::vector<double> derivatives = regularizer_->GetDerivatives(
-      estimated_image_data, partial_const_terms.data());
+      estimated_image_data, partial_const_terms);
   return derivatives;
 }
 

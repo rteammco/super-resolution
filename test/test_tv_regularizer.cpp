@@ -12,7 +12,7 @@ using testing::ContainerEq;
 
 // Verifies that the TV regularizer correctly computes the expected residuals
 // for an image.
-TEST(TotalVariationRegularizer, ComputeResiduals) {
+TEST(TotalVariationRegularizer, ApplyToImage) {
   const cv::Size image_size(3, 3);
   const super_resolution::TotalVariationRegularizer tv_regularizer(image_size);
 
@@ -44,4 +44,10 @@ TEST(TotalVariationRegularizer, ComputeResiduals) {
   const std::vector<double> returned_residuals =
       tv_regularizer.ApplyToImage(image1_data);
   EXPECT_THAT(returned_residuals, ContainerEq(expected_residuals));
+}
+
+// This test verifies the behavior of the derivative computation for the TV
+// Regularizer.
+TEST(TotalVariationRegularizer, GetDerivatives) {
+  // TODO: implement tests!
 }

@@ -29,8 +29,17 @@ class Regularizer {
   // contains precomputed partial derivative constants from the full
   // regularization term in the objective function, and these contants will be
   // multiplied to each partial derivative computed for image_data.
+  //
+  // For each pixel i, computes the sum of partial derivatives dj/di for all
+  // pixels j. The final derivative for each pixel i is defined as:
+  //   d/di = sum_j(c[j] * dj/di)
+  // where c[j] is the jth term in partial_const_terms.
+  //
+  // c[j] should include constants (e.g. 2 from differentiation a squared
+  // term), the regularization parameter, etc.
   virtual std::vector<double> GetDerivatives(
-      const double* image_data, const double* partial_const_terms) const = 0;
+      const double* image_data,
+      const std::vector<double> partial_const_terms) const = 0;
 
  protected:
   // The size of the image to be regularized.
