@@ -25,9 +25,12 @@ class Regularizer {
       const double* image_data) const = 0;
 
   // Returns a vector of derivatives of the regularization term with respect to
-  // each parameter in image_data.
+  // each parameter in image_data. The given partial_const_terms vector
+  // contains precomputed partial derivative constants from the full
+  // regularization term in the objective function, and these contants will be
+  // multiplied to each partial derivative computed for image_data.
   virtual std::vector<double> GetDerivatives(
-      const double* image_data) const = 0;
+      const double* image_data, const double* partial_const_terms) const = 0;
 
  protected:
   // The size of the image to be regularized.

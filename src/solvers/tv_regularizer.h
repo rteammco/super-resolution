@@ -23,7 +23,7 @@ class TotalVariationRegularizer : public Regularizer {
       const double* image_data) const;
 
   virtual std::vector<double> GetDerivatives(
-      const double* image_data) const;
+      const double* image_data, const double* partial_const_terms) const;
 };
 
 }  // namespace super_resolution

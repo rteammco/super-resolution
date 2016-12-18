@@ -63,11 +63,13 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
 }
 
 std::vector<double> TotalVariationRegularizer::GetDerivatives(
-      const double* image_data) const {
+      const double* image_data, const double* partial_const_terms) const {
 
   CHECK_NOTNULL(image_data);
+  CHECK_NOTNULL(partial_const_terms);
 
-  std::vector<double> derivatives(image_size_.width * image_size_.height);
+  std::vector<double> derivatives(
+      image_size_.width * image_size_.height);
   for (int row = 0; row < image_size_.height; ++row) {
     for (int col = 0; col < image_size_.width; ++col) {
       // For pixel at row and col (r, c), the derivative depends on the
@@ -84,6 +86,7 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
 
       // Partial w.r.t. x_{r,c-1} (pixel to the left) is:
       //   (x_{r,c-1} - x{r,c})
+      // TODO: / regularizer_values[i]...
       const double left_pixel_partial =
           GetXGradientAtPixel(image_data, image_size_, row, col - 1);
 
@@ -92,19 +95,28 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
       const double above_pixel_partial =
           GetYGradientAtPixel(image_data, image_size_, row - 1, col);
 
-      // The final derivative is
-      //
+      // For a reweighted least squares term, the final derivative is
       //   2 * r (
       //     w_{r,c}^2 * this_pixel_partial -
       //     w_{r,c-1}^2 * left_pixel_partial -
       //     w_{r-1,c}^2 * above_pixel_partial)
-      //
       // where r is the regularization parameter and w are the weights at each
-      // pixel location.
-
-      // TODO: pass in 2*r*w_{r,c} for all pixel positions {r,c} and then just
-      // compute the derivative using those values. This allows us to separate
-      // the reweighting scheme from the derivatives.
+      // pixel location. 
+      // We expect the 2*r*w_{i,j} terms to be passed in as part of the
+      // partial_const_terms vector, so we just multiply those into the
+      // partials and sum it up.
+      const int index = row * image_size_.width + col;
+      derivatives[index] = partial_const_terms[index] * this_pixel_partial;
+      if (col - 1 >= 0) {  // If left pixel is outside image, the partial is 0.
+        const int left_pixel_index = row * image_size_.width + (col - 1);
+        derivatives[index] +=
+            partial_const_terms[left_pixel_index] * left_pixel_partial;
+      }
+      if (row - 1 >= 0) {  // If above pixel is outside image, the partial is 0.
+        const int above_pixel_index = (row - 1) * image_size_.width + col;
+        derivatives[index] +=
+            partial_const_terms[above_pixel_index] * above_pixel_partial;
+      }
     }
   }
   return derivatives;
