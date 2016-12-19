@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "image/image_data.h"
+#include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
@@ -110,8 +111,8 @@ TEST(MapSolver, SmallDataTest) {
   // TODO: multichannel image test
 }
 
-// Tests on a small icon (real image) and compares the Ceres solver result to
-// the mathematical derivation result.
+// Tests on a small icon (real image) and compares the solver result to the
+// mathematical derivation result.
 TEST(MapSolver, RealIconDataTest) {
   const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
   const ImageData ground_truth(image);
@@ -230,9 +231,79 @@ TEST(MapSolver, RealIconDataTest) {
   // TODO: multichannel test
 }
 
+// This test uses the full image formation model, including blur, and attempts
+// to reconstruct the image using total variation regularization. The
+// reconstructed image should not be perfect, but should be close enough.
+TEST(MapSolver, RegularizationTest) {
+  const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
+  const ImageData ground_truth(image);
+  const cv::Size image_size = ground_truth.GetImageSize();
+
+  // Build the image model. 3x downsampling.
+  const int downsampling_scale = 2;  // TODO: 3x
+  super_resolution::ImageModel image_model(downsampling_scale);
+
+  // Motion.
+  const super_resolution::MotionShiftSequence motion_shift_sequence({
+    super_resolution::MotionShift(0, 0),
+    super_resolution::MotionShift(0, 1),
+    //super_resolution::MotionShift(0, 2),
+    super_resolution::MotionShift(1, 0),
+    super_resolution::MotionShift(1, 1),
+    //super_resolution::MotionShift(1, 2),
+    //super_resolution::MotionShift(2, 0),
+    //super_resolution::MotionShift(2, 1),
+    //super_resolution::MotionShift(2, 2)
+  });
+  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
+      new super_resolution::MotionModule(motion_shift_sequence));
+  image_model.AddDegradationOperator(std::move(motion_module));
+  const int num_images = motion_shift_sequence.GetNumMotionShifts();
+
+  // Blur.
+  std::unique_ptr<super_resolution::DegradationOperator> blur_module(
+      new super_resolution::BlurModule(3, 1));
+  image_model.AddDegradationOperator(std::move(blur_module));
+
+  // Downsampling.
+  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
+      new super_resolution::DownsamplingModule(downsampling_scale, image_size));
+  image_model.AddDegradationOperator(std::move(downsampling_module));
+
+  // Generate the low-res images using the image model.
+  std::vector<ImageData> low_res_images;
+  for (int i = 0; i < num_images; ++i) {
+    const super_resolution::ImageData low_res_image =
+        image_model.ApplyToImage(ground_truth, i);
+    low_res_images.push_back(low_res_image);
+  };
+
+  // Set the initial estimate as the upsampling of the referece image, in this
+  // case lr_image_1, since it has no motion shift.
+  ImageData initial_estimate = low_res_images[0];
+  initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
+
+  // Create the solver and attempt to solve.
+  super_resolution::MapSolverOptions solver_options;
+  solver_options.regularization_parameter = 0.05;
+  super_resolution::MapSolver solver(
+      solver_options, image_model, low_res_images, kPrintSolverOutput);
+  const ImageData solver_result = solver.Solve(initial_estimate);
+
+  const cv::Size disp_size(840, 840);
+  ImageData disp_ground_truth = ground_truth;
+  disp_ground_truth.ResizeImage(disp_size);
+  cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
+
+  ImageData disp_result = solver_result;
+  disp_result.ResizeImage(disp_size);
+  cv::imshow("Solver Result", disp_result.GetVisualizationImage());
+
+  cv::waitKey(0);
+}
+
 // This test is intended to test the solver's efficiency. It make take a
-// while...
-// TODO: fix this test and run it after implementing ImageModel::ApplyToPixel.
+// little while....
 TEST(MapSolver, RealBigImageTest) {
   const cv::Mat image = cv::imread(kTestImagePath, CV_LOAD_IMAGE_GRAYSCALE);
   ImageData ground_truth(image);
@@ -285,15 +356,15 @@ TEST(MapSolver, RealBigImageTest) {
   const cv::Size disp_size(840, 840);
   ImageData disp_lr_1 = low_res_images[0];
   disp_lr_1.ResizeImage(disp_size);
-  cv::imshow("upsampled lr 1", disp_lr_1.GetVisualizationImage());
+  cv::imshow("Upsampled LR #1", disp_lr_1.GetVisualizationImage());
 
   ImageData disp_ground_truth = ground_truth;
   disp_ground_truth.ResizeImage(disp_size);
-  cv::imshow("ground truth", disp_ground_truth.GetVisualizationImage());
+  cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
 
   ImageData disp_result = solver_result;
   disp_result.ResizeImage(disp_size);
-  cv::imshow("super-resolved", disp_result.GetVisualizationImage());
+  cv::imshow("Solver Result", disp_result.GetVisualizationImage());
 
   cv::waitKey(0);
 }

@@ -107,6 +107,8 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
   for (int i = 0; i < residuals.size(); ++i) {
     const double weight = sqrt(irls_weights_.at(i));
     residuals[i] = regularization_parameter_ * weight * residuals[i];
+    //if (weight > 0) { LOG(INFO) << "weight > 0 = " << weight; }
+    //if (residuals[i] > 0) { LOG(INFO) << "residual = " << residuals[i]; }
   }
   return residuals;
 }

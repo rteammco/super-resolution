@@ -88,8 +88,10 @@ void ObjectiveFunctionAnalyticalDifferentiation(
   const std::vector<double> regularization_derivatives =
       irls_cost_processor->ComputeRegularizationDerivatives(
           estimated_data.getcontent());
-  for (const double residual : regularization_residuals) {
+  for (int i = 0; i < num_pixels; ++i) {
+    const double residual = regularization_residuals[i];
     residual_sum += (residual * residual);
+    gradients[i] += regularization_derivatives[i];
   }
 }
 
@@ -105,6 +107,7 @@ void SolverIterationCallback(
   IrlsCostProcessor* irls_cost_processor =
       solver_meta_data->irls_cost_processor;
   irls_cost_processor->UpdateIrlsWeights(estimated_data.getcontent());
+  LOG(INFO) << "Callback: residual sum = " << residual_sum;
 }
 
 ImageData MapSolver::Solve(const ImageData& initial_estimate) const {

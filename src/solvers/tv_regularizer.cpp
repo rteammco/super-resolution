@@ -54,9 +54,9 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
   for (int row = 0; row < image_size_.height; ++row) {
     for (int col = 0; col < image_size_.width; ++col) {
       const int index = row * image_size_.width + col;
-      const int y_variation =
+      const double y_variation =
           GetYGradientAtPixel(image_data, image_size_, row, col);
-      const int x_variation =
+      const double x_variation =
           GetXGradientAtPixel(image_data, image_size_, row, col);
       const double total_variation =
           (y_variation * y_variation) + (x_variation * x_variation);
