@@ -73,17 +73,20 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
   //
   // The partials should be (where the numbers represent the pixel values at
   // that image index):
-  //   d0/d0 = ((0 - 1) + (0 - 3)) / tv(0)
-  //   d1/d1 = ((1 - 2) + (1 - 4)) / tv(1)
-  //   d1/d0 = -(0 - 1) / tv(0)
+  //   d0/d0 = ((1 - 0) + (3 - 0)) / tv(0)
+  //   d1/d1 = ((2 - 1) + (4 - 1)) / tv(1)
+  //   d1/d0 = -(1 - 0) / tv(0)
   //   d2/d2 = (5 - 2) / tv(2)
-  //   d2/d1 = -(1 - 2) / tv(1)
-  //   d3/d3 = ((3 - 4) + (3 - 6)) / tv(3)
-  //   d3/d0 = -(0 - 3) / tv(0)
-  //   d4/d4 = ((4 - 5) + (4 - 7)) / tv(4)
-  //   d4/d3 = -(3 - 4) / tv(3)
-  //   d4/d1 = -(1 - 4) / tv(1)
-  // The others follow similarly, we won't test those.
+  //   d2/d1 = -(2 - 1) / tv(1)
+  //   d3/d3 = ((4 - 3) + (6 - 3)) / tv(3)
+  //   d3/d0 = -(3 - 0) / tv(0)
+  //   d4/d4 = ((4 - 3) + (7 - 4)) / tv(4)
+  //   d4/d3 = -(4 - 3) / tv(3)
+  //   d4/d1 = -(4 - 1) / tv(1)
+  //   d8/d8 = zero (edge case)
+  //   d8/d7 = -(8 - 7) / tv(7)
+  //   d8/d5 = -(8 - 5) / tv(5)
+  // The others follow similarly, but we won't test those.
 
   // First, compute the "total variation", which is just the expected residuals
   // but padding zero values with a small delta to avoid division by 0. Total
@@ -95,29 +98,34 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
 
   // The actual derivatives, calculated from the test image, thus are:
   const double d0d0 =
-      ((image1_data[0] - image1_data[1]) +
-      (image1_data[0] - image1_data[3])) / total_variation[0];
+      ((image1_data[1] - image1_data[0]) +
+      (image1_data[3] - image1_data[0])) / total_variation[0];
   const double d1d1 =
-      ((image1_data[1] - image1_data[2]) +
-      (image1_data[1] - image1_data[4])) / total_variation[1];
+      ((image1_data[2] - image1_data[1]) +
+      (image1_data[4] - image1_data[1])) / total_variation[1];
   const double d1d0 =
-      -(image1_data[0] - image1_data[1]) / total_variation[0];
+      -(image1_data[1] - image1_data[0]) / total_variation[0];
   const double d2d2 =
       (image1_data[5] - image1_data[2]) / total_variation[2];
   const double d2d1 =
-      -(image1_data[1] - image1_data[2]) / total_variation[1];
+      -(image1_data[2] - image1_data[1]) / total_variation[1];
   const double d3d3 =
-      ((image1_data[3] - image1_data[4]) +
-      (image1_data[3] - image1_data[6])) / total_variation[3];
+      ((image1_data[4] - image1_data[3]) +
+      (image1_data[6] - image1_data[3])) / total_variation[3];
   const double d3d0 =
-      -(image1_data[0] - image1_data[3]) / total_variation[0];
+      -(image1_data[3] - image1_data[0]) / total_variation[0];
   const double d4d4 =
-      ((image1_data[4] - image1_data[5]) +
-      (image1_data[4] - image1_data[7])) / total_variation[4];
+      ((image1_data[5] - image1_data[4]) +
+      (image1_data[7] - image1_data[4])) / total_variation[4];
   const double d4d3 =
-      -(image1_data[3] - image1_data[4]) / total_variation[3];
+      -(image1_data[4] - image1_data[3]) / total_variation[3];
   const double d4d1 =
-      -(image1_data[1] - image1_data[4]) / total_variation[1];
+      -(image1_data[4] - image1_data[1]) / total_variation[1];
+  const double d8d8 = 0;  // Edge case, no TV defined in corner....
+  const double d8d7 =
+      -(image1_data[8] - image1_data[7]) / total_variation[7];
+  const double d8d5 =
+      -(image1_data[8] - image1_data[5]) / total_variation[5];
 
   // The expected values for the first four derivatives.
   const double expected_d0 = d0d0;
@@ -125,6 +133,7 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
   const double expected_d2 = d2d2 + d2d1;
   const double expected_d3 = d3d3 + d3d0;
   const double expected_d4 = d4d4 + d4d3 + d4d1;
+  const double expected_d8 = d8d8 + d8d7 + d8d5;
 
   // Pass identity (1) as weights, so we should expect the pure partial
   // derivatives be returned.
@@ -140,4 +149,5 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
   EXPECT_EQ(returned_derivatives[2], expected_d2);
   EXPECT_EQ(returned_derivatives[3], expected_d3);
   EXPECT_EQ(returned_derivatives[4], expected_d4);
+  EXPECT_EQ(returned_derivatives[8], expected_d8);
 }

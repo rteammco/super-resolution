@@ -96,21 +96,21 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
       // at their respective pixel locations.
 
       // Partial w.r.t. x_{r,c} (this pixel) is:
-      //   ((x_{r,c} - x_{r,c+1}) + (x_{r,c} - x{r+1,c})) / tv_{r,c}
+      //   ((x_{r,c+1} - x_{r,c}) + (x_{r+1,c} - x{r,c})) / tv_{r,c}
       // We do the tv_{r,c} division later.
       const double this_pixel_numerator =
           GetXGradientAtPixel(image_data, image_size_, row, col) +
           GetYGradientAtPixel(image_data, image_size_, row, col);
 
       // Partial w.r.t. x_{r,c-1} (pixel to the left) is:
-      //   (x_{r,c-1} - x{r,c}) / tv_{r,c-1}
+      //   -(x_{r,c} - x{r,c-1}) / tv_{r,c-1}
       const double left_pixel_numerator =
-          GetXGradientAtPixel(image_data, image_size_, row, col - 1);
+          -GetXGradientAtPixel(image_data, image_size_, row, col - 1);
 
       // Partial w.r.t. x_{r-1,c} (pixel above) is:
-      //   (x_{r-1,c} - x_{r,c}) / tv_{r-1,c}
+      //   -(x_{r,c} - x_{r-1,c}) / tv_{r-1,c}
       const double above_pixel_numerator =
-          GetYGradientAtPixel(image_data, image_size_, row - 1, col);
+          -GetYGradientAtPixel(image_data, image_size_, row - 1, col);
 
       // Divide the tv values and multiply by the given partial constants, and
       // sum it all up to get the final derivative for the pixel at (row, col).
