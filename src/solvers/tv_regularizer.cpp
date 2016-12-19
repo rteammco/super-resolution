@@ -1,11 +1,15 @@
 #include "solvers/tv_regularizer.h"
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
 #include "glog/logging.h"
 
 namespace super_resolution {
+
+// Minimum total variation so we don't divide by zero.
+constexpr double kMinTotalVariation = 0.000001;
 
 // For a given image row and col, returns the value of (x_{r,c+1} - x_{r,c}) if
 // c+1 is a valid column position, or 0 otherwise. That is, the X-direction
@@ -74,6 +78,11 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
     << "Use 1 for identity or 0 to ignore the derivative.";
 
   const std::vector<double> total_variation = ApplyToImage(image_data);
+  // Convert all values to non-zero to avoid division by zero.
+  std::vector<double> total_variation_nz;
+  for (const double tv_value : total_variation) {
+    total_variation_nz.push_back(std::max(tv_value, kMinTotalVariation));
+  }
 
   std::vector<double> derivatives(num_pixels);
   for (int row = 0; row < image_size_.height; ++row) {
@@ -109,7 +118,7 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
       // Add partial w.r.t. x_{r,c} (this pixel):
       const int this_pixel_index = row * image_size_.width + col;
       const double this_pixel_partial =
-          this_pixel_numerator / total_variation[this_pixel_index];
+          this_pixel_numerator / total_variation_nz[this_pixel_index];
       derivatives[this_pixel_index] =
           partial_const_terms[this_pixel_index] * this_pixel_partial;
 
@@ -117,7 +126,7 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
       if (col - 1 >= 0) {  // If left pixel is outside image, the partial is 0.
         const int left_pixel_index = row * image_size_.width + (col - 1);
         const double left_pixel_partial =
-            left_pixel_numerator / total_variation[left_pixel_index];
+            left_pixel_numerator / total_variation_nz[left_pixel_index];
         derivatives[this_pixel_index] +=
             partial_const_terms[left_pixel_index] * left_pixel_partial;
       }
@@ -126,7 +135,7 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
       if (row - 1 >= 0) {  // If above pixel is outside image, the partial is 0.
         const int above_pixel_index = (row - 1) * image_size_.width + col;
         const double above_pixel_partial =
-            above_pixel_numerator / total_variation[above_pixel_index];
+            above_pixel_numerator / total_variation_nz[above_pixel_index];
         derivatives[this_pixel_index] +=
             partial_const_terms[above_pixel_index] * above_pixel_partial;
       }
