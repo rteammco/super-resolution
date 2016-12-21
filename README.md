@@ -1,6 +1,8 @@
 Super Resolution
 ================
 
+<i><b>NOTE:</b> This project is work-in-progress. It is not currently in a stable release state.</i>
+
 Super-resolution is the process of increasing the resolvability of details in an image.
 This work-in-progress code is intended to be a framework for multiframe super-resolution, which combines multiple overlapping low-resolution images into a single higher-resolution output.
 The goal is to support both ordinary images (grayscale, RGB) as well as hyperspectral image data which may contain hundreds of channels.
