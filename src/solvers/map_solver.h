@@ -29,6 +29,12 @@ struct MapSolverOptions {
 
   // Choice of RegularizationMethod for the regularization cost functor.
   RegularizationMethod regularization_method = TOTAL_VARIATION;
+
+  // Set to true to use numerical differentiation instead of analytical
+  // differentiation. Numerical differentiation is going to be accurate, but
+  // extremely slow. Only use this to debug new gradient computation code to
+  // compare to analytical differentiation mode.
+  bool use_numerical_differentiation = false;
 };
 
 class MapSolver : public Solver {

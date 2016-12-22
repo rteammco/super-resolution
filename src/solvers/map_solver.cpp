@@ -38,13 +38,108 @@ struct SolverMetaData {
   const int num_pixels;
 };
 
+// Computes the data fidelity term residuals and the gradient from the given
+// estimated_data using the given IrlsCostProcessor. Pass in nullptr to the
+// gradient array to avoid computing those (i.e. if doing numerical
+// differentiation).
+void ComputeDataTermResiduals(
+    const int num_images,
+    const double* estimated_data,
+    const IrlsCostProcessor* irls_cost_processor,
+    double* residual_sum,
+    double* gradient = nullptr) {
+
+  CHECK_NOTNULL(residual_sum);
+
+  for (int image_index = 0; image_index < num_images; ++image_index) {
+    // TODO: only channel 0 is currently supported. For channel 1+ offset data
+    // pointer by num_pixels * channel_index.
+    const int channel_index = 0;
+    // TODO: IrlsCostProcessor should just return the number, no need to get a
+    // vector and loop through it again.
+    const std::vector<double> residuals =
+        irls_cost_processor->ComputeDataTermResiduals(
+            image_index, channel_index, estimated_data);
+    for (const double residual : residuals) {
+      *residual_sum += (residual * residual);
+    }
+    if (gradient != nullptr) {
+      const int num_pixels = residuals.size();
+      const std::vector<double> derivatives =
+          irls_cost_processor->ComputeDataTermDerivatives(
+              image_index, residuals.data());
+      for (int i = 0; i < num_pixels; ++i) {
+        gradient[i] += derivatives[i];
+      }
+    }
+  }
+}
+
+// Add the regularization term residuals and derivatives.
+void ComputeRegularizationResiduals(
+    const double* estimated_data,
+    const IrlsCostProcessor* irls_cost_processor,
+    double* residual_sum,
+    double* gradient = nullptr) {
+
+  CHECK_NOTNULL(residual_sum);
+
+  const std::vector<double> residuals =
+      irls_cost_processor->ComputeRegularizationResiduals(estimated_data);
+  for (const double residual : residuals) {
+    *residual_sum += (residual * residual);
+  }
+  if (gradient != nullptr) {
+    const int num_pixels = residuals.size();
+    const std::vector<double> derivatives =
+        irls_cost_processor->ComputeRegularizationDerivatives(estimated_data);
+    for (int i = 0; i < num_pixels; ++i) {
+      gradient[i] += derivatives[i];
+    }
+  }
+}
+
 // The objective function used by the solver to compute residuals. This version
-// uses analyitical differentiation, meaning that the gradients are computed
+// uses analyitical differentiation, meaning that the gradient is computed
 // manually.
 void ObjectiveFunctionAnalyticalDifferentiation(
     const alglib::real_1d_array& estimated_data,
     double& residual_sum,  // NOLINT
-    alglib::real_1d_array& gradients,  // NOLINT
+    alglib::real_1d_array& gradient,  // NOLINT
+    void* solver_meta_data_ptr) {
+
+  const SolverMetaData* solver_meta_data =
+      reinterpret_cast<const SolverMetaData*>(solver_meta_data_ptr);
+  const IrlsCostProcessor* irls_cost_processor =
+      solver_meta_data->irls_cost_processor;
+
+  // Initialize the residuals and gradient values to 0.
+  residual_sum = 0;
+  for (int i = 0; i < solver_meta_data->num_pixels; ++i) {
+    gradient[i] = 0;
+  }
+
+  // Compute the data fidelity term residuals and the gradient.
+  ComputeDataTermResiduals(
+      solver_meta_data->num_low_res_images,
+      estimated_data.getcontent(),
+      irls_cost_processor,
+      &residual_sum,
+      gradient.getcontent());
+
+  // Compute the regularization residuals and the gradient.
+  ComputeRegularizationResiduals(
+    estimated_data.getcontent(),
+    irls_cost_processor,
+    &residual_sum,
+    gradient.getcontent());
+}
+
+// A numerical differentiation version of the cost function, mostly for
+// debugging purposes.
+void ObjectiveFunctionNumericalDifferentiation(
+    const alglib::real_1d_array& estimated_data,
+    double& residual_sum,  // NOLINT
     void* solver_meta_data_ptr) {
 
   const SolverMetaData* solver_meta_data =
@@ -54,45 +149,16 @@ void ObjectiveFunctionAnalyticalDifferentiation(
 
   residual_sum = 0;
 
-  // Initialize the gradients to 0.
-  const int num_pixels = solver_meta_data->num_pixels;
-  for (int i = 0; i < num_pixels; ++i) {
-    gradients[i] = 0;
-  }
+  ComputeDataTermResiduals(
+      solver_meta_data->num_low_res_images,
+      estimated_data.getcontent(),
+      irls_cost_processor,
+      &residual_sum);
 
-  // Compute the data fidelity term residuals and the gradients.
-  const int num_images = solver_meta_data->num_low_res_images;
-  for (int image_index = 0; image_index < num_images; ++image_index) {
-    // TODO: only channel 0 is currently supported. For channel 1+ offset data
-    // pointer by num_pixels * channel_index.
-    const int channel_index = 0;
-    // TODO: IrlsCostProcessor should just return the number, no need to get a
-    // vector and loop through it again.
-    const std::vector<double> data_fidelity_residuals =
-        irls_cost_processor->ComputeDataTermResiduals(
-            image_index, channel_index, estimated_data.getcontent());
-    const std::vector<double> data_fidelity_derivatives =
-        irls_cost_processor->ComputeDataTermDerivatives(
-            image_index, data_fidelity_residuals.data());
-    for (int i = 0; i < num_pixels; ++i) {
-      const double residual = data_fidelity_residuals[i];
-      residual_sum += (residual * residual);
-      gradients[i] += data_fidelity_derivatives[i];
-    }
-  }
-
-  // Add the regularization term residuals and derivatives.
-  const std::vector<double> regularization_residuals =
-      irls_cost_processor->ComputeRegularizationResiduals(
-          estimated_data.getcontent());
-  const std::vector<double> regularization_derivatives =
-      irls_cost_processor->ComputeRegularizationDerivatives(
-          estimated_data.getcontent());
-  for (int i = 0; i < num_pixels; ++i) {
-    const double residual = regularization_residuals[i];
-    residual_sum += (residual * residual);
-    gradients[i] += regularization_derivatives[i];
-  }
+  ComputeRegularizationResiduals(
+    estimated_data.getcontent(),
+    irls_cost_processor,
+    &residual_sum);
 }
 
 // The callback function, called after every solver iteration, which updates
@@ -143,6 +209,7 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
   const double epsg = 0.0000000001;
   const double epsf = 0.0;
   const double epsx = 0.0;
+  const double numerical_diff_step_size = 1.0e-6;
   const alglib::ae_int_t max_num_iterations = 50;  // 0 = infinite.
 
   // TODO: multiple channel support?
@@ -152,18 +219,30 @@ ImageData MapSolver::Solve(const ImageData& initial_estimate) const {
 
   alglib::mincgstate solver_state;
   alglib::mincgreport solver_report;
-  alglib::mincgcreate(solver_data, solver_state);
+  if (solver_options_.use_numerical_differentiation) {
+    alglib::mincgcreatef(solver_data, numerical_diff_step_size, solver_state);
+  } else {
+    alglib::mincgcreate(solver_data, solver_state);
+  }
   alglib::mincgsetcond(solver_state, epsg, epsf, epsx, max_num_iterations);
   alglib::mincgsetxrep(solver_state, true);
 
   // Solve and get results report.
   const SolverMetaData solver_meta_data(
       &irls_cost_processor, num_images, num_channels, num_pixels);
-  alglib::mincgoptimize(
-      solver_state,
-      ObjectiveFunctionAnalyticalDifferentiation,
-      SolverIterationCallback,
-      const_cast<void*>(reinterpret_cast<const void*>(&solver_meta_data)));
+  if (solver_options_.use_numerical_differentiation) {
+    alglib::mincgoptimize(
+        solver_state,
+        ObjectiveFunctionNumericalDifferentiation,
+        SolverIterationCallback,
+        const_cast<void*>(reinterpret_cast<const void*>(&solver_meta_data)));
+  } else {
+    alglib::mincgoptimize(
+        solver_state,
+        ObjectiveFunctionAnalyticalDifferentiation,
+        SolverIterationCallback,
+        const_cast<void*>(reinterpret_cast<const void*>(&solver_meta_data)));
+  }
   alglib::mincgresults(solver_state, solver_data, solver_report);
 
   const ImageData estimated_image(

@@ -258,12 +258,11 @@ TEST(MapSolver, RegularizationTest) {
   std::unique_ptr<super_resolution::DegradationOperator> motion_module(
       new super_resolution::MotionModule(motion_shift_sequence));
   image_model.AddDegradationOperator(std::move(motion_module));
-  const int num_images = motion_shift_sequence.GetNumMotionShifts();
 
   // Blur.
-  std::unique_ptr<super_resolution::DegradationOperator> blur_module(
-      new super_resolution::BlurModule(3, 1));
-  image_model.AddDegradationOperator(std::move(blur_module));
+  //std::unique_ptr<super_resolution::DegradationOperator> blur_module(
+  //    new super_resolution::BlurModule(3, 3));
+  //image_model.AddDegradationOperator(std::move(blur_module));
 
   // Downsampling.
   std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
@@ -271,6 +270,7 @@ TEST(MapSolver, RegularizationTest) {
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
   // Generate the low-res images using the image model.
+  const int num_images = motion_shift_sequence.GetNumMotionShifts();
   std::vector<ImageData> low_res_images;
   for (int i = 0; i < num_images; ++i) {
     const super_resolution::ImageData low_res_image =
@@ -279,13 +279,14 @@ TEST(MapSolver, RegularizationTest) {
   };
 
   // Set the initial estimate as the upsampling of the referece image, in this
-  // case lr_image_1, since it has no motion shift.
+  // case low_res_images[0], since it has no motion shift.
   ImageData initial_estimate = low_res_images[0];
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
 
   // Create the solver and attempt to solve.
   super_resolution::MapSolverOptions solver_options;
-  solver_options.regularization_parameter = 0.05;
+  solver_options.use_numerical_differentiation = true;
+  solver_options.regularization_parameter = 0.1;
   super_resolution::MapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
