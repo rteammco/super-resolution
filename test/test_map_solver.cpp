@@ -86,7 +86,7 @@ TEST(MapSolver, SmallDataTest) {
   // Create the solver for the model and low-res images.
   super_resolution::MapSolverOptions solver_options;
   solver_options.regularization_parameter = 0.0;
-  super_resolution::MapSolver solver(
+  const super_resolution::MapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
 
   // Create the high-res initial estimate.
@@ -159,7 +159,7 @@ TEST(MapSolver, RealIconDataTest) {
   // Create the solver and attempt to solve.
   super_resolution::MapSolverOptions solver_options;
   solver_options.regularization_parameter = 0.0;
-  super_resolution::MapSolver solver(
+  const super_resolution::MapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
 
@@ -287,7 +287,7 @@ TEST(MapSolver, RegularizationTest) {
   super_resolution::MapSolverOptions solver_options;
   solver_options.use_numerical_differentiation = true;
   solver_options.regularization_parameter = 0.0;
-  super_resolution::MapSolver solver(
+  const super_resolution::MapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
 
@@ -346,7 +346,7 @@ TEST(MapSolver, RealBigImageTest) {
   // Create the solver and attempt to solve.
   super_resolution::MapSolverOptions solver_options;
   solver_options.regularization_parameter = 0.0;
-  super_resolution::MapSolver solver(
+  const super_resolution::MapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
   // TODO: it takes too long (infeasibly long). This needs to be way more
   // scalable.

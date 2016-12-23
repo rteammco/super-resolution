@@ -2,8 +2,12 @@
 #include <vector>
 
 #include "image/image_data.h"
+#include "image_model/downsampling_module.h"
+#include "image_model/motion_module.h"
+#include "motion/motion_shift.h"
 #include "solvers/irls_cost_processor.h"
 #include "solvers/regularizer.h"
+#include "solvers/tv_regularizer.h"
 
 #include "opencv2/core/core.hpp"
 
@@ -158,4 +162,88 @@ TEST(IrlsCostProcessor, ComputeRegularizationResiduals) {
   const std::vector<double> returned_residuals_2 =
       irls_cost_processor.ComputeRegularizationResiduals(image_data);
   EXPECT_THAT(returned_residuals_2, ElementsAreArray(expected_residuals_2));
+}
+
+// This test checks the validity of the differentiation methods, specifically
+// comparing results of analytical differentiation to numerical differentiation
+// to help debug any implementations of manually computing gradients.
+TEST(IrlsCostProcessor, DifferentiationTest) {
+  // Create the low-res test images.
+  const cv::Mat lr_image_1 = (cv::Mat_<double>(2, 2)
+    << 0.4, 0.4,
+       0.4, 0.4);
+  const cv::Mat lr_image_2 = (cv::Mat_<double>(2, 2)
+    << 0.2, 0.2,
+       0.2, 0.2);
+  const cv::Mat lr_image_3 = (cv::Mat_<double>(2, 2)
+    << 0.0, 0.0,
+       0.0, 0.0);
+  const cv::Mat lr_image_4 = (cv::Mat_<double>(2, 2)
+    << 1.0, 1.0,
+       1.0, 1.0);
+  std::vector<super_resolution::ImageData> low_res_images {
+    super_resolution::ImageData(lr_image_1),
+    super_resolution::ImageData(lr_image_2),
+    super_resolution::ImageData(lr_image_3),
+    super_resolution::ImageData(lr_image_4)
+  };
+
+  // Create the image model.
+  const cv::Size image_size(4, 4);
+  const int downsampling_scale = 2;
+  super_resolution::ImageModel image_model(downsampling_scale);
+
+  // Add motion:
+  super_resolution::MotionShiftSequence motion_shift_sequence({
+    super_resolution::MotionShift(0, 0),
+    super_resolution::MotionShift(-1, 0),
+    super_resolution::MotionShift(0, -1),
+    super_resolution::MotionShift(-1, -1)
+  });
+  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
+      new super_resolution::MotionModule(motion_shift_sequence));
+  image_model.AddDegradationOperator(std::move(motion_module));
+
+  // Add downsampling:
+  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
+      new super_resolution::DownsamplingModule(downsampling_scale, image_size));
+  image_model.AddDegradationOperator(std::move(downsampling_module));
+
+  /* Test differentiation with TV regularizer. */
+
+  std::unique_ptr<super_resolution::Regularizer> tv_regularizer(
+      new super_resolution::TotalVariationRegularizer(image_size));
+
+  super_resolution::IrlsCostProcessor irls_cost_processor(
+      low_res_images,
+      image_model,
+      image_size,
+      std::move(tv_regularizer),
+      0.1);
+
+  const double numerical_diff_step_size = 1.0e-6;
+  double gradient[16];
+
+  double estimated_data[16];
+  std::fill(estimated_data, estimated_data + 16, 0);
+
+  const double objective_value =
+      irls_cost_processor.ComputeObjectiveFunction(estimated_data, gradient);
+  std::cout << "Objective = " << objective_value << std::endl;
+
+  for (int i = 0; i < 16; ++i) {
+    std::cout << "Gradient @ " << i << std::endl;
+    std::cout << "    Analytical: " << gradient[i] << std::endl;
+
+    // Compute numerical finite difference gradient.
+    double estimated_data_diff[16];
+    std::copy(estimated_data, estimated_data + 16, estimated_data_diff);
+    estimated_data_diff[i] += numerical_diff_step_size;
+    const double diff_objective_value =
+        irls_cost_processor.ComputeObjectiveFunction(estimated_data_diff);
+    const double num_gradient =
+        (diff_objective_value - objective_value) / numerical_diff_step_size;
+
+    std::cout << "    Numerical:  " << num_gradient << std::endl;
+  }
 }
