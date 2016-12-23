@@ -44,6 +44,52 @@ IrlsCostProcessor::IrlsCostProcessor(
   std::fill(irls_weights_.begin(), irls_weights_.end(), 1);
 }
 
+double IrlsCostProcessor::ComputeObjectiveFunction(
+      const double* estimated_image_data, double* gradient) const {
+
+  CHECK_NOTNULL(estimated_image_data);
+
+  double residual_sum = 0;
+  
+  // Compute data term residuals and gradient.
+  const int num_images = observations_.size();
+  for (int image_index = 0; image_index < num_images; ++image_index) {
+    const int channel_index = 0;
+    const std::vector<double> data_term_residuals = ComputeDataTermResiduals(
+        image_index, channel_index, estimated_image_data);
+    for (const double residual : data_term_residuals) {
+      residual_sum += (residual * residual);
+    }
+    if (gradient != nullptr) {
+      const int num_pixels = GetNumPixels();
+      const std::vector<double> derivatives =
+          ComputeDataTermDerivatives(image_index, data_term_residuals.data());
+      for (int i = 0; i < num_pixels; ++i) {
+        gradient[i] += derivatives[i];
+      }
+    }
+  }
+
+  // Compute regularization residuals and gradient.
+  const std::vector<double> regularization_residuals =
+      ComputeRegularizationResiduals(estimated_image_data);
+  for (const double residual : regularization_residuals) {
+    residual_sum += (residual * residual);
+  }
+  if (gradient != nullptr) {
+    const int num_pixels = GetNumPixels();
+    const std::vector<double> derivatives =
+        ComputeRegularizationDerivatives(estimated_image_data);
+    for (int i = 0; i < num_pixels; ++i) {
+      gradient[i] += derivatives[i];
+    }
+  }
+
+  return residual_sum;
+}
+
+// TODO: this function should be merged with ComputeObjectiveFunction or at
+// least made private.
 std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
     const int image_index,
     const int channel_index,
@@ -57,7 +103,7 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
   degraded_hr_image.ResizeImage(image_size_, cv::INTER_NEAREST);
 
   // Compute the residuals by comparing pixel values.
-  const int num_pixels = image_size_.width * image_size_.height;
+  const int num_pixels = GetNumPixels();
   std::vector<double> residuals;
   residuals.reserve(num_pixels);
   for (int i = 0; i < num_pixels; ++i) {
@@ -69,6 +115,8 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermResiduals(
   return residuals;
 }
 
+// TODO: this function should be merged with ComputeObjectiveFunction or at
+// least made private.
 std::vector<double> IrlsCostProcessor::ComputeDataTermDerivatives(
     const int image_index,
     const double* residuals) const {
@@ -85,7 +133,7 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermDerivatives(
   upgraded_residual_image.ResizeImage(lr_image_size);
   image_model_.ApplyTransposeToImage(&upgraded_residual_image, image_index);
 
-  const int num_pixels = image_size_.width * image_size_.height;
+  const int num_pixels = GetNumPixels();
   std::vector<double> derivatives;
   derivatives.reserve(num_pixels);
   for (int i = 0; i < num_pixels; ++i) {
@@ -97,6 +145,8 @@ std::vector<double> IrlsCostProcessor::ComputeDataTermDerivatives(
   return derivatives;
 }
 
+// TODO: this function should be merged with ComputeObjectiveFunction or at
+// least made private.
 std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
     const double* estimated_image_data) const {
 
@@ -113,6 +163,8 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
   return residuals;
 }
 
+// TODO: this function should be merged with ComputeObjectiveFunction or at
+// least made private.
 std::vector<double> IrlsCostProcessor::ComputeRegularizationDerivatives(
     const double* estimated_image_data) const {
 
@@ -128,7 +180,7 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationDerivatives(
   const std::vector<double> regularizer_values =
       regularizer_->ApplyToImage(estimated_image_data);
   
-  const int num_pixels = image_size_.width * image_size_.height;
+  const int num_pixels = GetNumPixels();
   std::vector<double> partial_const_terms;
   for (int i = 0; i < num_pixels; ++i) {
     // Each derivative is multiplied by

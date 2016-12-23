@@ -286,7 +286,7 @@ TEST(MapSolver, RegularizationTest) {
   // Create the solver and attempt to solve.
   super_resolution::MapSolverOptions solver_options;
   solver_options.use_numerical_differentiation = true;
-  solver_options.regularization_parameter = 0.1;
+  solver_options.regularization_parameter = 0.0;
   super_resolution::MapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);

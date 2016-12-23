@@ -32,6 +32,13 @@ class IrlsCostProcessor {
       std::unique_ptr<Regularizer> regularizer,
       const double regularization_parameter);
 
+  // Computes residuals (as a sum) and the gradient of the MAP-IRLS objective
+  // function. The sum of all residuals is returned, and the gradient vector is
+  // filled with derivatives. If the given gradient is nullptr, gradients will
+  // not be computed. This is appropriate when using numerical differentiation.
+  double ComputeObjectiveFunction(
+      const double* estimated_image_data, double* gradient = nullptr) const;
+
   // Compares the given high-resolution image to the low-resolution image of
   // the given index (and channel) by applying the ImageModel to the HR image.
   // The returned values will be the residuals (the difference in pixel
@@ -70,6 +77,11 @@ class IrlsCostProcessor {
   // regularization residuals on the given estimated image pixel values and
   // then scaling the weights to make the residuals valid for an L2 norm.
   void UpdateIrlsWeights(const double* estimated_image_data);
+
+  // Returns the number of pixels in the high-resolution image.
+  int GetNumPixels() const {
+    return image_size_.width * image_size_.height;
+  }
 
  private:
   // Stores the low-resolution images as observations that were scaled up to
