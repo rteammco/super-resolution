@@ -67,8 +67,8 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
 }
 
 std::vector<double> TotalVariationRegularizer::GetDerivatives(
-      const double* image_data,
-      const std::vector<double> partial_const_terms) const {
+    const double* image_data,
+    const std::vector<double> partial_const_terms) const {
 
   CHECK_NOTNULL(image_data);
 

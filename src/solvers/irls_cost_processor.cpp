@@ -45,12 +45,11 @@ IrlsCostProcessor::IrlsCostProcessor(
 }
 
 double IrlsCostProcessor::ComputeObjectiveFunction(
-      const double* estimated_image_data, double* gradient) const {
+    const double* estimated_image_data, double* gradient) const {
 
   CHECK_NOTNULL(estimated_image_data);
-
   double residual_sum = 0;
-  
+
   // Compute data term residuals and gradient.
   const int num_images = observations_.size();
   for (int image_index = 0; image_index < num_images; ++image_index) {
@@ -157,8 +156,6 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationResiduals(
   for (int i = 0; i < residuals.size(); ++i) {
     const double weight = sqrt(irls_weights_.at(i));
     residuals[i] = regularization_parameter_ * weight * residuals[i];
-    //if (weight > 0) { LOG(INFO) << "weight > 0 = " << weight; }
-    //if (residuals[i] > 0) { LOG(INFO) << "residual = " << residuals[i]; }
   }
   return residuals;
 }
@@ -179,7 +176,7 @@ std::vector<double> IrlsCostProcessor::ComputeRegularizationDerivatives(
   // every parameter in x.
   const std::vector<double> regularizer_values =
       regularizer_->ApplyToImage(estimated_image_data);
-  
+
   const int num_pixels = GetNumPixels();
   std::vector<double> partial_const_terms;
   for (int i = 0; i < num_pixels; ++i) {

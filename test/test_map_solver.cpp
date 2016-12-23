@@ -276,7 +276,7 @@ TEST(MapSolver, RegularizationTest) {
     const super_resolution::ImageData low_res_image =
         image_model.ApplyToImage(ground_truth, i);
     low_res_images.push_back(low_res_image);
-  };
+  }
 
   // Set the initial estimate as the upsampling of the referece image, in this
   // case low_res_images[0], since it has no motion shift.
