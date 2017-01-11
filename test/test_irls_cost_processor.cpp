@@ -22,6 +22,8 @@ using testing::Matcher;
 using testing::Return;
 using testing::SizeIs;
 
+constexpr double kDerivativeErrorTolerance = 0.000001;
+
 class MockRegularizer : public super_resolution::Regularizer {
  public:
   // Handle super constructor, since we don't need the image_size_ field.
@@ -211,39 +213,121 @@ TEST(IrlsCostProcessor, DifferentiationTest) {
 
   /* Test differentiation with TV regularizer. */
 
-  std::unique_ptr<super_resolution::Regularizer> tv_regularizer(
-      new super_resolution::TotalVariationRegularizer(image_size));
+  const int num_variables = 16;
+  const double estimated_data[num_variables] = {
+    0.0, 0.1, 0.2, 0.3,
+    0.4, 0.5, 0.6, 0.7,
+    0.8, 0.9, 1.0, 0.5,
+    0.1, 0.3, 0.7, 0.9
+  };
 
-  super_resolution::IrlsCostProcessor irls_cost_processor(
-      low_res_images,
-      image_model,
-      image_size,
-      std::move(tv_regularizer),
-      0.1);
+  // Verify by checking that numerical (finite difference) differentiation
+  // produces the same results as the implemented analytical differentiation.
+  double analytical_gradient[num_variables];
+  double numerical_gradient[num_variables];
 
   const double numerical_diff_step_size = 1.0e-6;
-  double gradient[16];
 
-  double estimated_data[16];
-  std::fill(estimated_data, estimated_data + 16, 0);
+  // Loop over multiple regularization parameter values.
+  for (int i = 0; i < 2; ++i) {
+    const double regularization_parameter = 1 * i;
+    std::unique_ptr<super_resolution::Regularizer> tv_regularizer(
+        new super_resolution::TotalVariationRegularizer(image_size));
+    super_resolution::IrlsCostProcessor irls_cost_processor(
+        low_res_images,
+        image_model,
+        image_size,
+        std::move(tv_regularizer),
+        regularization_parameter);
 
-  const double objective_value =
-      irls_cost_processor.ComputeObjectiveFunction(estimated_data, gradient);
-  std::cout << "Objective = " << objective_value << std::endl;
-
-  for (int i = 0; i < 16; ++i) {
-    std::cout << "Gradient @ " << i << std::endl;
-    std::cout << "    Analytical: " << gradient[i] << std::endl;
+    const double objective_value = irls_cost_processor.ComputeObjectiveFunction(
+        estimated_data, analytical_gradient);
+    std::cout << "Objective = " << objective_value << std::endl;
 
     // Compute numerical finite difference gradient.
-    double estimated_data_diff[16];
-    std::copy(estimated_data, estimated_data + 16, estimated_data_diff);
-    estimated_data_diff[i] += numerical_diff_step_size;
-    const double diff_objective_value =
-        irls_cost_processor.ComputeObjectiveFunction(estimated_data_diff);
-    const double num_gradient =
-        (diff_objective_value - objective_value) / numerical_diff_step_size;
+    for (int i = 0; i < num_variables; ++i) {
+      // Copy the data and pertrube the ith variable by a small amount.
+      double estimated_data_diff[num_variables];
+      std::copy(
+          estimated_data, estimated_data + num_variables, estimated_data_diff);
+      estimated_data_diff[i] += numerical_diff_step_size;
+      // Compute the numerical derivative at the ith variable.
+      const double diff_objective_value =
+          irls_cost_processor.ComputeObjectiveFunction(estimated_data_diff);
+      numerical_gradient[i] =
+          (diff_objective_value - objective_value) / numerical_diff_step_size;
+    }
 
-    std::cout << "    Numerical:  " << num_gradient << std::endl;
+    // Normalize both gradients.
+    double analytical_gradient_norm = 0;
+    double numerical_gradient_norm = 0;
+    for (int i = 0; i < num_variables; ++i) {
+      analytical_gradient_norm += analytical_gradient[i] * analytical_gradient[i];
+      numerical_gradient_norm += numerical_gradient[i] * numerical_gradient[i];
+    }
+    analytical_gradient_norm = sqrt(analytical_gradient_norm);
+    numerical_gradient_norm = sqrt(numerical_gradient_norm);
+    for (int i = 0; i < num_variables; ++i) {
+      analytical_gradient[i] /= analytical_gradient_norm;
+      numerical_gradient[i] /= numerical_gradient_norm;
+    }
+
+    // Compare the two results.
+    for (int i = 0; i < num_variables; ++i) {
+      std::cout << "Gradient @ " << i << std::endl;
+      std::cout << "   Analytical: " << analytical_gradient[i] << std::endl;
+      std::cout << "   Numerical:  " << numerical_gradient[i] << std::endl;
+      // EXPECT_NEAR(
+      //     analytical_gradient[i],
+      //     numerical_gradient[i],
+      //     kDerivativeErrorTolerance);
+    }
   }
+
+  //std::unique_ptr<super_resolution::Regularizer> tv_regularizer(
+  //    new super_resolution::TotalVariationRegularizer(image_size));
+
+  //super_resolution::IrlsCostProcessor irls_cost_processor(
+  //    low_res_images,
+  //    image_model,
+  //    image_size,
+  //    std::move(tv_regularizer),
+  //    0.1); // TODO: loop over this
+
+  //const double objective_value = irls_cost_processor.ComputeObjectiveFunction(
+  //    estimated_data, analytical_gradient);
+  //std::cout << "Objective = " << objective_value << std::endl;
+
+  //for (int i = 0; i < num_variables; ++i) {
+  //  std::cout << "Gradient @ " << i << std::endl;
+  //  std::cout << "    Analytical: " << analytical_gradient[i] << std::endl;
+
+  //  // Compute numerical finite difference gradient.
+  //  double estimated_data_diff[num_variables];
+  //  std::copy(estimated_data, estimated_data + num_variables, estimated_data_diff);
+  //  estimated_data_diff[i] += numerical_diff_step_size;
+  //  const double diff_objective_value =
+  //      irls_cost_processor.ComputeObjectiveFunction(estimated_data_diff);
+  //  numerical_gradient[i] =
+  //      (diff_objective_value - objective_value) / numerical_diff_step_size;
+
+  //  std::cout << "    Numerical:  " << numerical_gradient[i] << std::endl;
+  //}
+
+  //// Normalize the gradients.
+  //double analytical_gradient_norm = 0;
+  //double numerical_gradient_norm = 0;
+  //for (int i = 0; i < num_variables; ++i) {
+  //  analytical_gradient_norm += analytical_gradient[i] * analytical_gradient[i];
+  //  numerical_gradient_norm += numerical_gradient[i] * numerical_gradient[i];
+  //}
+  //analytical_gradient_norm = sqrt(analytical_gradient_norm);
+  //numerical_gradient_norm = sqrt(numerical_gradient_norm);
+  //for (int i = 0; i < num_variables; ++i) {
+  //  analytical_gradient[i] /= analytical_gradient_norm;
+  //  numerical_gradient[i] /= numerical_gradient_norm;
+  //  std::cout << "Normalized @ " << i << std::endl;
+  //  std::cout << "    Analytical: " << analytical_gradient[i] << std::endl;
+  //  std::cout << "    Numerical:  " << numerical_gradient[i] << std::endl;
+  //}
 }
