@@ -79,28 +79,30 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) const {
 
   alglib::mincgstate solver_state;
   alglib::mincgreport solver_report;
-  //if (solver_options_.use_numerical_differentiation) {
-  //  alglib::mincgcreatef(solver_data, numerical_diff_step_size, solver_state);
-  //} else {
-    alglib::mincgcreate(solver_data, solver_state);
-  //}
+  // TODO: enable numerical diff option?
+  // if (solver_options_.use_numerical_differentiation) {
+  // alglib::mincgcreatef(solver_data, numerical_diff_step_size, solver_state);
+  // } else {
+  alglib::mincgcreate(solver_data, solver_state);
+  // }
   alglib::mincgsetcond(solver_state, epsg, epsf, epsx, max_num_iterations);
   alglib::mincgsetxrep(solver_state, true);
 
+  // TODO: enable numerical diff option?
   // Solve and get results report.
-  //if (solver_options_.use_numerical_differentiation) {
-  //  alglib::mincgoptimize(
-  //      solver_state,
-  //      ObjectiveFunctionNumericalDifferentiation,
-  //      SolverIterationCallback,
-  //      const_cast<void*>(reinterpret_cast<const void*>(this)));
-  //} else {
-    alglib::mincgoptimize(
-        solver_state,
-        AlglibObjectiveFunctionAnalyticalDiff,
-        AlglibSolverIterationCallback,
-        const_cast<void*>(reinterpret_cast<const void*>(this)));
-  //}
+  // if (solver_options_.use_numerical_differentiation) {
+  //   alglib::mincgoptimize(
+  //       solver_state,
+  //       ObjectiveFunctionNumericalDifferentiation,
+  //       SolverIterationCallback,
+  //       const_cast<void*>(reinterpret_cast<const void*>(this)));
+  // } else {
+  alglib::mincgoptimize(
+      solver_state,
+      AlglibObjectiveFunctionAnalyticalDiff,
+      AlglibSolverIterationCallback,
+      const_cast<void*>(reinterpret_cast<const void*>(this)));
+  // }
   alglib::mincgresults(solver_state, solver_data, solver_report);
 
   const ImageData estimated_image(solver_data.getcontent(), image_size_);

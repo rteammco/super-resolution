@@ -1,5 +1,5 @@
 // An iteratively reweighted least squares (IRLS) implementation of the MAP
-// objective formulation.  
+// objective formulation.
 #ifndef SRC_SOLVERS_IRLS_MAP_SOLVER_H_
 #define SRC_SOLVERS_IRLS_MAP_SOLVER_H_
 
