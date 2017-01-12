@@ -49,6 +49,10 @@ class MapSolver : public Solver {
     return image_size_.width * image_size_.height;
   }
 
+  int GetNumImages() const {
+    return observations_.size();
+  }
+
  protected:
   const MapSolverOptions solver_options_;
 

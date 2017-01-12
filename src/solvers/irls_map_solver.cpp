@@ -27,14 +27,23 @@ void AlglibObjectiveFunctionAnalyticalDiff(
   const IrlsMapSolver* irls_map_solver =
       reinterpret_cast<IrlsMapSolver*>(irls_map_solver_ptr);
 
-  std::pair<double, std::vector<double>> residual_sum_and_gradient =
-      irls_map_solver->ComputeDataTermAnalyticalDiff(
-          0, 0, estimated_data.getcontent());
-
-  residual_sum = residual_sum_and_gradient.first;
+  // Zero out the residual sum and the gradient vector.
+  residual_sum = 0;
   const int num_pixels = irls_map_solver->GetNumPixels();
   for (int i = 0; i < num_pixels; ++i) {
-    gradient[i] = residual_sum_and_gradient.second[i];
+    gradient[i] = 0;
+  }
+
+  const int num_images = irls_map_solver->GetNumImages();
+  for (int image_index = 0; image_index < num_images; ++image_index) {
+    std::pair<double, std::vector<double>> residual_sum_and_gradient =
+        irls_map_solver->ComputeDataTermAnalyticalDiff(
+            image_index, 0, estimated_data.getcontent());  // TODO: channel!?
+
+    residual_sum += residual_sum_and_gradient.first;
+    for (int i = 0; i < num_pixels; ++i) {
+      gradient[i] += residual_sum_and_gradient.second[i];
+    }
   }
 
   // TODO: add regularization computation.
@@ -91,12 +100,10 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) const {
         AlglibObjectiveFunctionAnalyticalDiff,
         AlglibSolverIterationCallback,
         const_cast<void*>(reinterpret_cast<const void*>(this)));
-        //reinterpret_cast<void*>(this));
   //}
   alglib::mincgresults(solver_state, solver_data, solver_report);
 
-  const ImageData estimated_image(
-      solver_data.getcontent(), initial_estimate.GetImageSize());
+  const ImageData estimated_image(solver_data.getcontent(), image_size_);
   return estimated_image;
 }
 
