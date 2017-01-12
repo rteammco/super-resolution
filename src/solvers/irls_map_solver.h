@@ -1,6 +1,5 @@
 // An iteratively reweighted least squares (IRLS) implementation of the MAP
-// objective formulation.
-
+// objective formulation.  
 #ifndef SRC_SOLVERS_IRLS_MAP_SOLVER_H_
 #define SRC_SOLVERS_IRLS_MAP_SOLVER_H_
 
@@ -12,7 +11,7 @@
 
 namespace super_resolution {
 
-class IrlsMapSolver : MapSolver {
+class IrlsMapSolver : public MapSolver {
  public:
   using MapSolver::MapSolver;  // Inherit MapSolver constructor.
 

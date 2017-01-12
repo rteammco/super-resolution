@@ -45,6 +45,10 @@ class MapSolver : public Solver {
       std::unique_ptr<Regularizer> regularizer,
       const double regularization_parameter);
 
+  int GetNumPixels() const {
+    return image_size_.width * image_size_.height;
+  }
+
  protected:
   const MapSolverOptions solver_options_;
 
