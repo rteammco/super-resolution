@@ -13,9 +13,6 @@
 namespace super_resolution {
 
 ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) const {
-  const int num_observations = low_res_images_.size();
-  CHECK(num_observations > 0) << "Cannot solve with 0 low-res images.";
-
   // TODO: implement.
   return initial_estimate;
 }

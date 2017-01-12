@@ -38,9 +38,7 @@ class MapSolver : public Solver {
       const MapSolverOptions& solver_options,
       const ImageModel& image_model,
       const std::vector<ImageData>& low_res_images,
-      const bool print_solver_output = true) :
-    Solver(image_model, low_res_images, print_solver_output),
-    solver_options_(solver_options) {}
+      const bool print_solver_output = true);
 
   // Adds a regularizer term to the objective function.
   void AddRegularizer(  // TODO: virtual or not?
@@ -49,7 +47,17 @@ class MapSolver : public Solver {
 
  protected:
   const MapSolverOptions solver_options_;
+
+  // All regularization terms and their respective regularization parameters to
+  // be applied in the cost function.
   std::vector<std::pair<std::unique_ptr<Regularizer>, double>> regularizers_;
+
+  // The observed LR images scaled up to the HR image size for use in the cost
+  // function.
+  std::vector<ImageData> observations_;
+
+  // This is the size of the HR image that is being estimated.
+  cv::Size image_size_;
 };
 
 }  // namespace super_resolution

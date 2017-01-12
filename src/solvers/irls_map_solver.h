@@ -27,16 +27,6 @@ class IrlsMapSolver : MapSolver {
       const int image_index,
       const int channel_index,
       const double* estimated_data) const;
-
- private:
-  // The observed LR images scaled up to the HR image size for use in the cost
-  // function.
-  // TODO: fill this up in constructor.
-  std::vector<ImageData> observations_;
-
-  // This is the size of the HR image that is being estimated.
-  // TODO: compute this also in constructor.
-  cv::Size image_size_;
 };
 
 }  // namespace super_resolution
