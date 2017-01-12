@@ -47,11 +47,6 @@ class MapSolver : public Solver {
       std::unique_ptr<Regularizer> regularizer,
       const double regularization_parameter);
 
-  // TODO: remove.
-  virtual ImageData Solve(const ImageData& initial_estimate) const {
-    return initial_estimate;
-  }
-
  protected:
   const MapSolverOptions solver_options_;
   std::vector<std::pair<std::unique_ptr<Regularizer>, double>> regularizers_;
