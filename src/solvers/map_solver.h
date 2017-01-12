@@ -1,39 +1,32 @@
-// The MapSolver is an implementation for the maximum a posteriori formulation.
-// It solves the MAP formulation using iteratively reweighted least squares.
+// The MapSolver is an implementation framework for the maximum a posteriori
+// formulation. This is a pure virtual class, since the MAP formulation can be
+// solved by different strategies, such as IRLS (iteratively reweighted least
+// squares). See subclasses for the specific solver strategy implementations.
 
 #ifndef SRC_SOLVERS_MAP_SOLVER_H_
 #define SRC_SOLVERS_MAP_SOLVER_H_
 
+#include <memory>
+#include <utility>
 #include <vector>
 
 #include "image/image_data.h"
+#include "image_model/image_model.h"
+#include "solvers/regularizer.h"
 #include "solvers/solver.h"
 
 namespace super_resolution {
 
-// RegularizationMethods map to a Regularizer object that computes the
-// regularization cost of the objective. In this formulation, the regularizer
-// should ;
+// TODO: remove this.
 enum RegularizationMethod {
-  TOTAL_VARIATION,
-  BILATERAL_TOTAL_VARIATION  // TODO: not implemented
-  // TODO: Add more regularizers as appropriate.
+  TOTAL_VARIATION
 };
 
-// Options for this solver.
 struct MapSolverOptions {
-  // The regularization parameter is a hyperparameter that scales the
-  // regularization cost. If it is zero, the MAP formulation becomes maximum
-  // likelihood, as the regularization term will have no effect.
+  // TODO: fill in the options as needed.
+  // Using temporary (old) options to avoid compile errors.
   double regularization_parameter = 0.0;
-
-  // Choice of RegularizationMethod for the regularization cost functor.
   RegularizationMethod regularization_method = TOTAL_VARIATION;
-
-  // Set to true to use numerical differentiation instead of analytical
-  // differentiation. Numerical differentiation is going to be accurate, but
-  // extremely slow. Only use this to debug new gradient computation code to
-  // compare to analytical differentiation mode.
   bool use_numerical_differentiation = false;
 };
 
@@ -49,11 +42,19 @@ class MapSolver : public Solver {
     Solver(image_model, low_res_images, print_solver_output),
     solver_options_(solver_options) {}
 
-  // Solves the problem using the MAP (maximum a posteriori) formulation.
-  virtual ImageData Solve(const ImageData& initial_estimate) const;
+  // Adds a regularizer term to the objective function.
+  void AddRegularizer(  // TODO: virtual or not?
+      std::unique_ptr<Regularizer> regularizer,
+      const double regularization_parameter);
 
- private:
+  // TODO: remove.
+  virtual ImageData Solve(const ImageData& initial_estimate) const {
+    return initial_estimate;
+  }
+
+ protected:
   const MapSolverOptions solver_options_;
+  std::vector<std::pair<std::unique_ptr<Regularizer>, double>> regularizers_;
 };
 
 }  // namespace super_resolution
