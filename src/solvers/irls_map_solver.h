@@ -17,7 +17,7 @@ class IrlsMapSolver : public MapSolver {
 
   // The IRLS MAP formulation solver implementation. Uses a least squares
   // solver library to do the actual optimization.
-  ImageData Solve(const ImageData& initial_estimate) const;
+  virtual ImageData Solve(const ImageData& initial_estimate);
 
   // Computes the data fidelity term using analytical (manually computed)
   // differentiation. Returns a pair consisting of the sum of squared errors
@@ -25,7 +25,16 @@ class IrlsMapSolver : public MapSolver {
   std::pair<double, std::vector<double>> ComputeDataTermAnalyticalDiff(
       const int image_index,
       const int channel_index,
-      const double* estimated_data) const;
+      const double* estimated_image_data) const;
+
+  std::pair<double, std::vector<double>> ComputeRegularizationAnalyticalDiff(
+      const double* estimated_image_data) const;
+
+ private:
+  // A vector containing the IRLS weights, one per parameter for which a
+  // regularization residual is computed. These weights get reweighted after
+  // every solver iteration to allow any regularizer norm under least squares.
+  std::vector<double> irls_weights_;
 };
 
 }  // namespace super_resolution

@@ -23,7 +23,7 @@ class Solver {
   // Solves the super-resolution optimization and returns the super-resolved
   // image. The given initial estimate is used as a starting point for
   // iterative methods.
-  virtual ImageData Solve(const ImageData& initial_estimate) const = 0;
+  virtual ImageData Solve(const ImageData& initial_estimate) = 0;
 
   // Sets the output flag to false. If the derived class respects this
   // property, this will make the solver run silently.
