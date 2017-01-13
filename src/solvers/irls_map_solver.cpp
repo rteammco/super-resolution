@@ -35,19 +35,27 @@ void AlglibObjectiveFunctionAnalyticalDiff(
     gradient[i] = 0;
   }
 
+  // Compute data term residuals and gradient.
   const int num_images = irls_map_solver->GetNumImages();
   for (int image_index = 0; image_index < num_images; ++image_index) {
     std::pair<double, std::vector<double>> residual_sum_and_gradient =
         irls_map_solver->ComputeDataTermAnalyticalDiff(
             image_index, 0, estimated_data.getcontent());  // TODO: channel!?
-
     residual_sum += residual_sum_and_gradient.first;
     for (int i = 0; i < num_pixels; ++i) {
       gradient[i] += residual_sum_and_gradient.second[i];
     }
   }
 
-  // TODO: add regularization computation.
+  // Compute regularization residuals and gradient.
+  std::pair<double, std::vector<double>> residual_sum_and_gradient =
+      irls_map_solver->ComputeRegularizationAnalyticalDiff(
+          estimated_data.getcontent());
+  residual_sum += residual_sum_and_gradient.first;
+  for (int i = 0; i < num_pixels; ++i) {
+    gradient[i] += residual_sum_and_gradient.second[i];
+  }
+
   // TODO: also add an optional numerical differentiation objective as before.
 }
 

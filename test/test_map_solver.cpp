@@ -9,6 +9,7 @@
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
 #include "solvers/irls_map_solver.h"
+#include "solvers/tv_regularizer.h"
 #include "util/test_util.h"
 
 #include "gtest/gtest.h"
@@ -85,7 +86,6 @@ TEST(MapSolver, SmallDataTest) {
 
   // Create the solver for the model and low-res images.
   super_resolution::MapSolverOptions solver_options;
-  solver_options.regularization_parameter = 0.0;
   super_resolution::IrlsMapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
 
@@ -158,7 +158,6 @@ TEST(MapSolver, RealIconDataTest) {
 
   // Create the solver and attempt to solve.
   super_resolution::MapSolverOptions solver_options;
-  solver_options.regularization_parameter = 0.0;
   super_resolution::IrlsMapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
@@ -285,10 +284,14 @@ TEST(MapSolver, RegularizationTest) {
 
   // Create the solver and attempt to solve.
   super_resolution::MapSolverOptions solver_options;
-  solver_options.use_numerical_differentiation = true;
-  solver_options.regularization_parameter = 0.0;
+  //solver_options.use_numerical_differentiation = true;
   super_resolution::IrlsMapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
+  // Add regularizer.
+  std::unique_ptr<super_resolution::TotalVariationRegularizer> regularizer(
+      new super_resolution::TotalVariationRegularizer(image_size));
+  solver.AddRegularizer(std::move(regularizer), 0.1);
+  // Solve.
   const ImageData solver_result = solver.Solve(initial_estimate);
 
   const cv::Size disp_size(840, 840);
@@ -345,7 +348,6 @@ TEST(MapSolver, RealBigImageTest) {
 
   // Create the solver and attempt to solve.
   super_resolution::MapSolverOptions solver_options;
-  solver_options.regularization_parameter = 0.0;
   super_resolution::IrlsMapSolver solver(
       solver_options, image_model, low_res_images, kPrintSolverOutput);
   // TODO: it takes too long (infeasibly long). This needs to be way more
