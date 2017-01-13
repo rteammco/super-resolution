@@ -23,6 +23,8 @@ enum RegularizationMethod {
 };
 
 struct MapSolverOptions {
+  MapSolverOptions() {}
+
   // TODO: fill in the options as needed.
   // Using temporary (old) options to avoid compile errors.
   double regularization_parameter = 0.0;

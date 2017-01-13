@@ -1,5 +1,6 @@
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "image/image_data.h"
@@ -23,6 +24,8 @@ using super_resolution::test::AreMatricesEqual;
 
 constexpr bool kPrintSolverOutput = true;
 constexpr double kSolverResultErrorTolerance = 0.001;
+constexpr double kDerivativeErrorTolerance = 0.000001;
+static const super_resolution::MapSolverOptions kDefaultSolverOptions;
 
 // Small image (icon size):
 // NOTE: this image cannot exceed 30x30 because of limitations with computing
@@ -85,9 +88,8 @@ TEST(MapSolver, SmallDataTest) {
   /* Verify that the image model produces the correct LR observations. */
 
   // Create the solver for the model and low-res images.
-  super_resolution::MapSolverOptions solver_options;
   super_resolution::IrlsMapSolver solver(
-      solver_options, image_model, low_res_images, kPrintSolverOutput);
+      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
 
   // Create the high-res initial estimate.
   const cv::Mat initial_estimate_matrix = (cv::Mat_<double>(4, 4)
@@ -157,9 +159,8 @@ TEST(MapSolver, RealIconDataTest) {
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
 
   // Create the solver and attempt to solve.
-  super_resolution::MapSolverOptions solver_options;
   super_resolution::IrlsMapSolver solver(
-      solver_options, image_model, low_res_images, kPrintSolverOutput);
+      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
 
   // Compare to a solution using the matrix formulation.
@@ -230,82 +231,6 @@ TEST(MapSolver, RealIconDataTest) {
   // TODO: multichannel test
 }
 
-// This test uses the full image formation model, including blur, and attempts
-// to reconstruct the image using total variation regularization. The
-// reconstructed image should not be perfect, but should be close enough.
-TEST(MapSolver, RegularizationTest) {
-  const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
-  const ImageData ground_truth(image);
-  const cv::Size image_size = ground_truth.GetImageSize();
-
-  // Build the image model. 3x downsampling.
-  const int downsampling_scale = 2;  // TODO: 3x
-  super_resolution::ImageModel image_model(downsampling_scale);
-
-  // Motion.
-  const super_resolution::MotionShiftSequence motion_shift_sequence({
-    super_resolution::MotionShift(0, 0),
-    super_resolution::MotionShift(0, 1),
-    //super_resolution::MotionShift(0, 2),
-    super_resolution::MotionShift(1, 0),
-    super_resolution::MotionShift(1, 1),
-    //super_resolution::MotionShift(1, 2),
-    //super_resolution::MotionShift(2, 0),
-    //super_resolution::MotionShift(2, 1),
-    //super_resolution::MotionShift(2, 2)
-  });
-  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
-      new super_resolution::MotionModule(motion_shift_sequence));
-  image_model.AddDegradationOperator(std::move(motion_module));
-
-  // Blur.
-  //std::unique_ptr<super_resolution::DegradationOperator> blur_module(
-  //    new super_resolution::BlurModule(3, 3));
-  //image_model.AddDegradationOperator(std::move(blur_module));
-
-  // Downsampling.
-  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(downsampling_scale, image_size));
-  image_model.AddDegradationOperator(std::move(downsampling_module));
-
-  // Generate the low-res images using the image model.
-  const int num_images = motion_shift_sequence.GetNumMotionShifts();
-  std::vector<ImageData> low_res_images;
-  for (int i = 0; i < num_images; ++i) {
-    const super_resolution::ImageData low_res_image =
-        image_model.ApplyToImage(ground_truth, i);
-    low_res_images.push_back(low_res_image);
-  }
-
-  // Set the initial estimate as the upsampling of the referece image, in this
-  // case low_res_images[0], since it has no motion shift.
-  ImageData initial_estimate = low_res_images[0];
-  initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
-
-  // Create the solver and attempt to solve.
-  super_resolution::MapSolverOptions solver_options;
-  //solver_options.use_numerical_differentiation = true;
-  super_resolution::IrlsMapSolver solver(
-      solver_options, image_model, low_res_images, kPrintSolverOutput);
-  // Add regularizer.
-  std::unique_ptr<super_resolution::TotalVariationRegularizer> regularizer(
-      new super_resolution::TotalVariationRegularizer(image_size));
-  solver.AddRegularizer(std::move(regularizer), 0.1);
-  // Solve.
-  const ImageData solver_result = solver.Solve(initial_estimate);
-
-  const cv::Size disp_size(840, 840);
-  ImageData disp_ground_truth = ground_truth;
-  disp_ground_truth.ResizeImage(disp_size);
-  cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
-
-  ImageData disp_result = solver_result;
-  disp_result.ResizeImage(disp_size);
-  cv::imshow("Solver Result", disp_result.GetVisualizationImage());
-
-  cv::waitKey(0);
-}
-
 // This test is intended to test the solver's efficiency. It make take a
 // little while....
 TEST(MapSolver, RealBigImageTest) {
@@ -347,9 +272,8 @@ TEST(MapSolver, RealBigImageTest) {
   initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
 
   // Create the solver and attempt to solve.
-  super_resolution::MapSolverOptions solver_options;
   super_resolution::IrlsMapSolver solver(
-      solver_options, image_model, low_res_images, kPrintSolverOutput);
+      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   // TODO: it takes too long (infeasibly long). This needs to be way more
   // scalable.
   // TODO: run some analysis on the code and find out where all the memory is
@@ -370,4 +294,210 @@ TEST(MapSolver, RealBigImageTest) {
   cv::imshow("Solver Result", disp_result.GetVisualizationImage());
 
   cv::waitKey(0);
+}
+
+// This test uses the full image formation model, including blur, and attempts
+// to reconstruct the image using total variation regularization. The
+// reconstructed image should not be perfect, but should be close enough.
+TEST(MapSolver, RegularizationTest) {
+  const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
+  const ImageData ground_truth(image);
+  const cv::Size image_size = ground_truth.GetImageSize();
+
+  // Build the image model. 3x downsampling.
+  const int downsampling_scale = 2;  // TODO: 3x
+  super_resolution::ImageModel image_model(downsampling_scale);
+
+  // Motion.
+  const super_resolution::MotionShiftSequence motion_shift_sequence({
+    super_resolution::MotionShift(0, 0),
+    super_resolution::MotionShift(0, 1),
+    //super_resolution::MotionShift(0, 2),
+    super_resolution::MotionShift(1, 0),
+    super_resolution::MotionShift(1, 1),
+    //super_resolution::MotionShift(1, 2),
+    //super_resolution::MotionShift(2, 0),
+    //super_resolution::MotionShift(2, 1),
+    //super_resolution::MotionShift(2, 2)
+  });
+  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
+      new super_resolution::MotionModule(motion_shift_sequence));
+  image_model.AddDegradationOperator(std::move(motion_module));
+
+  // Blur.
+  std::unique_ptr<super_resolution::DegradationOperator> blur_module(
+      new super_resolution::BlurModule(3, 3));
+  image_model.AddDegradationOperator(std::move(blur_module));
+
+  // Downsampling.
+  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
+      new super_resolution::DownsamplingModule(downsampling_scale, image_size));
+  image_model.AddDegradationOperator(std::move(downsampling_module));
+
+  // Generate the low-res images using the image model.
+  const int num_images = motion_shift_sequence.GetNumMotionShifts();
+  std::vector<ImageData> low_res_images;
+  for (int i = 0; i < num_images; ++i) {
+    const super_resolution::ImageData low_res_image =
+        image_model.ApplyToImage(ground_truth, i);
+    low_res_images.push_back(low_res_image);
+  }
+
+  // Set the initial estimate as the upsampling of the referece image, in this
+  // case low_res_images[0], since it has no motion shift.
+  ImageData initial_estimate = low_res_images[0];
+  initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
+
+  // Create the solver and attempt to solve.
+  //solver_options.use_numerical_differentiation = true;
+  super_resolution::IrlsMapSolver solver(
+      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
+  // Add regularizer.
+  std::unique_ptr<super_resolution::TotalVariationRegularizer> regularizer(
+      new super_resolution::TotalVariationRegularizer(image_size));
+  solver.AddRegularizer(std::move(regularizer), 0.01);
+  // Solve.
+  const ImageData solver_result = solver.Solve(initial_estimate);
+
+  const cv::Size disp_size(840, 840);
+  ImageData disp_ground_truth = ground_truth;
+  disp_ground_truth.ResizeImage(disp_size);
+  cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
+
+  ImageData disp_result = solver_result;
+  disp_result.ResizeImage(disp_size);
+  cv::imshow("Solver Result", disp_result.GetVisualizationImage());
+
+  cv::waitKey(0);
+}
+
+// Verifies that the IrlsMapSolver computes the correct data term residuals.
+TEST(MapSolver, IrlsComputeDataTerm) {
+  const cv::Size image_size(3, 3);
+  const cv::Mat lr_channel_1 = (cv::Mat_<double>(3, 3)
+      << 0.5, 0.5, 0.5,
+         0.5, 0.5, 0.5,
+         0.5, 0.5, 0.5);
+  const cv::Mat lr_channel_2 = (cv::Mat_<double>(3, 3)
+      << 1.0,  0.5,  0.0,
+         0.25, 0.5,  0.75,
+         1.0,  0.0,  1.0);
+  const cv::Mat lr_channel_3 = (cv::Mat_<double>(3, 3)
+      << 1.0, 1.0, 1.0,
+         1.0, 1.0, 1.0,
+         1.0, 1.0, 1.0);
+
+  super_resolution::ImageData lr_image_data_1;
+  lr_image_data_1.AddChannel(lr_channel_1);
+  lr_image_data_1.AddChannel(lr_channel_2);
+  super_resolution::ImageData lr_image_data_2(lr_channel_3);
+  const std::vector<super_resolution::ImageData> low_res_images = {
+    lr_image_data_1,  // Image with 2 channels
+    lr_image_data_2   // Image with 1 channel
+  };
+
+  // Empty image model (does nothing) and no regularizer.
+  super_resolution::ImageModel empty_image_model(1);
+  super_resolution::IrlsMapSolver irls_map_solver(
+      kDefaultSolverOptions,
+      empty_image_model,
+      low_res_images);
+
+  const double hr_pixel_values[9] = {
+    0.5, 0.5, 0.5,
+    0.5, 0.5, 0.5,
+    0.5, 0.5, 0.5
+  };
+
+  // (Image 1, Channel 1) and hr pixels are identical, so expect all zeros.
+  std::pair<double, std::vector<double>> residual_sum_and_gradient_1 =
+      irls_map_solver.ComputeDataTermAnalyticalDiff(0, 0, hr_pixel_values);
+  EXPECT_EQ(residual_sum_and_gradient_1.first, 0);
+
+  // (Image 1, Channel 2) residuals should be different at each pixel.
+  std::pair<double, std::vector<double>> residual_sum_and_gradient_2 =
+      irls_map_solver.ComputeDataTermAnalyticalDiff(0, 1, hr_pixel_values);
+  const std::vector<double> expected_residuals = {
+      -0.5,  0.0,  0.5,
+       0.25, 0.0, -0.25,
+      -0.5,  0.5, -0.5
+  };
+  double expected_residual_sum = 0.0;
+  for (const double residual : expected_residuals) {
+    expected_residual_sum += (residual * residual);
+  }
+  EXPECT_EQ(residual_sum_and_gradient_2.first, expected_residual_sum);
+
+  // (Image 2, channel 1) ("channel_3") should all be -0.5.
+  std::pair<double, std::vector<double>> residual_sum_and_gradient_3 =
+      irls_map_solver.ComputeDataTermAnalyticalDiff(1, 0, hr_pixel_values);
+  expected_residual_sum = 0.0;
+  for (int i = 0; i < 9; ++i) {
+    expected_residual_sum += (-0.5 * -0.5);
+  }
+  EXPECT_EQ(residual_sum_and_gradient_3.first, expected_residual_sum);
+
+  // TODO: Mock the ImageModel and make sure the residuals are computed
+  // correctly if the HR image is degraded first.
+}
+
+TEST(MapSolver, IrlsComputeRegularization) {
+//  // Mocked Regularizer.
+//  std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
+//  const double image_data[5] = {1, 2, 3, 4, 5};
+//  const std::vector<double> residuals = {1, 2, 3, 4, 5};
+//  EXPECT_CALL(*mock_regularizer, ApplyToImage(image_data))
+//      .Times(3)  // 3 calls: compute residuals, update weights, compute again.
+//      .WillRepeatedly(Return(residuals));
+//
+//  std::vector<super_resolution::ImageData> empty_image_vector;
+//  super_resolution::ImageModel empty_image_model(2);
+//
+//  const double regularization_parameter = 0.5;
+//  super_resolution::IrlsCostProcessor irls_cost_processor(
+//      empty_image_vector,
+//      empty_image_model,
+//      cv::Size(5, 1),
+//      std::move(mock_regularizer),
+//      regularization_parameter);
+//
+//  // Expected residuals should be the residuals returned by the mocked
+//  // Regularizer times the regularization parameter and the square root of the
+//  // respective weights, which are all 1.0 to begin with.
+//  const Matcher<double> expected_residuals_1[5] = {
+//    DoubleEq(residuals[0] * regularization_parameter),
+//    DoubleEq(residuals[1] * regularization_parameter),
+//    DoubleEq(residuals[2] * regularization_parameter),
+//    DoubleEq(residuals[3] * regularization_parameter),
+//    DoubleEq(residuals[4] * regularization_parameter)
+//  };
+//  const std::vector<double> returned_residuals_1 =
+//      irls_cost_processor.ComputeRegularizationResiduals(image_data);
+//  EXPECT_THAT(returned_residuals_1, ElementsAreArray(expected_residuals_1));
+//
+//  // Update weights and test again. The weights are expected to be updated as
+//  // follows:
+//  //   w = 1.0 / sqrt(residual)
+//  // so, given residuals [1, 2, 3, 4, 5]:
+//  //   w0 = 1.0 / 1.0 ~= 1.0
+//  //   w1 = 1.0 / 2.0 ~= 0.5
+//  //   w2 = 1.0 / 3.0 ~= 0.333333333
+//  //   w3 = 1.0 / 4.0 ~= 0.25
+//  //   w4 = 1.0 / 5.0 ~= 0.2
+//  //
+//  // TODO: test with updated weights for a non-L1 norm regularizer.
+//  irls_cost_processor.UpdateIrlsWeights(image_data);
+//
+//  // Now expect the residuals to be multiplied by the regularization parameter
+//  // and the square root of the newly computed weights.
+//  const Matcher<double> expected_residuals_2[5] = {
+//    DoubleEq(residuals[0] * regularization_parameter * sqrt(1.0 / 1.0)),
+//    DoubleEq(residuals[1] * regularization_parameter * sqrt(1.0 / 2.0)),
+//    DoubleEq(residuals[2] * regularization_parameter * sqrt(1.0 / 3.0)),
+//    DoubleEq(residuals[3] * regularization_parameter * sqrt(1.0 / 4.0)),
+//    DoubleEq(residuals[4] * regularization_parameter * sqrt(1.0 / 5.0))
+//  };
+//  const std::vector<double> returned_residuals_2 =
+//      irls_cost_processor.ComputeRegularizationResiduals(image_data);
+//  EXPECT_THAT(returned_residuals_2, ElementsAreArray(expected_residuals_2));
 }

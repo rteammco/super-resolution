@@ -16,6 +16,10 @@
 
 namespace super_resolution {
 
+// Minimum residual value for computing IRLS weights, used to avoid division by
+// zero.
+constexpr double kMinResidualValue = 0.00001;
+
 // The objective function used by the ALGLIB solver to compute residuals. This
 // version uses analyitical differentiation, meaning that the gradient is
 // computed manually.
@@ -64,9 +68,11 @@ void AlglibObjectiveFunctionAnalyticalDiff(
 void AlglibSolverIterationCallback(
     const alglib::real_1d_array& estimated_data,
     double residual_sum,
-    void* irls_map_solver) {
+    void* irls_map_solver_ptr) {
 
-  // TODO: implement the reweighting computation here.
+  IrlsMapSolver* irls_map_solver =
+      reinterpret_cast<IrlsMapSolver*>(irls_map_solver_ptr);
+  irls_map_solver->UpdateIrlsWeights(estimated_data.getcontent());
   LOG(INFO) << "Callback: residual sum = " << residual_sum;
 }
 
@@ -227,6 +233,28 @@ IrlsMapSolver::ComputeRegularizationAnalyticalDiff(
   }
 
   return make_pair(residual_sum, gradient);
+}
+
+void IrlsMapSolver::UpdateIrlsWeights(const double* estimated_image_data) {
+  CHECK_NOTNULL(estimated_image_data);
+
+  // TODO: the regularizer is assumed to be L1 norm. Scale appropriately to L*
+  // norm based on the regularizer's properties.
+  // TODO: also, this assumes a single regularization term. Scale it up to more
+  // (which means we need separate weights for each one).
+  const int num_pixels = GetNumPixels();
+  for (int i = 0; i < regularizers_.size(); ++i) {
+    std::vector<double> regularization_residuals =
+        regularizers_[i].first->ApplyToImage(estimated_image_data);
+    CHECK_EQ(regularization_residuals.size(), num_pixels)
+        << "Number of residuals does not match number of weights.";
+    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+      // TODO: this assumes L1 loss!
+      // w = |r|^(p-2)
+      irls_weights_[pixel_index] = 1.0 / std::max(
+          kMinResidualValue, regularization_residuals[pixel_index]);
+    }
+  }
 }
 
 }  // namespace super_resolution

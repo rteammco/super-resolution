@@ -5,7 +5,7 @@
 #include "image_model/downsampling_module.h"
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
-//#include "solvers/irls_cost_processor.h"
+#include "solvers/irls_map_solver.h"
 #include "solvers/regularizer.h"
 #include "solvers/tv_regularizer.h"
 
@@ -24,6 +24,8 @@ using testing::SizeIs;
 
 constexpr double kDerivativeErrorTolerance = 0.000001;
 
+static const super_resolution::MapSolverOptions kDefaultSolverOptions;
+
 class MockRegularizer : public super_resolution::Regularizer {
  public:
   // Handle super constructor, since we don't need the image_size_ field.
@@ -40,7 +42,7 @@ class MockRegularizer : public super_resolution::Regularizer {
 
 // // Verifies that the correct data term residuals are returned for an image.
 // // TODO: fix.
-// TEST(IrlsCostProcessor, ComputeDataTermResiduals) {
+// TEST(IrlsMapSolver, ComputeDataTerm) {
 //   const cv::Size image_size(3, 3);
 //   const cv::Mat lr_channel_1 = (cv::Mat_<double>(3, 3)
 //       << 0.5, 0.5, 0.5,
@@ -67,12 +69,10 @@ class MockRegularizer : public super_resolution::Regularizer {
 //   super_resolution::ImageModel empty_image_model(2);
 //   std::unique_ptr<super_resolution::Regularizer> regularizer(
 //       new MockRegularizer());
-//   super_resolution::IrlsCostProcessor irls_cost_processor(
-//       low_res_images,
+//   super_resolution::IrlsMapSolver irls_map_solver(
+//       kDefaultSolverOptions,
 //       empty_image_model,
-//       image_size,
-//       std::move(regularizer),
-//       0.0);  // We're skipping regularization in this test.
+//       low_res_images);
 // 
 //   const double hr_pixel_values[9] = {
 //     0.5, 0.5, 0.5,
@@ -105,7 +105,7 @@ class MockRegularizer : public super_resolution::Regularizer {
 // // Verifies that the correct regularization residuals are returned for an
 // // image. This test does not cover regularization operators; instead, it tests
 // // the IrlsCostProcessor with a mock Regularizer.
-// TEST(IrlsCostProcessor, ComputeRegularizationResiduals) {
+// TEST(IrlsMapSolver, ComputeRegularizationResiduals) {
 //   // Mocked Regularizer.
 //   std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
 //   const double image_data[5] = {1, 2, 3, 4, 5};
@@ -169,7 +169,7 @@ class MockRegularizer : public super_resolution::Regularizer {
 // // This test checks the validity of the differentiation methods, specifically
 // // comparing results of analytical differentiation to numerical differentiation
 // // to help debug any implementations of manually computing gradients.
-// TEST(IrlsCostProcessor, DifferentiationTest) {
+// TEST(IrlsMapSolver, DifferentiationTest) {
 //   // Create the low-res test images.
 //   const cv::Mat lr_image_1 = (cv::Mat_<double>(2, 2)
 //     << 0.4, 0.4,

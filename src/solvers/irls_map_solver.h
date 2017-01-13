@@ -27,8 +27,12 @@ class IrlsMapSolver : public MapSolver {
       const int channel_index,
       const double* estimated_image_data) const;
 
+  // Computes the regularization term using analytical differentiation.
   std::pair<double, std::vector<double>> ComputeRegularizationAnalyticalDiff(
       const double* estimated_image_data) const;
+
+  // Updates the IRLS weights given the current data estimate.
+  void UpdateIrlsWeights(const double* estimated_image_data);
 
  private:
   // A vector containing the IRLS weights, one per parameter for which a
