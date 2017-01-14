@@ -22,6 +22,7 @@
 using super_resolution::ImageData;
 using super_resolution::test::AreMatricesEqual;
 
+using testing::_;
 using testing::ContainerEq;
 using testing::DoubleEq;
 using testing::ElementsAre;
@@ -469,6 +470,9 @@ TEST(MapSolver, IrlsComputeRegularization) {
   EXPECT_CALL(*mock_regularizer, ApplyToImage(image_data))
       .Times(3)  // 3 calls: compute residuals, update weights, compute again.
       .WillRepeatedly(Return(residuals));
+  EXPECT_CALL(*mock_regularizer, GetDerivatives(_, _))
+      .Times(2)  // 2 calls: once for each ComputeRegularizationAnalyticalDiff.
+      .WillRepeatedly(Return(residuals));
 
   const std::vector<super_resolution::ImageData> low_res_images = {
     ImageData(image_data, cv::Size(5, 1))  // Ignored image for this test.
@@ -498,7 +502,6 @@ TEST(MapSolver, IrlsComputeRegularization) {
   }
   const auto& residual_sum_and_gradient_1 =
       irls_map_solver.ComputeRegularizationAnalyticalDiff(image_data);
-  std::cout << "1 - HERE HERE HERE" << std::endl;
   EXPECT_EQ(residual_sum_and_gradient_1.first, expected_residual_sum);
 
   // Update weights and test again. The weights are expected to be updated as
@@ -513,7 +516,6 @@ TEST(MapSolver, IrlsComputeRegularization) {
   //
   // TODO: test with updated weights for a non-L1 norm regularizer.
   irls_map_solver.UpdateIrlsWeights(image_data);
-  std::cout << "2" << std::endl;
 
   // Now expect the residuals to be multiplied by the regularization parameter
   // and the square root of the newly computed weights.
@@ -530,6 +532,145 @@ TEST(MapSolver, IrlsComputeRegularization) {
   }
   const auto& residual_sum_and_gradient_2 =
       irls_map_solver.ComputeRegularizationAnalyticalDiff(image_data);
-  std::cout << "3" << std::endl;
   EXPECT_EQ(residual_sum_and_gradient_2.first, expected_residual_sum);
+}
+
+// This test checks the validity of the differentiation methods, specifically
+// comparing results of analytical differentiation to numerical differentiation
+// to help debug any implementations of manually computing gradients.
+TEST(MapSolver, IrlsDifferentiationTest) {
+  // Create the low-res test images.
+  const cv::Mat lr_image_1 = (cv::Mat_<double>(2, 2)
+    << 0.4, 0.4,
+       0.4, 0.4);
+  const cv::Mat lr_image_2 = (cv::Mat_<double>(2, 2)
+    << 0.2, 0.2,
+       0.2, 0.2);
+  const cv::Mat lr_image_3 = (cv::Mat_<double>(2, 2)
+    << 0.0, 0.0,
+       0.0, 0.0);
+  const cv::Mat lr_image_4 = (cv::Mat_<double>(2, 2)
+    << 1.0, 1.0,
+       1.0, 1.0);
+  const std::vector<super_resolution::ImageData> low_res_images {
+    super_resolution::ImageData(lr_image_1),
+    super_resolution::ImageData(lr_image_2),
+    super_resolution::ImageData(lr_image_3),
+    super_resolution::ImageData(lr_image_4)
+  };
+
+  // Create the image model.
+  const cv::Size image_size(4, 4);
+  const int downsampling_scale = 2;
+  super_resolution::ImageModel image_model(downsampling_scale);
+
+  // Add motion:
+  super_resolution::MotionShiftSequence motion_shift_sequence({
+    super_resolution::MotionShift(0, 0),
+    super_resolution::MotionShift(-1, 0),
+    super_resolution::MotionShift(0, -1),
+    super_resolution::MotionShift(-1, -1)
+  });
+  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
+      new super_resolution::MotionModule(motion_shift_sequence));
+  image_model.AddDegradationOperator(std::move(motion_module));
+
+  // Add downsampling:
+  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
+      new super_resolution::DownsamplingModule(downsampling_scale, image_size));
+  image_model.AddDegradationOperator(std::move(downsampling_module));
+
+  /* Test differentiation with TV regularizer. */
+
+  const int num_variables = 16;
+  const double estimated_data[num_variables] = {
+    0.0, 0.1, 0.2, 0.3,
+    0.4, 0.5, 0.6, 0.7,
+    0.8, 0.9, 1.0, 0.5,
+    0.1, 0.3, 0.7, 0.9
+  };
+
+  // Verify by checking that numerical (finite difference) differentiation
+  // produces the same results as the implemented analytical differentiation.
+  double analytical_gradient[num_variables];
+  double numerical_gradient[num_variables];
+
+  const int num_images = low_res_images.size();
+  const double numerical_diff_step_size = 1.0e-6;
+
+  // Loop over multiple regularization parameter values.
+  for (int i = 0; i < 2; ++i) {
+    super_resolution::IrlsMapSolver irls_map_solver(
+        kDefaultSolverOptions,
+        image_model,
+        low_res_images);
+    const double regularization_parameter = 1 * i;
+    std::unique_ptr<super_resolution::Regularizer> tv_regularizer(
+        new super_resolution::TotalVariationRegularizer(image_size));
+    irls_map_solver.AddRegularizer(
+        std::move(tv_regularizer), regularization_parameter);
+
+    const int num_pixels = irls_map_solver.GetNumPixels();
+    double residual_sum = 0;
+    double gradient[num_pixels];
+    std::fill(gradient, gradient + num_pixels, 0);
+
+    for (int image_index = 0; image_index < num_images; ++image_index) {
+      const auto& residual_sum_and_gradient =
+          irls_map_solver.ComputeDataTermAnalyticalDiff(
+              image_index, 0, estimated_data);  // channel 0
+      residual_sum += residual_sum_and_gradient.first;
+      for (int i = 0; i < num_pixels; ++i) {
+        gradient[i] += residual_sum_and_gradient.second[i];
+      }
+    }
+
+    const auto& residual_sum_and_gradient =
+        irls_map_solver.ComputeRegularizationAnalyticalDiff(estimated_data);
+    residual_sum += residual_sum_and_gradient.first;
+    for (int i = 0; i < num_pixels; ++i) {
+      gradient[i] += residual_sum_and_gradient.second[i];
+    }
+
+    std::cout << "Objective = " << residual_sum << std::endl;
+
+    //// Compute numerical finite difference gradient.
+    //for (int i = 0; i < num_variables; ++i) {
+    //  // Copy the data and pertrube the ith variable by a small amount.
+    //  double estimated_data_diff[num_variables];
+    //  std::copy(
+    //      estimated_data, estimated_data + num_variables, estimated_data_diff);
+    //  estimated_data_diff[i] += numerical_diff_step_size;
+    //  // Compute the numerical derivative at the ith variable.
+    //  const double diff_objective_value =
+    //      irls_cost_processor.ComputeObjectiveFunction(estimated_data_diff);
+    //  numerical_gradient[i] =
+    //      (diff_objective_value - objective_value) / numerical_diff_step_size;
+    //}
+
+    //// Normalize both gradients.
+    //double analytical_gradient_norm = 0;
+    //double numerical_gradient_norm = 0;
+    //for (int i = 0; i < num_variables; ++i) {
+    //  analytical_gradient_norm += analytical_gradient[i] * analytical_gradient[i];
+    //  numerical_gradient_norm += numerical_gradient[i] * numerical_gradient[i];
+    //}
+    //analytical_gradient_norm = sqrt(analytical_gradient_norm);
+    //numerical_gradient_norm = sqrt(numerical_gradient_norm);
+    //for (int i = 0; i < num_variables; ++i) {
+    //  analytical_gradient[i] /= analytical_gradient_norm;
+    //  numerical_gradient[i] /= numerical_gradient_norm;
+    //}
+
+    //// Compare the two results.
+    //for (int i = 0; i < num_variables; ++i) {
+    //  std::cout << "Gradient @ " << i << std::endl;
+    //  std::cout << "   Analytical: " << analytical_gradient[i] << std::endl;
+    //  std::cout << "   Numerical:  " << numerical_gradient[i] << std::endl;
+    //  // EXPECT_NEAR(
+    //  //     analytical_gradient[i],
+    //  //     numerical_gradient[i],
+    //  //     kDerivativeErrorTolerance);
+    //}
+  }
 }
