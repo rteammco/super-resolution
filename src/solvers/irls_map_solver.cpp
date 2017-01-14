@@ -20,6 +20,19 @@ namespace super_resolution {
 // zero.
 constexpr double kMinResidualValue = 0.00001;
 
+IrlsMapSolver::IrlsMapSolver(
+    const MapSolverOptions& solver_options,
+    const ImageModel& image_model,
+    const std::vector<ImageData>& low_res_images,
+    const bool print_solver_output)
+    : MapSolver(
+          solver_options, image_model, low_res_images, print_solver_output) {
+
+  // Initialize IRLS weights to 1.
+  irls_weights_.resize(GetNumPixels());
+  std::fill(irls_weights_.begin(), irls_weights_.end(), 1.0);
+}
+
 // The objective function used by the ALGLIB solver to compute residuals. This
 // version uses analyitical differentiation, meaning that the gradient is
 // computed manually.
@@ -77,8 +90,7 @@ void AlglibSolverIterationCallback(
 }
 
 ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
-  // Initialize IRLS weights to 1.
-  irls_weights_.resize(GetNumPixels());
+  // Reset all weights to 1.0.
   std::fill(irls_weights_.begin(), irls_weights_.end(), 1.0);
 
   const int num_channels = observations_[0].GetNumChannels();  // TODO: use!
@@ -198,8 +210,9 @@ IrlsMapSolver::ComputeRegularizationAnalyticalDiff(
 
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       const double weight = sqrt(irls_weights_.at(pixel_index));
-      const double residual = regularization_parameter * weight * residuals[i];
-      residuals[i] = residual;
+      const double residual =
+          regularization_parameter * weight * residuals[pixel_index];
+      residuals[pixel_index] = residual;
       // TODO: ^^^
       //   Should we square this? Keep it unchanged? Maybe this is the issue?
       residual_sum += (residual * residual);

@@ -13,7 +13,11 @@ namespace super_resolution {
 
 class IrlsMapSolver : public MapSolver {
  public:
-  using MapSolver::MapSolver;  // Inherit MapSolver constructor.
+  IrlsMapSolver(
+      const MapSolverOptions& solver_options,
+      const ImageModel& image_model,
+      const std::vector<ImageData>& low_res_images,
+      const bool print_solver_output = true);
 
   // The IRLS MAP formulation solver implementation. Uses a least squares
   // solver library to do the actual optimization.

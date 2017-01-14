@@ -22,6 +22,12 @@
 using super_resolution::ImageData;
 using super_resolution::test::AreMatricesEqual;
 
+using testing::ContainerEq;
+using testing::DoubleEq;
+using testing::ElementsAre;
+using testing::Matcher;
+using testing::Return;
+
 constexpr bool kPrintSolverOutput = true;
 constexpr double kSolverResultErrorTolerance = 0.001;
 constexpr double kDerivativeErrorTolerance = 0.000001;
@@ -34,6 +40,20 @@ static const std::string kTestIconPath = "../test_data/fb.png";
 
 // Bigger image for testing:
 static const std::string kTestImagePath = "../test_data/goat.jpg";
+
+class MockRegularizer : public super_resolution::Regularizer {
+ public:
+  // Handle super constructor, since we don't need the image_size_ field.
+  MockRegularizer() : super_resolution::Regularizer(cv::Size(0, 0)) {}
+
+  MOCK_CONST_METHOD1(
+      ApplyToImage, std::vector<double>(const double* image_data));
+
+  MOCK_CONST_METHOD2(
+      GetDerivatives, std::vector<double>(
+          const double* image_data,
+          const std::vector<double> partial_const_terms));
+};
 
 // Tests the solver on small, "perfect" data to make sure it works as expected.
 TEST(MapSolver, SmallDataTest) {
@@ -397,7 +417,7 @@ TEST(MapSolver, IrlsComputeDataTerm) {
   };
 
   // Empty image model (does nothing) and no regularizer.
-  super_resolution::ImageModel empty_image_model(1);
+  const super_resolution::ImageModel empty_image_model(1);
   super_resolution::IrlsMapSolver irls_map_solver(
       kDefaultSolverOptions,
       empty_image_model,
@@ -410,12 +430,12 @@ TEST(MapSolver, IrlsComputeDataTerm) {
   };
 
   // (Image 1, Channel 1) and hr pixels are identical, so expect all zeros.
-  std::pair<double, std::vector<double>> residual_sum_and_gradient_1 =
+  const auto& residual_sum_and_gradient_1 =
       irls_map_solver.ComputeDataTermAnalyticalDiff(0, 0, hr_pixel_values);
   EXPECT_EQ(residual_sum_and_gradient_1.first, 0);
 
   // (Image 1, Channel 2) residuals should be different at each pixel.
-  std::pair<double, std::vector<double>> residual_sum_and_gradient_2 =
+  const auto& residual_sum_and_gradient_2 =
       irls_map_solver.ComputeDataTermAnalyticalDiff(0, 1, hr_pixel_values);
   const std::vector<double> expected_residuals = {
       -0.5,  0.0,  0.5,
@@ -429,7 +449,7 @@ TEST(MapSolver, IrlsComputeDataTerm) {
   EXPECT_EQ(residual_sum_and_gradient_2.first, expected_residual_sum);
 
   // (Image 2, channel 1) ("channel_3") should all be -0.5.
-  std::pair<double, std::vector<double>> residual_sum_and_gradient_3 =
+  const auto& residual_sum_and_gradient_3 =
       irls_map_solver.ComputeDataTermAnalyticalDiff(1, 0, hr_pixel_values);
   expected_residual_sum = 0.0;
   for (int i = 0; i < 9; ++i) {
@@ -442,62 +462,74 @@ TEST(MapSolver, IrlsComputeDataTerm) {
 }
 
 TEST(MapSolver, IrlsComputeRegularization) {
-//  // Mocked Regularizer.
-//  std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
-//  const double image_data[5] = {1, 2, 3, 4, 5};
-//  const std::vector<double> residuals = {1, 2, 3, 4, 5};
-//  EXPECT_CALL(*mock_regularizer, ApplyToImage(image_data))
-//      .Times(3)  // 3 calls: compute residuals, update weights, compute again.
-//      .WillRepeatedly(Return(residuals));
-//
-//  std::vector<super_resolution::ImageData> empty_image_vector;
-//  super_resolution::ImageModel empty_image_model(2);
-//
-//  const double regularization_parameter = 0.5;
-//  super_resolution::IrlsCostProcessor irls_cost_processor(
-//      empty_image_vector,
-//      empty_image_model,
-//      cv::Size(5, 1),
-//      std::move(mock_regularizer),
-//      regularization_parameter);
-//
-//  // Expected residuals should be the residuals returned by the mocked
-//  // Regularizer times the regularization parameter and the square root of the
-//  // respective weights, which are all 1.0 to begin with.
-//  const Matcher<double> expected_residuals_1[5] = {
-//    DoubleEq(residuals[0] * regularization_parameter),
-//    DoubleEq(residuals[1] * regularization_parameter),
-//    DoubleEq(residuals[2] * regularization_parameter),
-//    DoubleEq(residuals[3] * regularization_parameter),
-//    DoubleEq(residuals[4] * regularization_parameter)
-//  };
-//  const std::vector<double> returned_residuals_1 =
-//      irls_cost_processor.ComputeRegularizationResiduals(image_data);
-//  EXPECT_THAT(returned_residuals_1, ElementsAreArray(expected_residuals_1));
-//
-//  // Update weights and test again. The weights are expected to be updated as
-//  // follows:
-//  //   w = 1.0 / sqrt(residual)
-//  // so, given residuals [1, 2, 3, 4, 5]:
-//  //   w0 = 1.0 / 1.0 ~= 1.0
-//  //   w1 = 1.0 / 2.0 ~= 0.5
-//  //   w2 = 1.0 / 3.0 ~= 0.333333333
-//  //   w3 = 1.0 / 4.0 ~= 0.25
-//  //   w4 = 1.0 / 5.0 ~= 0.2
-//  //
-//  // TODO: test with updated weights for a non-L1 norm regularizer.
-//  irls_cost_processor.UpdateIrlsWeights(image_data);
-//
-//  // Now expect the residuals to be multiplied by the regularization parameter
-//  // and the square root of the newly computed weights.
-//  const Matcher<double> expected_residuals_2[5] = {
-//    DoubleEq(residuals[0] * regularization_parameter * sqrt(1.0 / 1.0)),
-//    DoubleEq(residuals[1] * regularization_parameter * sqrt(1.0 / 2.0)),
-//    DoubleEq(residuals[2] * regularization_parameter * sqrt(1.0 / 3.0)),
-//    DoubleEq(residuals[3] * regularization_parameter * sqrt(1.0 / 4.0)),
-//    DoubleEq(residuals[4] * regularization_parameter * sqrt(1.0 / 5.0))
-//  };
-//  const std::vector<double> returned_residuals_2 =
-//      irls_cost_processor.ComputeRegularizationResiduals(image_data);
-//  EXPECT_THAT(returned_residuals_2, ElementsAreArray(expected_residuals_2));
+  // Mocked Regularizer.
+  std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
+  const double image_data[5] = {1, 2, 3, 4, 5};
+  const std::vector<double> residuals = {1, 2, 3, 4, 5};
+  EXPECT_CALL(*mock_regularizer, ApplyToImage(image_data))
+      .Times(3)  // 3 calls: compute residuals, update weights, compute again.
+      .WillRepeatedly(Return(residuals));
+
+  const std::vector<super_resolution::ImageData> low_res_images = {
+    ImageData(image_data, cv::Size(5, 1))  // Ignored image for this test.
+  };
+  const super_resolution::ImageModel empty_image_model(1);
+  const double regularization_parameter = 0.5;
+  super_resolution::IrlsMapSolver irls_map_solver(
+      kDefaultSolverOptions,
+      empty_image_model,
+      low_res_images);
+  irls_map_solver.AddRegularizer(
+      std::move(mock_regularizer), regularization_parameter);
+
+  // Expected residuals should be the residuals returned by the mocked
+  // Regularizer times the regularization parameter and the square root of the
+  // respective weights, which are all 1.0 to begin with.
+  const std::vector<double> expected_residuals_1 = {
+      residuals[0] * regularization_parameter,
+      residuals[1] * regularization_parameter,
+      residuals[2] * regularization_parameter,
+      residuals[3] * regularization_parameter,
+      residuals[4] * regularization_parameter,
+  };
+  double expected_residual_sum = 0.0;
+  for (const double residual : expected_residuals_1) {
+    expected_residual_sum += (residual * residual);
+  }
+  const auto& residual_sum_and_gradient_1 =
+      irls_map_solver.ComputeRegularizationAnalyticalDiff(image_data);
+  std::cout << "1 - HERE HERE HERE" << std::endl;
+  EXPECT_EQ(residual_sum_and_gradient_1.first, expected_residual_sum);
+
+  // Update weights and test again. The weights are expected to be updated as
+  // follows:
+  //   w = 1.0 / sqrt(residual)
+  // so, given residuals [1, 2, 3, 4, 5]:
+  //   w0 = 1.0 / 1.0 ~= 1.0
+  //   w1 = 1.0 / 2.0 ~= 0.5
+  //   w2 = 1.0 / 3.0 ~= 0.333333333
+  //   w3 = 1.0 / 4.0 ~= 0.25
+  //   w4 = 1.0 / 5.0 ~= 0.2
+  //
+  // TODO: test with updated weights for a non-L1 norm regularizer.
+  irls_map_solver.UpdateIrlsWeights(image_data);
+  std::cout << "2" << std::endl;
+
+  // Now expect the residuals to be multiplied by the regularization parameter
+  // and the square root of the newly computed weights.
+  const std::vector<double> expected_residuals_2 = {
+    residuals[0] * regularization_parameter * sqrt(1.0 / 1.0),
+    residuals[1] * regularization_parameter * sqrt(1.0 / 2.0),
+    residuals[2] * regularization_parameter * sqrt(1.0 / 3.0),
+    residuals[3] * regularization_parameter * sqrt(1.0 / 4.0),
+    residuals[4] * regularization_parameter * sqrt(1.0 / 5.0)
+  };
+  expected_residual_sum = 0.0;
+  for (const double residual : expected_residuals_2) {
+    expected_residual_sum += (residual * residual);
+  }
+  const auto& residual_sum_and_gradient_2 =
+      irls_map_solver.ComputeRegularizationAnalyticalDiff(image_data);
+  std::cout << "3" << std::endl;
+  EXPECT_EQ(residual_sum_and_gradient_2.first, expected_residual_sum);
 }
