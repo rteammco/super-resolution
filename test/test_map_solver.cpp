@@ -539,6 +539,8 @@ TEST(MapSolver, IrlsComputeRegularization) {
 // comparing results of analytical differentiation to numerical differentiation
 // to help debug any implementations of manually computing gradients.
 TEST(MapSolver, IrlsDifferentiationTest) {
+  // TODO: finish this test or remove it.
+
   // Create the low-res test images.
   const cv::Mat lr_image_1 = (cv::Mat_<double>(2, 2)
     << 0.4, 0.4,
