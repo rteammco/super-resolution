@@ -1,9 +1,12 @@
 #include "solvers/alglib_objective.h"
 
-#include "solvers/irls_map_solver.h"
-
 #include <utility>
 #include <vector>
+
+#include "solvers/irls_map_solver.h"
+
+#include "alglib/src/stdafx.h"
+#include "alglib/src/optimization.h"
 
 #include "glog/logging.h"
 

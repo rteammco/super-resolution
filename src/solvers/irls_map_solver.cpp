@@ -6,14 +6,14 @@
 
 #include "image/image_data.h"
 #include "image_model/image_model.h"
-#include "solvers/alglib_objective.h"
-
-#include "alglib/src/stdafx.h"  // TODO: replace and remove.
-#include "alglib/src/optimization.h"  // TODO: replace and remove.
+#include "solvers/ceres_objective.h"
+#include "solvers/alglib_objective.h" //TODO: remove
 
 #include "opencv2/core/core.hpp"
 
-// #include "ceres/ceres.h"  TODO: replace alglib with ceres.
+#include "ceres/ceres.h"
+#include "alglib/src/stdafx.h" // TODO: remove
+#include "alglib/src/optimization.h" // TODO: remove
 
 #include "glog/logging.h"
 

@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(SuperResolution)
 
 find_package(OpenCV REQUIRED)
+find_package(Ceres REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIR})
@@ -65,6 +66,7 @@ add_executable(
 target_link_libraries(
   Test
   LibSuperResolution
+  Ceres
   glog
   gmock
   gmock_main
@@ -108,6 +110,7 @@ add_executable(
 target_link_libraries(
   SuperResolution
   LibSuperResolution
+  Ceres
   glog
   gflags
   ${OpenCV_LIBS}
