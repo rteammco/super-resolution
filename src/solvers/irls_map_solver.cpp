@@ -41,46 +41,45 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   ImageData estimated_image = initial_estimate;
   double* hr_image_estimate = estimated_image.GetMutableDataPointer(0);
 
-  ceres::GradientProblem problem(new MapDataCostFunction(this));
+  //ceres::GradientProblem problem(new MapDataCostFunction(this));
 
-  ceres::GradientProblemSolver::Options options;
-  options.callbacks.push_back(
-      new MapIterationCallback(hr_image_estimate, this));
+  //ceres::GradientProblemSolver::Options options;
+  //options.callbacks.push_back(
+  //    new MapIterationCallback(hr_image_estimate, this));
+  //options.minimizer_progress_to_stdout = true;
+
+  //ceres::GradientProblemSolver::Summary summary;
+  //ceres::Solve(options, problem, hr_image_estimate, &summary);
+  //std::cout << summary.FullReport() << std::endl;
+
+  // Set up the optimization code with Ceres.
+  ceres::Problem problem;
+//  for (int image_index = 0; image_index < GetNumImages(); ++image_index) {
+    ceres::CostFunction* cost_function = new MapDataCostFunction(this);
+    // TODO: channel 0 only, extend to multiple channels!
+    problem.AddResidualBlock(cost_function, NULL, hr_image_estimate);
+//  }
+
+  // TODO: handle regularization.
+
+  // Set the solver options. TODO: figure out what these should be.
+  ceres::Solver::Options options;
+  // options.linear_solver_type = ceres::DENSE_SCHUR;
+  // options.num_threads = 4;
+  // options.num_linear_solver_threads = 4;
+  // Always update parameters because we need to compute the new LR estimates.
+  options.max_num_iterations = 50;
+  options.update_state_every_iteration = true;
+  options.callbacks.push_back(new MapIterationCallback(hr_image_estimate, this));
   options.minimizer_progress_to_stdout = true;
-  //options.update_state_every_iteration = true;
+  options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+  options.minimizer_type = ceres::LINE_SEARCH;
+  options.line_search_direction_type = ceres::STEEPEST_DESCENT;//NONLINEAR_CONJUGATE_GRADIENT;
 
-  ceres::GradientProblemSolver::Summary summary;
-  ceres::Solve(options, problem, hr_image_estimate, &summary);
+  // Solve.
+  ceres::Solver::Summary summary;
+  ceres::Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
-
-//  // Set up the optimization code with Ceres.
-//  ceres::Problem problem;
-////  for (int image_index = 0; image_index < GetNumImages(); ++image_index) {
-//    ceres::CostFunction* cost_function =
-//        new MapDataCostFunction(this, 0);//image_index);
-//    // TODO: channel 0 only, extend to multiple channels!
-//    problem.AddResidualBlock(
-//        cost_function,
-//        NULL,
-//        estimated_image.GetMutableDataPointer(0));
-////  }
-//
-//  // TODO: handle regularization.
-//
-//  // Set the solver options. TODO: figure out what these should be.
-//  ceres::Solver::Options options;
-//  // options.linear_solver_type = ceres::DENSE_SCHUR;
-//  // options.num_threads = 4;
-//  // options.num_linear_solver_threads = 4;
-//  // Always update parameters because we need to compute the new LR estimates.
-//  options.update_state_every_iteration = true;
-//  options.callbacks.push_back(new MapIterationCallback());
-//  options.minimizer_progress_to_stdout = true;
-//
-//  // Solve.
-//  ceres::Solver::Summary summary;
-//  ceres::Solve(options, &problem, &summary);
-//  std::cout << summary.FullReport() << std::endl;
 
   return estimated_image;
 }

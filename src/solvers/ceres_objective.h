@@ -14,21 +14,37 @@
 namespace super_resolution {
 
 // TODO: comments.
-class MapDataCostFunction : public ceres::FirstOrderFunction {
+//class MapDataCostFunction : public ceres::FirstOrderFunction {
+class MapDataCostFunction : public ceres::CostFunction {
  public:
   MapDataCostFunction(const IrlsMapSolver* irls_map_solver)
       : irls_map_solver_(irls_map_solver),
-        num_pixels_(irls_map_solver->GetNumPixels()) {}
+        num_pixels_(irls_map_solver->GetNumPixels()) {
 
-  virtual int NumParameters() const {
-    return num_pixels_;
+    mutable_parameter_block_sizes()->push_back(num_pixels_);
+    set_num_residuals(1);
   }
 
+  //virtual int NumParameters() const {
+  //  return num_pixels_;
+  //}
+
   virtual bool Evaluate(
-      const double* parameters, double* cost, double* gradient) const {
+  //    const double* parameters, double* residuals, double* jacobian) const {
+      double const* const* parameters,
+      double* residuals,
+      double** jacobian) const {
+
+    // Get the pararmaeters.
+    const double* estimated_image_data = parameters[0];
+    double* cost = residuals;
+    double* gradient = nullptr;
+    if (jacobian != NULL) {
+      gradient = jacobian[0];
+    }
 
     // Zero-out the gradient if the gradient vector is given.
-    if (gradient != NULL) {
+    if (gradient != nullptr) {
       for (int i = 0; i < num_pixels_; ++i) {
         gradient[i] = 0;
       }
@@ -41,8 +57,8 @@ class MapDataCostFunction : public ceres::FirstOrderFunction {
       const int num_images = irls_map_solver_->GetNumImages();
       const auto& residual_sum_and_gradient =
           irls_map_solver_->ComputeDataTermAnalyticalDiff(
-              image_index, 0, parameters);  // TODO: channel!?
-      if (gradient != NULL) {
+              image_index, 0, estimated_image_data);  // TODO: channel!?
+      if (gradient != nullptr) {
         for (int i = 0; i < num_pixels_; ++i) {
           gradient[i] += residual_sum_and_gradient.second[i];
         }
@@ -63,7 +79,7 @@ class MapDataCostFunction : public ceres::FirstOrderFunction {
 class MapIterationCallback : public ceres::IterationCallback {
  public:
   MapIterationCallback(
-      const double* hr_image_estimate,
+      double* hr_image_estimate,
       IrlsMapSolver* irls_map_solver)
       : hr_image_estimate_(hr_image_estimate),
         irls_map_solver_(irls_map_solver) {}
@@ -87,7 +103,7 @@ class MapIterationCallback : public ceres::IterationCallback {
   }
 
  private:
-  const double* hr_image_estimate_;
+  double* hr_image_estimate_;
   IrlsMapSolver* irls_map_solver_;
 };
 
