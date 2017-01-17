@@ -39,20 +39,19 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
 
   const int num_channels = observations_[0].GetNumChannels();  // TODO: use!
   ImageData estimated_image = initial_estimate;
+  double* hr_image_estimate = estimated_image.GetMutableDataPointer(0);
 
-  ceres::GradientProblem problem(new MapDataCostFunction(this, 0));
+  ceres::GradientProblem problem(new MapDataCostFunction(this));
+
   ceres::GradientProblemSolver::Options options;
-  //options.update_state_every_iteration = true;
-  options.callbacks.push_back(new MapIterationCallback());
+  options.callbacks.push_back(
+      new MapIterationCallback(hr_image_estimate, this));
   options.minimizer_progress_to_stdout = true;
+  //options.update_state_every_iteration = true;
 
   ceres::GradientProblemSolver::Summary summary;
-  ceres::Solve(
-      options,
-      problem,
-      estimated_image.GetMutableDataPointer(0),
-      &summary);
-  std::cout << summary.FullReport() << "\n";
+  ceres::Solve(options, problem, hr_image_estimate, &summary);
+  std::cout << summary.FullReport() << std::endl;
 
 //  // Set up the optimization code with Ceres.
 //  ceres::Problem problem;
