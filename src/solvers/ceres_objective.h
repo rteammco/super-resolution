@@ -14,7 +14,7 @@
 namespace super_resolution {
 
 // TODO: comments.
-class MapDataCostFunction : public ceres::CostFunction {
+class MapDataCostFunction : public ceres::FirstOrderFunction {
  public:
   MapDataCostFunction(
     const IrlsMapSolver* irls_map_solver, const int image_index)
@@ -22,36 +22,46 @@ class MapDataCostFunction : public ceres::CostFunction {
       image_index_(image_index),
       num_pixels_(irls_map_solver->GetNumPixels()) {
 
-    mutable_parameter_block_sizes()->push_back(num_pixels_);
-    set_num_residuals(1);
+    // TODO: PUT BACK ANd ALSO HERE
+    //mutable_parameter_block_sizes()->push_back(num_pixels_);
+    //set_num_residuals(1);
+  }
+
+  virtual int NumParameters() const {
+    return num_pixels_;
   }
 
   virtual bool Evaluate(
-      double const* const* parameters,
+      const double* parameters,
+      //double const* const* parameters,
       double* residuals,
-      double** jacobians) const {
+      double* jacobians) const {
+      //double** jacobians) const {
 
     // Zero-out the gradients if the jacobians matrix is given.
     double* gradient = nullptr;
     if (jacobians != NULL) {
-      gradient = jacobians[0];
+      gradient = jacobians;//[0];
       for (int i = 0; i < num_pixels_; ++i) {
         gradient[i] = 0;
       }
     }
+    residuals[0] = 0.0;
 
-    const double* estimated_image_data = parameters[0];
+    for (int image_index = 0; image_index < irls_map_solver_->GetNumImages(); ++image_index) {
+    const double* estimated_image_data = parameters;//[0];
     const int num_images = irls_map_solver_->GetNumImages();
     const auto& residual_sum_and_gradient =
         irls_map_solver_->ComputeDataTermAnalyticalDiff(
-            image_index_, 0, estimated_image_data);  // TODO: channel!?
+            image_index, 0, estimated_image_data);  // TODO: channel!?
     if (gradient != nullptr) {
       for (int i = 0; i < num_pixels_; ++i) {
         gradient[i] += residual_sum_and_gradient.second[i];
       }
     }
+    residuals[0] += sqrt(residual_sum_and_gradient.first);
+    }
 
-    residuals[0] = sqrt(residual_sum_and_gradient.first);
     return true;
   }
 

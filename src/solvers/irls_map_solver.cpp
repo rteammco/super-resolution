@@ -40,77 +40,49 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   const int num_channels = observations_[0].GetNumChannels();  // TODO: use!
   ImageData estimated_image = initial_estimate;
 
-  // Set up the optimization code with Ceres.
-  ceres::Problem problem;
-  for (int image_index = 0; image_index < GetNumImages(); ++image_index) {
-    ceres::CostFunction* cost_function =
-        new MapDataCostFunction(this, image_index);
-    // TODO: channel 0 only, extend to multiple channels!
-    problem.AddResidualBlock(
-        cost_function,
-        NULL,
-        estimated_image.GetMutableDataPointer(0));
-  }
-
-  // TODO: handle regularization.
-
-  // Set the solver options. TODO: figure out what these should be.
-  ceres::Solver::Options options;
-  // options.linear_solver_type = ceres::DENSE_SCHUR;
-  // options.num_threads = 4;
-  // options.num_linear_solver_threads = 4;
-  // Always update parameters because we need to compute the new LR estimates.
-  options.update_state_every_iteration = true;
+  ceres::GradientProblem problem(new MapDataCostFunction(this, 0));
+  ceres::GradientProblemSolver::Options options;
+  //options.update_state_every_iteration = true;
   options.callbacks.push_back(new MapIterationCallback());
   options.minimizer_progress_to_stdout = true;
 
-  // Solve.
-  ceres::Solver::Summary summary;
-  ceres::Solve(options, &problem, &summary);
-  std::cout << summary.FullReport() << std::endl;
+  ceres::GradientProblemSolver::Summary summary;
+  ceres::Solve(
+      options,
+      problem,
+      estimated_image.GetMutableDataPointer(0),
+      &summary);
+  std::cout << summary.FullReport() << "\n";
 
-//  // Set up the optimization code with ALGLIB.
-//  // TODO: set these numbers correctly.
-//  const double epsg = 0.0000000001;
-//  const double epsf = 0.0;
-//  const double epsx = 0.0;
-//  const double numerical_diff_step_size = 1.0e-6;
-//  const alglib::ae_int_t max_num_iterations = 50;  // 0 = infinite.
+//  // Set up the optimization code with Ceres.
+//  ceres::Problem problem;
+////  for (int image_index = 0; image_index < GetNumImages(); ++image_index) {
+//    ceres::CostFunction* cost_function =
+//        new MapDataCostFunction(this, 0);//image_index);
+//    // TODO: channel 0 only, extend to multiple channels!
+//    problem.AddResidualBlock(
+//        cost_function,
+//        NULL,
+//        estimated_image.GetMutableDataPointer(0));
+////  }
 //
-//  // TODO: multiple channel support?
-//  alglib::real_1d_array solver_data;
-//  solver_data.setcontent(
-//      GetNumPixels(), initial_estimate.GetMutableDataPointer(0));
+//  // TODO: handle regularization.
 //
-//  alglib::mincgstate solver_state;
-//  alglib::mincgreport solver_report;
-//  // TODO: enable numerical diff option?
-//  // if (solver_options_.use_numerical_differentiation) {
-//  // alglib::mincgcreatef(solver_data, numerical_diff_step_size, solver_state);
-//  // } else {
-//  alglib::mincgcreate(solver_data, solver_state);
-//  // }
-//  alglib::mincgsetcond(solver_state, epsg, epsf, epsx, max_num_iterations);
-//  alglib::mincgsetxrep(solver_state, true);
+//  // Set the solver options. TODO: figure out what these should be.
+//  ceres::Solver::Options options;
+//  // options.linear_solver_type = ceres::DENSE_SCHUR;
+//  // options.num_threads = 4;
+//  // options.num_linear_solver_threads = 4;
+//  // Always update parameters because we need to compute the new LR estimates.
+//  options.update_state_every_iteration = true;
+//  options.callbacks.push_back(new MapIterationCallback());
+//  options.minimizer_progress_to_stdout = true;
 //
-//  // TODO: enable numerical diff option?
-//  // Solve and get results report.
-//  // if (solver_options_.use_numerical_differentiation) {
-//  //   alglib::mincgoptimize(
-//  //       solver_state,
-//  //       ObjectiveFunctionNumericalDifferentiation,
-//  //       SolverIterationCallback,
-//  //       const_cast<void*>(reinterpret_cast<const void*>(this)));
-//  // } else {
-//  alglib::mincgoptimize(
-//      solver_state,
-//      AlglibObjectiveFunctionAnalyticalDiff,
-//      AlglibSolverIterationCallback,
-//      const_cast<void*>(reinterpret_cast<const void*>(this)));
-//  // }
-//  alglib::mincgresults(solver_state, solver_data, solver_report);
-//
-//  const ImageData estimated_image(solver_data.getcontent(), image_size_);
+//  // Solve.
+//  ceres::Solver::Summary summary;
+//  ceres::Solve(options, &problem, &summary);
+//  std::cout << summary.FullReport() << std::endl;
+
   return estimated_image;
 }
 
