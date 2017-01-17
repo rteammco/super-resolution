@@ -124,12 +124,10 @@ TEST(MapSolver, SmallDataTest) {
 
   ImageData result = solver.Solve(initial_estimate);
 
-  for (int pixel_index = 0; pixel_index < 16; ++pixel_index) {
-    EXPECT_NEAR(
-        result.GetPixelValue(0, pixel_index),
-        ground_truth_image.GetPixelValue(0, pixel_index),
-        kSolverResultErrorTolerance);
-  }
+  EXPECT_TRUE(AreMatricesEqual(
+      result.GetChannelImage(0),
+      ground_truth_image.GetChannelImage(0),
+      kSolverResultErrorTolerance));
 
   // TODO: multichannel image test
 }

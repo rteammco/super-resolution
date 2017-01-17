@@ -15,15 +15,14 @@ namespace super_resolution {
 
 // TODO: comments.
 class MapDataCostFunction : public ceres::CostFunction {
+ public:
   MapDataCostFunction(
-      const IrlsMapSolver& irls_map_solver,
-      const int image_index,
-      const int channel_index)
+    const IrlsMapSolver* irls_map_solver, const int image_index)
     : irls_map_solver_(irls_map_solver),
       image_index_(image_index),
-      channel_index_(channel_index) {
+      num_pixels_(irls_map_solver->GetNumPixels()) {
 
-    mutable_parameter_block_sizes()->push_back(irls_map_solver.GetNumPixels());
+    mutable_parameter_block_sizes()->push_back(num_pixels_);
     set_num_residuals(1);
   }
 
@@ -32,25 +31,49 @@ class MapDataCostFunction : public ceres::CostFunction {
       double* residuals,
       double** jacobians) const {
 
-    const double* estimated_image_data = parameters[0];
-    double* gradient = jacobians[0];
-    const std::pair<double, std::vector<double>> residual_sum_and_gradient =
-        irls_map_solver_.ComputeDataTermAnalyticalDiff(
-            image_index_, channel_index_, estimated_image_data);
-    const double residual_sum = residual_sum_and_gradient.first;
-    const int num_pixels = irls_map_solver_.GetNumPixels();
-    for (int i = 0; i < num_pixels; ++i) {
-      gradient[i] = residual_sum_and_gradient.second[i];
+    // Zero-out the gradients if the jacobians matrix is given.
+    double* gradient = nullptr;
+    if (jacobians != NULL) {
+      gradient = jacobians[0];
+      for (int i = 0; i < num_pixels_; ++i) {
+        gradient[i] = 0;
+      }
     }
 
+    const double* estimated_image_data = parameters[0];
+    const int num_images = irls_map_solver_->GetNumImages();
+    const auto& residual_sum_and_gradient =
+        irls_map_solver_->ComputeDataTermAnalyticalDiff(
+            image_index_, 0, estimated_image_data);  // TODO: channel!?
+    if (gradient != nullptr) {
+      for (int i = 0; i < num_pixels_; ++i) {
+        gradient[i] += residual_sum_and_gradient.second[i];
+      }
+    }
+
+    residuals[0] = sqrt(residual_sum_and_gradient.first);
     return true;
   }
 
  private:
-  const IrlsMapSolver& irls_map_solver_;
+  const IrlsMapSolver* irls_map_solver_;
   const int image_index_;
-  const int channel_index_;
+  const int num_pixels_;
 };
+
+// TODO: this should only update W. Fix.
+class MapIterationCallback : public ceres::IterationCallback {
+ public:
+  // Called after each iteration.
+  ceres::CallbackReturnType operator() (
+      const ceres::IterationSummary& summary) {
+    // TODO: implement computing W matrix.
+    // TODO: remove logging here.
+    LOG(INFO) << "CALLBACK";
+    return ceres::SOLVER_CONTINUE;
+  }
+};
+
 
 }  // namespace super_resolution
 
