@@ -322,24 +322,26 @@ TEST(MapSolver, RealBigImageTest) {
 // reconstructed image should not be perfect, but should be close enough.
 TEST(MapSolver, RegularizationTest) {
   const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
-  const ImageData ground_truth(image);
+  ImageData ground_truth(image);
+  // Make sure the image size is divisible by the scale.
+  ground_truth.ResizeImage(cv::Size(27, 27));
   const cv::Size image_size = ground_truth.GetImageSize();
 
   // Build the image model. 3x downsampling.
-  const int downsampling_scale = 2;  // TODO: 3x
+  const int downsampling_scale = 3;
   super_resolution::ImageModel image_model(downsampling_scale);
 
   // Motion.
   const super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
     super_resolution::MotionShift(0, 1),
-    //super_resolution::MotionShift(0, 2),
+    super_resolution::MotionShift(0, 2),
     super_resolution::MotionShift(1, 0),
     super_resolution::MotionShift(1, 1),
-    //super_resolution::MotionShift(1, 2),
-    //super_resolution::MotionShift(2, 0),
-    //super_resolution::MotionShift(2, 1),
-    //super_resolution::MotionShift(2, 2)
+    super_resolution::MotionShift(1, 2),
+    super_resolution::MotionShift(2, 0),
+    super_resolution::MotionShift(2, 1),
+    super_resolution::MotionShift(2, 2)
   });
   std::unique_ptr<super_resolution::DegradationOperator> motion_module(
       new super_resolution::MotionModule(motion_shift_sequence));
@@ -367,7 +369,7 @@ TEST(MapSolver, RegularizationTest) {
   // Set the initial estimate as the upsampling of the referece image, in this
   // case low_res_images[0], since it has no motion shift.
   ImageData initial_estimate = low_res_images[0];
-  initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
+  initial_estimate.ResizeImage(downsampling_scale, cv::INTER_LINEAR);
 
   // Create the solver and attempt to solve.
   //solver_options.use_numerical_differentiation = true;
@@ -384,6 +386,10 @@ TEST(MapSolver, RegularizationTest) {
   ImageData disp_ground_truth = ground_truth;
   disp_ground_truth.ResizeImage(disp_size);
   cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
+
+  ImageData disp_upsampled = initial_estimate;
+  disp_upsampled.ResizeImage(disp_size);
+  cv::imshow("Upsampled", disp_upsampled.GetVisualizationImage());
 
   ImageData disp_result = solver_result;
   disp_result.ResizeImage(disp_size);

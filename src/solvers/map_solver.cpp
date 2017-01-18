@@ -19,7 +19,8 @@ MapSolver::MapSolver(
       solver_options_(solver_options) {
 
   const int num_observations = low_res_images.size();
-  CHECK(num_observations > 0) << "Cannot super-resolve with 0 low-res images.";
+  CHECK_GT(num_observations, 0)
+      << "Cannot super-resolve with 0 low-res images.";
 
   // Set the size of the HR images. There must be at least one image at
   // low_res_images[0], otherwise the above check will have failed.
