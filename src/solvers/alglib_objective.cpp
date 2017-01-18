@@ -20,14 +20,12 @@ void AlglibObjectiveFunctionAnalyticalDiff(
   IrlsMapSolver* irls_map_solver =
       reinterpret_cast<IrlsMapSolver*>(irls_map_solver_ptr);
 
-  // Zero out the residual sum and the gradient vector.
+  // Need to zero out the residual sum and the gradient vector.
   residual_sum = 0;
   const int num_pixels = irls_map_solver->GetNumPixels();
   for (int i = 0; i < num_pixels; ++i) {
     gradient[i] = 0;
   }
-
-  LOG(INFO) << "ITER START: " << estimated_data[0];
 
   // Compute data term residuals and gradient.
   const int num_images = irls_map_solver->GetNumImages();

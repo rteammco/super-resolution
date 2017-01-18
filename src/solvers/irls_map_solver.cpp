@@ -203,8 +203,7 @@ IrlsMapSolver::ComputeRegularizationAutomaticDiff(
   CHECK_NOTNULL(estimated_image_data);
 
   const int num_pixels = GetNumPixels();
-  std::vector<double> gradient(num_pixels);
-  std::fill(gradient.begin(), gradient.end(), 0);
+  std::vector<double> gradient(num_pixels);  // inits to 0.
   double residual_sum = 0;
 
   // Apply each regularizer individually.
@@ -226,18 +225,15 @@ IrlsMapSolver::ComputeRegularizationAutomaticDiff(
       residual_sum += (residual * residual);
 
       // TODO: is it...
-      //gradient[pixel_index] +=
-      //    regularization_parameter * weight * 2 * partials[pixel_index];
-      // ... or...
       gradient[pixel_index] +=
-          regularization_parameter * weight * 2 *
-          residuals[pixel_index] * partials[pixel_index];
+          regularization_parameter * weight * 2 * partials[pixel_index];
+      // ... or...
+      //gradient[pixel_index] +=
+      //    regularization_parameter * weight * 2 *
+      //    residuals[pixel_index] * partials[pixel_index];
     }
   }
 
-  if (!isnan(gradient[0])) {
-    LOG(INFO) << "Sum = " << residual_sum << " & grad[0] = " << gradient[0];
-  }
   return make_pair(residual_sum, gradient);
 }
 

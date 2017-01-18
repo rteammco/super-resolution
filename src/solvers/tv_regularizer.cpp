@@ -82,61 +82,20 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   std::vector<F<double>> parameters(
       image_data, image_data + num_parameters);
   for (int i = 0; i < num_parameters; ++i) {
-    //parameters[i] = image_data[i];
     parameters[i].diff(i, num_parameters);
-    //LOG(INFO) << "@@@ " << i << ": " << image_data[i] << " vs. "
-    //          << parameters[i].x() << ", " << parameters[i].d(i);
   }
 
   std::vector<F<double>> residuals(num_parameters);
   for (int row = 0; row < image_size_.height; ++row) {
     for (int col = 0; col < image_size_.width; ++col) {
       const int index = row * image_size_.width + col;
-      F<double> y_variation = GetYGradientAtPixel<F<double>>(
+      const F<double> y_variation = GetYGradientAtPixel<F<double>>(
           parameters.data(), image_size_, row, col);
-      F<double> x_variation = GetXGradientAtPixel<F<double>>(
+      const F<double> x_variation = GetXGradientAtPixel<F<double>>(
           parameters.data(), image_size_, row, col);
-      F<double> total_variation =
+      const F<double> total_variation =
           (y_variation * y_variation) + (x_variation * x_variation);
-
-      //LOG(INFO) << parameters[index].d(index);
-      //LOG(INFO) << y_variation.d(index);
-      //LOG(INFO) << x_variation.d(index);
-      //LOG(INFO) << total_variation.d(index);
-
-      //LOG(INFO) << ">>> " << y_variation.x() << ", " << x_variation.x();
-
-      //F<double> y_squared = y_variation * y_variation;
-      //F<double> x_squared = x_variation * x_variation;
-      //if (isnan(x_squared.d(index))) {
-      //  //LOG(INFO) << "Failure at squared x: " << x_squared.x();
-      //}
-      //if (isnan(y_squared.d(index))) {
-      //  //LOG(INFO) << "Failure at squared y: " << y_squared.x();
-      //}
-      //if (!isnan(total_variation.d(index))) {
-      //  //LOG(INFO) << " NOT fail @ " << index;
-      //}
-
-      //for (int i = 0; i < num_parameters; ++i) {
-      //  // TODO: nans, debug.
-      //  const double partial = total_variation.d(i);
-      //  if (isnan(partial)) {
-      //    LOG(INFO) << "NAN @ " << index << " w.r.t. " << i;
-      //    if (isnan(x_variation.d(i))) {
-      //      LOG(INFO) << "    x partial failed";
-      //    }
-      //    if (isnan(y_variation.d(i))) {
-      //      LOG(INFO) << "    y partial failed";
-      //    }
-      //  }
-      //  //LOG(INFO) << "partial " << index << " w.r.t. " << i << " = "
-      //  //          << total_variation.d(i);
-      //}
-
       residuals[index] = fadbad::sqrt(total_variation);
-      //LOG(INFO) << residuals[index].d(index);
-      //LOG(INFO) << "-----------------------";
     }
   }
 
@@ -144,22 +103,13 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   std::vector<double> partial_derivatives(num_parameters);  // inits to 0.
   for (int i = 0; i < num_parameters; ++i) {
     for (int j = 0; j < num_parameters; ++j) {
-      //const double didj = residuals[j].d(i);
-      //if (i == 0 && !isnan(didj) && didj != 0) {
-      //  LOG(INFO) << "d" << i << "d" << j << " = " << didj;
-      //}
-      const double didj = residuals[j].d(i);
-      if (!isnan(didj)) {
-        partial_derivatives[i] += didj;
+      const double djdi = residuals[j].d(i);
+      if (!isnan(djdi)) {
+        partial_derivatives[i] += djdi;
       }
     }
     partial_derivatives[i] *= -1;
     residual_values[i] = residuals[i].x();
-    //if (isnan(residuals[i].d(i))) {
-    //  partial_derivatives[i] = 0;
-    //} else {
-    //  partial_derivatives[i] = residuals[i].d(i);
-    //}
   }
   return std::make_pair(residual_values, partial_derivatives);
 }
