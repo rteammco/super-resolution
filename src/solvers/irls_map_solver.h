@@ -35,6 +35,10 @@ class IrlsMapSolver : public MapSolver {
   std::pair<double, std::vector<double>> ComputeRegularizationAnalyticalDiff(
       const double* estimated_image_data) const;
 
+  // Computes the regularization term using automatic differentiation.
+  std::pair<double, std::vector<double>> ComputeRegularizationAutomaticDiff(
+    const double* estimated_image_data) const;
+
   // Updates the IRLS weights given the current data estimate.
   void UpdateIrlsWeights(const double* estimated_image_data);
 

@@ -10,9 +10,13 @@
 
 #include "alglib/src/optimization.h"
 
+#include "FADBAD++/fadiff.h"
+
 #include "opencv2/core/core.hpp"
 
 #include "glog/logging.h"
+
+using fadbad::F;  // FADBAD++ forward derivative template.
 
 namespace super_resolution {
 
@@ -189,6 +193,51 @@ IrlsMapSolver::ComputeRegularizationAnalyticalDiff(
     }
   }
 
+  return make_pair(residual_sum, gradient);
+}
+
+std::pair<double, std::vector<double>>
+IrlsMapSolver::ComputeRegularizationAutomaticDiff(
+    const double* estimated_image_data) const {
+
+  CHECK_NOTNULL(estimated_image_data);
+
+  const int num_pixels = GetNumPixels();
+  std::vector<double> gradient(num_pixels);
+  std::fill(gradient.begin(), gradient.end(), 0);
+  double residual_sum = 0;
+
+  // Apply each regularizer individually.
+  for (int i = 0; i < regularizers_.size(); ++i) {
+    // Compute the residuals and squared residual sum.
+    const double regularization_parameter = regularizers_[i].second;
+    std::pair<std::vector<double>, std::vector<double>> residuals_and_partials =
+        regularizers_[i].first->ApplyToImageWithDifferentiation(
+            estimated_image_data);
+
+    const std::vector<double>& residuals = residuals_and_partials.first;
+    const std::vector<double>& partials = residuals_and_partials.second;
+
+    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+      const double weight = irls_weights_.at(pixel_index);
+
+      const double residual =
+          regularization_parameter * sqrt(weight) * residuals[pixel_index];
+      residual_sum += (residual * residual);
+
+      // TODO: is it...
+      //gradient[pixel_index] +=
+      //    regularization_parameter * weight * 2 * partials[pixel_index];
+      // ... or...
+      gradient[pixel_index] +=
+          regularization_parameter * weight * 2 *
+          residuals[pixel_index] * partials[pixel_index];
+    }
+  }
+
+  if (!isnan(gradient[0])) {
+    LOG(INFO) << "Sum = " << residual_sum << " & grad[0] = " << gradient[0];
+  }
   return make_pair(residual_sum, gradient);
 }
 

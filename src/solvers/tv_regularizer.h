@@ -6,6 +6,7 @@
 #ifndef SRC_SOLVERS_TV_REGULARIZER_H_
 #define SRC_SOLVERS_TV_REGULARIZER_H_
 
+#include <utility>
 #include <vector>
 
 #include "solvers/regularizer.h"
@@ -21,6 +22,9 @@ class TotalVariationRegularizer : public Regularizer {
   // Implementation of total variation regularization.
   virtual std::vector<double> ApplyToImage(
       const double* image_data) const;
+
+  virtual std::pair<std::vector<double>, std::vector<double>>
+  ApplyToImageWithDifferentiation(const double* image_data) const;
 
   virtual std::vector<double> GetDerivatives(
       const double* image_data,

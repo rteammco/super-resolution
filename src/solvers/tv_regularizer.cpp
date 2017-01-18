@@ -2,9 +2,14 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 #include <vector>
 
+#include "FADBAD++/fadiff.h"
+
 #include "glog/logging.h"
+
+using fadbad::F;  // FADBAD++ forward derivative template.
 
 namespace super_resolution {
 
@@ -15,8 +20,9 @@ constexpr double kMinTotalVariation = 0.000001;
 // c+1 is a valid column position, or 0 otherwise. That is, the X-direction
 // gradient between the pixel at position index in the data and the pixel
 // immediately to its right in the image.
-double GetXGradientAtPixel(
-    const double* image_data,
+template<typename T>
+T GetXGradientAtPixel(
+    const T* image_data,
     const cv::Size& image_size,
     const int row,
     const int col) {
@@ -31,8 +37,9 @@ double GetXGradientAtPixel(
 
 // Same as GetRightPixelDifference, but for the value below the given pixel
 // rather than to the right. That is, the Y-direction gradient at that pixel.
-double GetYGradientAtPixel(
-    const double* image_data,
+template<typename T>
+T GetYGradientAtPixel(
+    const T* image_data,
     const cv::Size& image_size,
     const int row,
     const int col) {
@@ -55,15 +62,106 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
     for (int col = 0; col < image_size_.width; ++col) {
       const int index = row * image_size_.width + col;
       const double y_variation =
-          GetYGradientAtPixel(image_data, image_size_, row, col);
+          GetYGradientAtPixel<double>(image_data, image_size_, row, col);
       const double x_variation =
-          GetXGradientAtPixel(image_data, image_size_, row, col);
+          GetXGradientAtPixel<double>(image_data, image_size_, row, col);
       const double total_variation =
           (y_variation * y_variation) + (x_variation * x_variation);
       residuals[index] = sqrt(total_variation);
     }
   }
   return residuals;
+}
+
+std::pair<std::vector<double>, std::vector<double>>
+TotalVariationRegularizer::ApplyToImageWithDifferentiation(
+    const double* image_data) const {
+
+  // Initialize the derivatives of each parameter with respect to itself.
+  const int num_parameters = image_size_.width * image_size_.height;
+  std::vector<F<double>> parameters(
+      image_data, image_data + num_parameters);
+  for (int i = 0; i < num_parameters; ++i) {
+    //parameters[i] = image_data[i];
+    parameters[i].diff(i, num_parameters);
+    //LOG(INFO) << "@@@ " << i << ": " << image_data[i] << " vs. "
+    //          << parameters[i].x() << ", " << parameters[i].d(i);
+  }
+
+  std::vector<F<double>> residuals(num_parameters);
+  for (int row = 0; row < image_size_.height; ++row) {
+    for (int col = 0; col < image_size_.width; ++col) {
+      const int index = row * image_size_.width + col;
+      F<double> y_variation = GetYGradientAtPixel<F<double>>(
+          parameters.data(), image_size_, row, col);
+      F<double> x_variation = GetXGradientAtPixel<F<double>>(
+          parameters.data(), image_size_, row, col);
+      F<double> total_variation =
+          (y_variation * y_variation) + (x_variation * x_variation);
+
+      //LOG(INFO) << parameters[index].d(index);
+      //LOG(INFO) << y_variation.d(index);
+      //LOG(INFO) << x_variation.d(index);
+      //LOG(INFO) << total_variation.d(index);
+
+      //LOG(INFO) << ">>> " << y_variation.x() << ", " << x_variation.x();
+
+      //F<double> y_squared = y_variation * y_variation;
+      //F<double> x_squared = x_variation * x_variation;
+      //if (isnan(x_squared.d(index))) {
+      //  //LOG(INFO) << "Failure at squared x: " << x_squared.x();
+      //}
+      //if (isnan(y_squared.d(index))) {
+      //  //LOG(INFO) << "Failure at squared y: " << y_squared.x();
+      //}
+      //if (!isnan(total_variation.d(index))) {
+      //  //LOG(INFO) << " NOT fail @ " << index;
+      //}
+
+      //for (int i = 0; i < num_parameters; ++i) {
+      //  // TODO: nans, debug.
+      //  const double partial = total_variation.d(i);
+      //  if (isnan(partial)) {
+      //    LOG(INFO) << "NAN @ " << index << " w.r.t. " << i;
+      //    if (isnan(x_variation.d(i))) {
+      //      LOG(INFO) << "    x partial failed";
+      //    }
+      //    if (isnan(y_variation.d(i))) {
+      //      LOG(INFO) << "    y partial failed";
+      //    }
+      //  }
+      //  //LOG(INFO) << "partial " << index << " w.r.t. " << i << " = "
+      //  //          << total_variation.d(i);
+      //}
+
+      residuals[index] = fadbad::sqrt(total_variation);
+      //LOG(INFO) << residuals[index].d(index);
+      //LOG(INFO) << "-----------------------";
+    }
+  }
+
+  std::vector<double> residual_values(num_parameters);
+  std::vector<double> partial_derivatives(num_parameters);  // inits to 0.
+  for (int i = 0; i < num_parameters; ++i) {
+    for (int j = 0; j < num_parameters; ++j) {
+      //const double didj = residuals[j].d(i);
+      //if (i == 0 && !isnan(didj) && didj != 0) {
+      //  LOG(INFO) << "d" << i << "d" << j << " = " << didj;
+      //}
+      const double didj = residuals[j].d(i);
+      if (!isnan(didj)) {
+        partial_derivatives[i] += didj;
+      }
+    }
+    partial_derivatives[i] *= -1;
+    residual_values[i] = residuals[i].x();
+    //if (isnan(residuals[i].d(i))) {
+    //  partial_derivatives[i] = 0;
+    //} else {
+    //  partial_derivatives[i] = residuals[i].d(i);
+    //}
+  }
+  return std::make_pair(residual_values, partial_derivatives);
 }
 
 std::vector<double> TotalVariationRegularizer::GetDerivatives(
@@ -99,18 +197,18 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
       //   ((x_{r,c+1} - x_{r,c}) + (x_{r+1,c} - x{r,c})) / tv_{r,c}
       // We do the tv_{r,c} division later.
       const double this_pixel_numerator =
-          GetXGradientAtPixel(image_data, image_size_, row, col) +
-          GetYGradientAtPixel(image_data, image_size_, row, col);
+          GetXGradientAtPixel<double>(image_data, image_size_, row, col) +
+          GetYGradientAtPixel<double>(image_data, image_size_, row, col);
 
       // Partial w.r.t. x_{r,c-1} (pixel to the left) is:
       //   -(x_{r,c} - x{r,c-1}) / tv_{r,c-1}
       const double left_pixel_numerator =
-          -GetXGradientAtPixel(image_data, image_size_, row, col - 1);
+          -GetXGradientAtPixel<double>(image_data, image_size_, row, col - 1);
 
       // Partial w.r.t. x_{r-1,c} (pixel above) is:
       //   -(x_{r,c} - x_{r-1,c}) / tv_{r-1,c}
       const double above_pixel_numerator =
-          -GetYGradientAtPixel(image_data, image_size_, row - 1, col);
+          -GetYGradientAtPixel<double>(image_data, image_size_, row - 1, col);
 
       // Divide the tv values and multiply by the given partial constants, and
       // sum it all up to get the final derivative for the pixel at (row, col).

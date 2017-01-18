@@ -3,6 +3,7 @@
 #ifndef SRC_SOLVERS_REGULARIZER_H_
 #define SRC_SOLVERS_REGULARIZER_H_
 
+#include <utility>
 #include <vector>
 
 #include "opencv2/core/core.hpp"
@@ -23,6 +24,12 @@ class Regularizer {
   // in the given array.
   virtual std::vector<double> ApplyToImage(
       const double* image_data) const = 0;
+
+  // Same as ApplyToImage, but the second vector returned in the pair contains
+  // the derivative with respect to the residual at that index in the first
+  // vector.  Derivatives computed using an automatic differentiation library.
+  virtual std::pair<std::vector<double>, std::vector<double>>
+  ApplyToImageWithDifferentiation(const double* image_data) const = 0;
 
   // Returns a vector of derivatives of the regularization term with respect to
   // each parameter in image_data. The given partial_const_terms vector

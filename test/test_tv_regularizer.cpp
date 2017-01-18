@@ -150,4 +150,20 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
   EXPECT_EQ(returned_derivatives[3], expected_d3);
   EXPECT_EQ(returned_derivatives[4], expected_d4);
   EXPECT_EQ(returned_derivatives[8], expected_d8);
+
+  /* Also verify that the derivatives are correct with auto differentiation. */
+
+  const auto& returned_residuals_and_partials =
+      tv_regularizer.ApplyToImageWithDifferentiation(image1_data);
+
+  // Check correct behavior of returned residuals.
+  EXPECT_THAT(
+      returned_residuals_and_partials.first, ContainerEq(expected_residuals));
+
+  EXPECT_EQ(returned_residuals_and_partials.second[0], expected_d0);
+  EXPECT_EQ(returned_residuals_and_partials.second[1], expected_d1);
+  EXPECT_EQ(returned_residuals_and_partials.second[2], expected_d2);
+  EXPECT_EQ(returned_residuals_and_partials.second[3], expected_d3);
+  EXPECT_EQ(returned_residuals_and_partials.second[4], expected_d4);
+  EXPECT_EQ(returned_residuals_and_partials.second[8], expected_d8);
 }
