@@ -1,8 +1,8 @@
 // Defines functions that are used by the ALGLIB library for computing the
 // objective cost and gradient values.
 
-#ifndef SRC_SOLVERS_IRLS_ALGLIB_OBJECTIVE_H_
-#define SRC_SOLVERS_IRLS_ALGLIB_OBJECTIVE_H_
+#ifndef SRC_SOLVERS_ALGLIB_IRLS_OBJECTIVE_H_
+#define SRC_SOLVERS_ALGLIB_IRLS_OBJECTIVE_H_
 
 #include "alglib/src/optimization.h"
 
@@ -26,4 +26,4 @@ void AlglibSolverIterationCallback(
 
 }  // namespace super_resolution
 
-#endif  // SRC_SOLVERS_IRLS_ALGLIB_OBJECTIVE_H_
+#endif  // SRC_SOLVERS_ALGLIB_IRLS_OBJECTIVE_H_

@@ -1,4 +1,4 @@
-#include "solvers/alglib_objective.h"
+#include "solvers/alglib_irls_objective.h"
 
 #include <utility>
 #include <vector>

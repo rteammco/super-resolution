@@ -6,7 +6,7 @@
 
 #include "image/image_data.h"
 #include "image_model/image_model.h"
-#include "solvers/alglib_objective.h"
+#include "solvers/alglib_irls_objective.h"
 
 #include "alglib/src/optimization.h"
 
@@ -30,7 +30,7 @@ IrlsMapSolver::IrlsMapSolver(
     const std::vector<ImageData>& low_res_images,
     const bool print_solver_output)
     : MapSolver(
-          solver_options, image_model, low_res_images, print_solver_output) {
+      solver_options, image_model, low_res_images, print_solver_output) {
 
   // Initialize IRLS weights to 1.
   irls_weights_.resize(GetNumPixels());
@@ -228,9 +228,9 @@ IrlsMapSolver::ComputeRegularizationAutomaticDiff(
       gradient[pixel_index] +=
           regularization_parameter * weight * 2 * partials[pixel_index];
       // ... or...
-      //gradient[pixel_index] +=
-      //    regularization_parameter * weight * 2 *
-      //    residuals[pixel_index] * partials[pixel_index];
+      // gradient[pixel_index] +=
+      //     regularization_parameter * weight * 2 *
+      //     residuals[pixel_index] * partials[pixel_index];
     }
   }
 
