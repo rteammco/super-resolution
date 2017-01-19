@@ -1,4 +1,4 @@
-#include "solvers/irls_map_solver.h"
+#include "optimization/irls_map_solver.h"
 
 #include <algorithm>
 #include <utility>
@@ -6,7 +6,7 @@
 
 #include "image/image_data.h"
 #include "image_model/image_model.h"
-#include "solvers/alglib_irls_objective.h"
+#include "optimization/alglib_irls_objective.h"
 
 #include "alglib/src/optimization.h"
 

@@ -1,13 +1,13 @@
 // An iteratively reweighted least squares (IRLS) implementation of the MAP
 // objective formulation.
-#ifndef SRC_SOLVERS_IRLS_MAP_SOLVER_H_
-#define SRC_SOLVERS_IRLS_MAP_SOLVER_H_
+#ifndef SRC_OPTIMIZATION_IRLS_MAP_SOLVER_H_
+#define SRC_OPTIMIZATION_IRLS_MAP_SOLVER_H_
 
 #include <utility>
 #include <vector>
 
 #include "image/image_data.h"
-#include "solvers/map_solver.h"
+#include "optimization/map_solver.h"
 
 namespace super_resolution {
 
@@ -51,4 +51,4 @@ class IrlsMapSolver : public MapSolver {
 
 }  // namespace super_resolution
 
-#endif  // SRC_SOLVERS_IRLS_MAP_SOLVER_H_
+#endif  // SRC_OPTIMIZATION_IRLS_MAP_SOLVER_H_

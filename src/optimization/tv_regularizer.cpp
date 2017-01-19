@@ -1,4 +1,4 @@
-#include "solvers/tv_regularizer.h"
+#include "optimization/tv_regularizer.h"
 
 #include <algorithm>
 #include <cmath>

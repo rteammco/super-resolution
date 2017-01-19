@@ -2,8 +2,8 @@
 // with one or more specific super-resolution optimization methods (e.g. MAP or
 // POCS).
 
-#ifndef SRC_SOLVERS_SOLVER_H_
-#define SRC_SOLVERS_SOLVER_H_
+#ifndef SRC_OPTIMIZATION_SOLVER_H_
+#define SRC_OPTIMIZATION_SOLVER_H_
 
 #include <vector>
 
@@ -42,4 +42,4 @@ class Solver {
 
 }  // namespace super_resolution
 
-#endif  // SRC_SOLVERS_SOLVER_H_
+#endif  // SRC_OPTIMIZATION_SOLVER_H_

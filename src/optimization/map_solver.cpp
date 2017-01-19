@@ -1,10 +1,10 @@
-#include "solvers/map_solver.h"
+#include "optimization/map_solver.h"
 
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "solvers/regularizer.h"
+#include "optimization/regularizer.h"
 
 #include "glog/logging.h"
 

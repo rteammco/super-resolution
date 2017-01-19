@@ -9,8 +9,8 @@
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
-#include "solvers/irls_map_solver.h"
-#include "solvers/tv_regularizer.h"
+#include "optimization/irls_map_solver.h"
+#include "optimization/tv_regularizer.h"
 #include "util/test_util.h"
 
 #include "gtest/gtest.h"

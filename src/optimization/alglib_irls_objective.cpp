@@ -1,9 +1,9 @@
-#include "solvers/alglib_irls_objective.h"
+#include "optimization/alglib_irls_objective.h"
 
 #include <utility>
 #include <vector>
 
-#include "solvers/irls_map_solver.h"
+#include "optimization/irls_map_solver.h"
 
 #include "alglib/src/optimization.h"
 

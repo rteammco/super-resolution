@@ -3,13 +3,13 @@
 // add denoising by imposing smoothness in the estimated image (smaller changes
 // between neighrboing pixels in the x and y directions).
 
-#ifndef SRC_SOLVERS_TV_REGULARIZER_H_
-#define SRC_SOLVERS_TV_REGULARIZER_H_
+#ifndef SRC_OPTIMIZATION_TV_REGULARIZER_H_
+#define SRC_OPTIMIZATION_TV_REGULARIZER_H_
 
 #include <utility>
 #include <vector>
 
-#include "solvers/regularizer.h"
+#include "optimization/regularizer.h"
 
 #include "opencv2/core/core.hpp"
 
@@ -33,4 +33,4 @@ class TotalVariationRegularizer : public Regularizer {
 
 }  // namespace super_resolution
 
-#endif  // SRC_SOLVERS_TV_REGULARIZER_H_
+#endif  // SRC_OPTIMIZATION_TV_REGULARIZER_H_

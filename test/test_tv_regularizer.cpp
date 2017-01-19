@@ -2,7 +2,7 @@
 #include <cmath>
 #include <vector>
 
-#include "solvers/tv_regularizer.h"
+#include "optimization/tv_regularizer.h"
 
 #include "opencv2/core/core.hpp"
 

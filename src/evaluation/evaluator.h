@@ -1,7 +1,0 @@
-// Evaluation.
-
-#ifndef SRC_EVALUATION_EVALUATOR_H_
-#define SRC_EVALUATION_EVALUATOR_H_
-
-
-#endif  // SRC_EVALUATION_EVALUATOR_H_

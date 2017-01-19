@@ -1,7 +1,7 @@
 // An abstract interface for implementing regularization terms.
 
-#ifndef SRC_SOLVERS_REGULARIZER_H_
-#define SRC_SOLVERS_REGULARIZER_H_
+#ifndef SRC_OPTIMIZATION_REGULARIZER_H_
+#define SRC_OPTIMIZATION_REGULARIZER_H_
 
 #include <utility>
 #include <vector>
@@ -55,4 +55,4 @@ class Regularizer {
 
 }  // namespace super_resolution
 
-#endif  // SRC_SOLVERS_REGULARIZER_H_
+#endif  // SRC_OPTIMIZATION_REGULARIZER_H_

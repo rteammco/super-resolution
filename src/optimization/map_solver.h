@@ -3,8 +3,8 @@
 // solved by different strategies, such as IRLS (iteratively reweighted least
 // squares). See subclasses for the specific solver strategy implementations.
 
-#ifndef SRC_SOLVERS_MAP_SOLVER_H_
-#define SRC_SOLVERS_MAP_SOLVER_H_
+#ifndef SRC_OPTIMIZATION_MAP_SOLVER_H_
+#define SRC_OPTIMIZATION_MAP_SOLVER_H_
 
 #include <memory>
 #include <utility>
@@ -12,8 +12,8 @@
 
 #include "image/image_data.h"
 #include "image_model/image_model.h"
-#include "solvers/regularizer.h"
-#include "solvers/solver.h"
+#include "optimization/regularizer.h"
+#include "optimization/solver.h"
 
 namespace super_resolution {
 
@@ -72,4 +72,4 @@ class MapSolver : public Solver {
 
 }  // namespace super_resolution
 
-#endif  // SRC_SOLVERS_MAP_SOLVER_H_
+#endif  // SRC_OPTIMIZATION_MAP_SOLVER_H_
