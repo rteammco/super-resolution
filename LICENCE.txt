@@ -1,0 +1,33 @@
+tl;dr: GPLv3
+
+
+
+Copyright (C) 2017 Richard Teammco
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+Full licence is available here for reference: https://www.gnu.org/licenses/gpl-3.0.en.html
+
+
+
+This code is currently distributed under the GPLv3 licence as required by the following libraries used and distributed with this code:
+  - ALGLIB
+  - FADBAD++
+These libraries are provided in the libs/ directory and their original licences are included.
+
+
+
+The hope is that a future release of this code will use different and less restrictive libraries so that this code can be utilized by anyone in full without being plagued by "copyleft" restrictions. However, in the meantime, these libraries work well and are easy to use for prototyping purposes.
