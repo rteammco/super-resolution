@@ -67,5 +67,28 @@ TEST(Evaluation, PSNR) {
 
   /* Verify correctness on a multi-channel image with random differences. */
 
-  // TODO: implement multichannel test.
+  // Add 3 channels to the ground truth, all the same for test purposes.
+  super_resolution::ImageData ground_truth_multichannel;
+  ground_truth_multichannel.AddChannel(ground_truth_matrix);
+  ground_truth_multichannel.AddChannel(ground_truth_matrix);
+  ground_truth_multichannel.AddChannel(ground_truth_matrix);
+  const super_resolution::PeakSignalToNoiseRatioEvaluator psnr_evaluator_2(
+      ground_truth_multichannel);
+
+  // For the test image to be evaluated, use the previous three images.
+  super_resolution::ImageData test_image_4;
+  test_image_4.AddChannel(ground_truth_matrix);
+  test_image_4.AddChannel(test_image_2.GetChannelImage(0));
+  test_image_4.AddChannel(test_image_matrix_3);
+
+  // Sum of squared differences:
+  //   For channel 1 = 0 (the images are identical).
+  //   For channel 2 = 0.25^2 + 0.5^2 = 0.3125 (see above computation comments).
+  //   For channel 3 = sum_of_squared_differences (computed above).
+  // MSE = 1/48 * SSD (since there are 16 * 3 = 48 pixels).
+  const double expected_mse_4 =
+      (1.0 / 48.0) * (0.0 + 0.3125 + sum_of_squared_differences);
+  const double expected_psnr_4 = 10.0 * log10(1.0 / expected_mse_4);
+  const double psnr_result_4 = psnr_evaluator_2.Evaluate(test_image_4);
+  EXPECT_DOUBLE_EQ(psnr_result_4, expected_psnr_4);
 }
