@@ -35,6 +35,7 @@ file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 # the classes).
 file(GLOB   alglib_SRC         "libs/alglib/src/*.cpp")
 file(GLOB   ftir_SRC           "src/ftir/*.cpp")
+file(GLOB   evaluation_SRC     "src/evaluation/*.cpp")
 file(GLOB   image_SRC          "src/image/*.cpp")
 file(GLOB   image_model_SRC    "src/image_model/*.cpp")
 file(GLOB   motion_SRC         "src/motion/*.cpp")
@@ -46,6 +47,7 @@ add_library(
   LibSuperResolution
   ${alglib_SRC}
   ${ftir_SRC}
+  ${evaluation_SRC}
   ${image_SRC}
   ${image_model_SRC}
   ${motion_SRC}

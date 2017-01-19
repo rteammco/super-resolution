@@ -7,16 +7,23 @@
 
 #include "image/image_data.h"
 
+namespace super_resolution {
+
 // Abstract class.
 class GroundTruthEvaluator {
  public:
   explicit GroundTruthEvaluator(const ImageData& ground_truth)
       : ground_truth_(ground_truth) {}
 
-  double Evaluate(const ImageData& image) const = 0;
+  // Returns a value to indicate the quality of the given image using the
+  // implemented evaluation metric. This value will differ between
+  // implementations, so see individual derived GroundTruthEvaluator objects.
+  virtual double Evaluate(const ImageData& image) const = 0;
 
- private:
+ protected:
   const ImageData& ground_truth_;
 };
+
+}  // namespace super_resolution
 
 #endif  // SRC_EVALUATION_GROUND_TRUTH_EVALUATOR_H_
