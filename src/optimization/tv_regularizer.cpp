@@ -108,7 +108,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
         partial_derivatives[i] += djdi;
       }
     }
-    partial_derivatives[i] *= -1;
+    //partial_derivatives[i] *= -1;
     residual_values[i] = residuals[i].x();
   }
   return std::make_pair(residual_values, partial_derivatives);

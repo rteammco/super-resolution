@@ -157,13 +157,9 @@ IrlsMapSolver::ComputeRegularizationAnalyticalDiff(
         regularizers_[i].first->ApplyToImage(estimated_image_data);
 
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+      const double residual = residuals[pixel_index];
       const double weight = sqrt(irls_weights_.at(pixel_index));
-      const double residual =
-          regularization_parameter * weight * residuals[pixel_index];
-      residuals[pixel_index] = residual;
-      // TODO: ^^^
-      //   Should we square this? Keep it unchanged? Maybe this is the issue?
-      residual_sum += (residual * residual);
+      residual_sum += regularization_parameter * weight * residual * residual;
     }
 
     // Compute the gradient vector.
@@ -218,19 +214,16 @@ IrlsMapSolver::ComputeRegularizationAutomaticDiff(
     const std::vector<double>& partials = residuals_and_partials.second;
 
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+      const double residual = residuals[pixel_index];
       const double weight = irls_weights_.at(pixel_index);
 
-      const double residual =
-          regularization_parameter * sqrt(weight) * residuals[pixel_index];
-      residual_sum += (residual * residual);
+      residual_sum += regularization_parameter * weight * residual * residual;
 
-      // TODO: is it...
+      // TODO: need to integrate weight first.
+      // The actual gradient is for this pixel (i) is:
+      //    2 * lambda * sum_j(w_j * r_j * djdi(r_j))
       gradient[pixel_index] +=
-          regularization_parameter * weight * 2 * partials[pixel_index];
-      // ... or...
-      // gradient[pixel_index] +=
-      //     regularization_parameter * weight * 2 *
-      //     residuals[pixel_index] * partials[pixel_index];
+          regularization_parameter * 2 * partials[pixel_index];
     }
   }
 
