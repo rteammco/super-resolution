@@ -138,11 +138,11 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
 
   // Pass identity (1) as weights, so we should expect the pure partial
   // derivatives be returned.
-  std::vector<double> partial_const_terms(9);
-  std::fill(partial_const_terms.begin(), partial_const_terms.end(), 1.0);
+  std::vector<double> gradient_constants(9);
+  std::fill(gradient_constants.begin(), gradient_constants.end(), 1.0);
 
   const std::vector<double> returned_derivatives =
-      tv_regularizer.GetDerivatives(image1_data, partial_const_terms);
+      tv_regularizer.GetGradient(image1_data, gradient_constants);
   EXPECT_THAT(returned_derivatives, SizeIs(9));
 
   EXPECT_EQ(returned_derivatives[0], expected_d0);
@@ -154,8 +154,10 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
 
   /* Also verify that the derivatives are correct with auto differentiation. */
 
+  // TODO: fix gradient_constants...
   const auto& returned_residuals_and_partials =
-      tv_regularizer.ApplyToImageWithDifferentiation(image1_data);
+      tv_regularizer.ApplyToImageWithDifferentiation(
+          image1_data, gradient_constants);
 
   // Check correct behavior of returned residuals.
   EXPECT_THAT(

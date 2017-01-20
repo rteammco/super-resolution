@@ -5,6 +5,8 @@
 #include <utility>
 #include <vector>
 
+#include "optimization/values_and_partial_derivatives.h"
+
 #include "FADBAD++/fadiff.h"
 
 #include "glog/logging.h"
@@ -75,7 +77,8 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
 
 std::pair<std::vector<double>, std::vector<double>>
 TotalVariationRegularizer::ApplyToImageWithDifferentiation(
-    const double* image_data) const {
+    const double* image_data,
+    const std::vector<double>& gradient_constants) const {
 
   // Initialize the derivatives of each parameter with respect to itself.
   const int num_parameters = image_size_.width * image_size_.height;
@@ -99,29 +102,47 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     }
   }
 
+//  ValuesAndPartialDerivatives values_and_partials(num_parameters);
+//  for (int i = 0; i < num_parameters; ++i) {
+//    values_and_partials.SetValue(residuals[i].x(), i);
+//    // For each pixel i, its gradient is the sum of partial derivatives at all
+//    // other pixels j with respect to pixel i.
+//    for (int j = 0; j < num_parameters; ++j) {
+//      const double djdi = residuals[j].d(i);
+//      if (!isnan(djdi)) {  // If this partial exists...
+//        values_and_partials.AddPartialDerivative(i, j, djdi);
+//      }
+//    }
+//    // TODO: This is O(n^2). Can we do a sparse loop from FADBAD++?
+//  }
+
   std::vector<double> residual_values(num_parameters);
-  std::vector<double> partial_derivatives(num_parameters);  // inits to 0.
+  std::vector<double> gradient(num_parameters);  // inits to 0.
   for (int i = 0; i < num_parameters; ++i) {
+    // For each pixel i, its gradient is the sum of partial derivatives at all
+    // other pixels j with respect to pixel i.
     for (int j = 0; j < num_parameters; ++j) {
       const double djdi = residuals[j].d(i);
-      if (!isnan(djdi)) {
-        partial_derivatives[i] += djdi;
+      if (!isnan(djdi)) {  // If this partial exists...
+        //gradient[i] += djdi;
+        const double gradient_ij =
+            2 * gradient_constants[j] * residuals[j].x() * djdi;
+        gradient[i] += gradient_ij;
       }
     }
-    //partial_derivatives[i] *= -1;
     residual_values[i] = residuals[i].x();
   }
-  return std::make_pair(residual_values, partial_derivatives);
+  return std::make_pair(residual_values, gradient);
 }
 
-std::vector<double> TotalVariationRegularizer::GetDerivatives(
+std::vector<double> TotalVariationRegularizer::GetGradient(
     const double* image_data,
-    const std::vector<double> partial_const_terms) const {
+    const std::vector<double>& gradient_constants) const {
 
   CHECK_NOTNULL(image_data);
 
   const int num_pixels = image_size_.width * image_size_.height;
-  CHECK_EQ(partial_const_terms.size(), num_pixels)
+  CHECK_EQ(gradient_constants.size(), num_pixels)
     << "There must be exactly one const term per pixel in the image. "
     << "Use 1 for identity or 0 to ignore the derivative.";
 
@@ -168,7 +189,7 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
       const double this_pixel_partial =
           this_pixel_numerator / total_variation_nz[this_pixel_index];
       derivatives[this_pixel_index] =
-          partial_const_terms[this_pixel_index] * this_pixel_partial;
+          gradient_constants[this_pixel_index] * this_pixel_partial;
 
       // Partial w.r.t. x_{r,c-1} (pixel to the left):
       if (col - 1 >= 0) {  // If left pixel is outside image, the partial is 0.
@@ -176,7 +197,7 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
         const double left_pixel_partial =
             left_pixel_numerator / total_variation_nz[left_pixel_index];
         derivatives[this_pixel_index] +=
-            partial_const_terms[left_pixel_index] * left_pixel_partial;
+            gradient_constants[left_pixel_index] * left_pixel_partial;
       }
 
       // Partial w.r.t. x_{r-1,c} (pixel above):
@@ -185,7 +206,7 @@ std::vector<double> TotalVariationRegularizer::GetDerivatives(
         const double above_pixel_partial =
             above_pixel_numerator / total_variation_nz[above_pixel_index];
         derivatives[this_pixel_index] +=
-            partial_const_terms[above_pixel_index] * above_pixel_partial;
+            gradient_constants[above_pixel_index] * above_pixel_partial;
       }
     }
   }

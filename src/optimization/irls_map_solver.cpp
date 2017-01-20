@@ -10,13 +10,9 @@
 
 #include "alglib/src/optimization.h"
 
-#include "FADBAD++/fadiff.h"
-
 #include "opencv2/core/core.hpp"
 
 #include "glog/logging.h"
-
-using fadbad::F;  // FADBAD++ forward derivative template.
 
 namespace super_resolution {
 
@@ -163,7 +159,7 @@ IrlsMapSolver::ComputeRegularizationAnalyticalDiff(
     }
 
     // Compute the gradient vector.
-    std::vector<double> partial_const_terms;
+    std::vector<double> gradient_constants;
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       // Each derivative is multiplied by
       //   2 * lambda * w^2 * reg_i
@@ -175,15 +171,15 @@ IrlsMapSolver::ComputeRegularizationAnalyticalDiff(
       // These constants are multiplied with the partial derivatives at each
       // pixel w.r.t. all other pixels, which are computed specifically based on
       // the derivative of the regularizer function.
-      partial_const_terms.push_back(
+      gradient_constants.push_back(
           2 *
           regularization_parameter *
           irls_weights_[pixel_index] *
           residuals[pixel_index]);
     }
     const std::vector<double> partial_derivatives =
-        regularizers_[i].first->GetDerivatives(
-            estimated_image_data, partial_const_terms);
+        regularizers_[i].first->GetGradient(
+            estimated_image_data, gradient_constants);
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       gradient[pixel_index] += partial_derivatives[pixel_index];
     }
@@ -204,26 +200,38 @@ IrlsMapSolver::ComputeRegularizationAutomaticDiff(
 
   // Apply each regularizer individually.
   for (int i = 0; i < regularizers_.size(); ++i) {
-    // Compute the residuals and squared residual sum.
     const double regularization_parameter = regularizers_[i].second;
-    std::pair<std::vector<double>, std::vector<double>> residuals_and_partials =
-        regularizers_[i].first->ApplyToImageWithDifferentiation(
-            estimated_image_data);
 
-    const std::vector<double>& residuals = residuals_and_partials.first;
-    const std::vector<double>& partials = residuals_and_partials.second;
+    // Precompute the constant terms in the gradients at each pixel. This is
+    // the regularization parameter (lambda) and the IRLS weights.
+    std::vector<double> gradient_constants(num_pixels);
+    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+      gradient_constants[pixel_index] =
+          regularization_parameter * irls_weights_.at(pixel_index);
+    }
+
+    // Compute the residuals and squared residual sum.
+    std::pair<std::vector<double>, std::vector<double>> values_and_partials =
+        regularizers_[i].first->ApplyToImageWithDifferentiation(
+            estimated_image_data, gradient_constants);
+
+    // The values are the regularizer values at each pixel and the partials are
+    // the sum of partial derivatives at each pixel.
+    const std::vector<double>& values = values_and_partials.first;
+    const std::vector<double>& partials = values_and_partials.second;
 
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-      const double residual = residuals[pixel_index];
+      const double residual = values[pixel_index];
       const double weight = irls_weights_.at(pixel_index);
 
       residual_sum += regularization_parameter * weight * residual * residual;
 
+      gradient[pixel_index] += partials[pixel_index];
       // TODO: need to integrate weight first.
       // The actual gradient is for this pixel (i) is:
       //    2 * lambda * sum_j(w_j * r_j * djdi(r_j))
-      gradient[pixel_index] +=
-          regularization_parameter * 2 * partials[pixel_index];
+      //gradient[pixel_index] +=
+      //    regularization_parameter * 2 * partials[pixel_index];
     }
   }
 

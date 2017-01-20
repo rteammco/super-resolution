@@ -41,7 +41,7 @@ void AlglibObjectiveFunctionAnalyticalDiff(
 
   // Compute regularization residuals and gradient.
   const std::pair<double, std::vector<double>> residual_sum_and_gradient =
-      irls_map_solver->ComputeRegularizationAutomaticDiff(
+      irls_map_solver->ComputeRegularizationAutomaticDiff(  // TODO!
       //irls_map_solver->ComputeRegularizationAnalyticalDiff(
           estimated_data.getcontent());
   residual_sum += residual_sum_and_gradient.first;

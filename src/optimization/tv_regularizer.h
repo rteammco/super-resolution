@@ -24,11 +24,13 @@ class TotalVariationRegularizer : public Regularizer {
       const double* image_data) const;
 
   virtual std::pair<std::vector<double>, std::vector<double>>
-  ApplyToImageWithDifferentiation(const double* image_data) const;
-
-  virtual std::vector<double> GetDerivatives(
+  ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double> partial_const_terms) const;
+      const std::vector<double>& gradient_constants) const;
+
+  virtual std::vector<double> GetGradient(
+      const double* image_data,
+      const std::vector<double>& gradient_constants) const;
 };
 
 }  // namespace super_resolution
