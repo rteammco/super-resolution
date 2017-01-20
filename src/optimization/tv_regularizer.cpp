@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "optimization/values_and_partial_derivatives.h"
+#include "optimization/regularizer.h"
 
 #include "FADBAD++/fadiff.h"
 
@@ -78,7 +78,8 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
 std::pair<std::vector<double>, std::vector<double>>
 TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const double* image_data,
-    const std::vector<double>& gradient_constants) const {
+    const std::vector<double>& gradient_constants,
+    const GradientComputationMethod& method) const {
 
   // Initialize the derivatives of each parameter with respect to itself.
   const int num_parameters = image_size_.width * image_size_.height;
@@ -101,20 +102,6 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
       residuals[index] = fadbad::sqrt(total_variation);
     }
   }
-
-//  ValuesAndPartialDerivatives values_and_partials(num_parameters);
-//  for (int i = 0; i < num_parameters; ++i) {
-//    values_and_partials.SetValue(residuals[i].x(), i);
-//    // For each pixel i, its gradient is the sum of partial derivatives at all
-//    // other pixels j with respect to pixel i.
-//    for (int j = 0; j < num_parameters; ++j) {
-//      const double djdi = residuals[j].d(i);
-//      if (!isnan(djdi)) {  // If this partial exists...
-//        values_and_partials.AddPartialDerivative(i, j, djdi);
-//      }
-//    }
-//    // TODO: This is O(n^2). Can we do a sparse loop from FADBAD++?
-//  }
 
   std::vector<double> residual_values(num_parameters);
   std::vector<double> gradient(num_parameters);  // inits to 0.

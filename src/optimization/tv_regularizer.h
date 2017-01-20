@@ -26,9 +26,12 @@ class TotalVariationRegularizer : public Regularizer {
   virtual std::pair<std::vector<double>, std::vector<double>>
   ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double>& gradient_constants) const;
+      const std::vector<double>& gradient_constants,
+      const GradientComputationMethod& method = AUTOMATIC) const;
 
-  virtual std::vector<double> GetGradient(
+ private:
+  // TODO: fix.
+  std::vector<double> GetGradient(
       const double* image_data,
       const std::vector<double>& gradient_constants) const;
 };

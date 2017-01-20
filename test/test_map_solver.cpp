@@ -50,16 +50,12 @@ class MockRegularizer : public super_resolution::Regularizer {
   MOCK_CONST_METHOD1(
       ApplyToImage, std::vector<double>(const double* image_data));
 
-  MOCK_CONST_METHOD2(
+  MOCK_CONST_METHOD3(
       ApplyToImageWithDifferentiation,
       std::pair<std::vector<double>, std::vector<double>>(
           const double* image_data,
-          const std::vector<double>& gradient_constants));
-
-  MOCK_CONST_METHOD2(
-      GetGradient, std::vector<double>(
-          const double* image_data,
-          const std::vector<double>& gradient_constants));
+          const std::vector<double>& gradient_constants,
+          const super_resolution::GradientComputationMethod& method));
 };
 
 // Tests the solver on small, "perfect" data to make sure it works as expected.
@@ -486,9 +482,9 @@ TEST(MapSolver, IrlsComputeRegularization) {
   //EXPECT_CALL(*mock_regularizer, ApplyToImageWithDifferentiation(image_data))
   //    .Times(2)  // 2 calls: once for each ComputeRegularizationAutomaticDiff.
   //    .WillRepeatedly(Return(residuals_and_residuals));
-  EXPECT_CALL(*mock_regularizer, GetGradient(_, _))
-      .Times(2)  // 2 calls: once for each ComputeRegularizationAnalyticalDiff.
-      .WillRepeatedly(Return(residuals));
+  //EXPECT_CALL(*mock_regularizer, GetGradient(_, _))
+  //    .Times(2)  // 2 calls: once for each ComputeRegularizationAnalyticalDiff.
+  //    .WillRepeatedly(Return(residuals));
 
   const std::vector<super_resolution::ImageData> low_res_images = {
     ImageData(image_data, cv::Size(5, 1))  // Ignored image for this test.

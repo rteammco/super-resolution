@@ -146,44 +146,45 @@ IrlsMapSolver::ComputeRegularizationAnalyticalDiff(
   double residual_sum = 0;
 
   // Apply each regularizer individually.
-  for (int i = 0; i < regularizers_.size(); ++i) {
-    // Compute the residuals and squared residual sum.
-    const double regularization_parameter = regularizers_[i].second;
-    std::vector<double> residuals =
-        regularizers_[i].first->ApplyToImage(estimated_image_data);
+  // TODO: fix
+  //for (int i = 0; i < regularizers_.size(); ++i) {
+  //  // Compute the residuals and squared residual sum.
+  //  const double regularization_parameter = regularizers_[i].second;
+  //  std::vector<double> residuals =
+  //      regularizers_[i].first->ApplyToImage(estimated_image_data);
 
-    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-      const double residual = residuals[pixel_index];
-      const double weight = sqrt(irls_weights_.at(pixel_index));
-      residual_sum += regularization_parameter * weight * residual * residual;
-    }
+  //  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+  //    const double residual = residuals[pixel_index];
+  //    const double weight = sqrt(irls_weights_.at(pixel_index));
+  //    residual_sum += regularization_parameter * weight * residual * residual;
+  //  }
 
-    // Compute the gradient vector.
-    std::vector<double> gradient_constants;
-    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-      // Each derivative is multiplied by
-      //   2 * lambda * w^2 * reg_i
-      // where 2 comes from the squared norm (L2) term,
-      // lambda is the regularization parameter,
-      // w^2 is the squared weight (since the weights are square-rooted in the
-      //   residual computation, the raw weight is used here),
-      // and reg_i is the value of the regularization term at pixel i.
-      // These constants are multiplied with the partial derivatives at each
-      // pixel w.r.t. all other pixels, which are computed specifically based on
-      // the derivative of the regularizer function.
-      gradient_constants.push_back(
-          2 *
-          regularization_parameter *
-          irls_weights_[pixel_index] *
-          residuals[pixel_index]);
-    }
-    const std::vector<double> partial_derivatives =
-        regularizers_[i].first->GetGradient(
-            estimated_image_data, gradient_constants);
-    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-      gradient[pixel_index] += partial_derivatives[pixel_index];
-    }
-  }
+  //  // Compute the gradient vector.
+  //  std::vector<double> gradient_constants;
+  //  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+  //    // Each derivative is multiplied by
+  //    //   2 * lambda * w^2 * reg_i
+  //    // where 2 comes from the squared norm (L2) term,
+  //    // lambda is the regularization parameter,
+  //    // w^2 is the squared weight (since the weights are square-rooted in the
+  //    //   residual computation, the raw weight is used here),
+  //    // and reg_i is the value of the regularization term at pixel i.
+  //    // These constants are multiplied with the partial derivatives at each
+  //    // pixel w.r.t. all other pixels, which are computed specifically based on
+  //    // the derivative of the regularizer function.
+  //    gradient_constants.push_back(
+  //        2 *
+  //        regularization_parameter *
+  //        irls_weights_[pixel_index] *
+  //        residuals[pixel_index]);
+  //  }
+  //  const std::vector<double> partial_derivatives =
+  //      regularizers_[i].first->GetGradient(
+  //          estimated_image_data, gradient_constants);
+  //  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+  //    gradient[pixel_index] += partial_derivatives[pixel_index];
+  //  }
+  //}
 
   return make_pair(residual_sum, gradient);
 }

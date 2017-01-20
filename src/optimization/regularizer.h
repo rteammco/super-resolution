@@ -12,8 +12,8 @@ namespace super_resolution {
 
 // The type of differentiation method used in ApplyToImageWithDifferentiation.
 enum GradientComputationMethod {
-  AUTOMATIC_DIFFERENTIATION,  // Uses automatic differentiation library.
-  ANALYTICAL_DIFFERENTIATION  // Direct analytical derivatives if implemented.
+  AUTOMATIC,  // Uses automatic differentiation library.
+  ANALYTICAL  // Direct analytical derivatives if implemented.
 };
 
 class Regularizer {
@@ -34,7 +34,10 @@ class Regularizer {
 
   // Same as ApplyToImage, but the second vector returned in the pair contains
   // the gradient (assuming a single residual value) in the objective
-  // function). Derivatives computed using automatic differentiation.
+  // function). That is, this is the gradient with respect to each pixel.
+  // Derivatives computed using either automatic differentiation or direct
+  // analytical differentiation (if implemented) based on the given method
+  // flag.
   //
   // The given gradient_constants vector should contain for each pixel any
   // constant terms that will be multiplied with the gradient. This should
@@ -47,25 +50,8 @@ class Regularizer {
   virtual std::pair<std::vector<double>, std::vector<double>>
   ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double>& gradient_constants) const = 0;
-
-  // TODO: Replace this method with the above method, .
-  // Returns a vector of derivatives of the regularization term with respect to
-  // each parameter in image_data. The given gravector
-  // contains precomputed partial derivative constants from the full
-  // regularization term in the objective function, and these contants will be
-  // multiplied to each partial derivative computed for image_data.
-  //
-  // For each pixel i, computes the sum of partial derivatives dj/di for all
-  // pixels j. The final derivative for each pixel i is defined as:
-  //   d/di = sum_j(c[j] * dj/di)
-  // where c[j] is the jth term in partial_const_terms.
-  //
-  // c[j] should include constants (e.g. 2 from differentiation a squared
-  // term), the regularization parameter, etc.
-  virtual std::vector<double> GetGradient(
-      const double* image_data,
-      const std::vector<double>& gradient_constants) const = 0;
+      const std::vector<double>& gradient_constants,
+      const GradientComputationMethod& method = AUTOMATIC) const = 0;
 
  protected:
   // The size of the image to be regularized.
