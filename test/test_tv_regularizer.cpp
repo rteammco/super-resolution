@@ -2,6 +2,7 @@
 #include <cmath>
 #include <vector>
 
+#include "optimization/regularizer.h"
 #include "optimization/tv_regularizer.h"
 
 #include "opencv2/core/core.hpp"
@@ -98,6 +99,7 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
   }
 
   // The actual derivatives, calculated from the test image, thus are:
+  // TODO: this is WRONG and needs to be updated. Test fails.
   const double d0d0 =
       ((image1_data[1] - image1_data[0]) +
       (image1_data[3] - image1_data[0])) / total_variation[0];
@@ -141,33 +143,45 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
   std::vector<double> gradient_constants(9);
   std::fill(gradient_constants.begin(), gradient_constants.end(), 1.0);
 
-  // TODO: this no longer works.
-//  const std::vector<double> returned_derivatives =
-//      tv_regularizer.GetGradient(image1_data, gradient_constants);
-//  EXPECT_THAT(returned_derivatives, SizeIs(9));
-//
-//  EXPECT_EQ(returned_derivatives[0], expected_d0);
-//  EXPECT_EQ(returned_derivatives[1], expected_d1);
-//  EXPECT_EQ(returned_derivatives[2], expected_d2);
-//  EXPECT_EQ(returned_derivatives[3], expected_d3);
-//  EXPECT_EQ(returned_derivatives[4], expected_d4);
-//  EXPECT_EQ(returned_derivatives[8], expected_d8);
-
-  /* Also verify that the derivatives are correct with auto differentiation. */
-
-  // TODO: fix gradient_constants...
-  const auto& returned_residuals_and_partials =
+  const auto& returned_residuals_and_gradient_automatic =
       tv_regularizer.ApplyToImageWithDifferentiation(
-          image1_data, gradient_constants);
+          image1_data, gradient_constants, super_resolution::AUTOMATIC);
+  const std::vector<double> gradient_automatic =
+      returned_residuals_and_gradient_automatic.second;
 
   // Check correct behavior of returned residuals.
   EXPECT_THAT(
-      returned_residuals_and_partials.first, ContainerEq(expected_residuals));
+      returned_residuals_and_gradient_automatic.first,
+      ContainerEq(expected_residuals));
 
-  EXPECT_EQ(returned_residuals_and_partials.second[0], expected_d0);
-  EXPECT_EQ(returned_residuals_and_partials.second[1], expected_d1);
-  EXPECT_EQ(returned_residuals_and_partials.second[2], expected_d2);
-  EXPECT_EQ(returned_residuals_and_partials.second[3], expected_d3);
-  EXPECT_EQ(returned_residuals_and_partials.second[4], expected_d4);
-  EXPECT_EQ(returned_residuals_and_partials.second[8], expected_d8);
+  EXPECT_THAT(gradient_automatic, SizeIs(9));
+
+  EXPECT_EQ(gradient_automatic[0], expected_d0);
+  EXPECT_EQ(gradient_automatic[1], expected_d1);
+  EXPECT_EQ(gradient_automatic[2], expected_d2);
+  EXPECT_EQ(gradient_automatic[3], expected_d3);
+  EXPECT_EQ(gradient_automatic[4], expected_d4);
+  EXPECT_EQ(gradient_automatic[8], expected_d8);
+
+  /* Also verify that the gradient is correct with analytical diff. */
+
+  const auto& returned_residuals_and_gradient_analytical =
+      tv_regularizer.ApplyToImageWithDifferentiation(
+          image1_data, gradient_constants, super_resolution::ANALYTICAL);
+  const std::vector<double> gradient_analytical =
+      returned_residuals_and_gradient_analytical.second;
+
+  // Check correct behavior of returned residuals.
+  EXPECT_THAT(
+      returned_residuals_and_gradient_analytical.first,
+      ContainerEq(expected_residuals));
+
+  EXPECT_THAT(gradient_analytical, SizeIs(9));
+
+  EXPECT_EQ(gradient_analytical[0], expected_d0);
+  EXPECT_EQ(gradient_analytical[1], expected_d1);
+  EXPECT_EQ(gradient_analytical[2], expected_d2);
+  EXPECT_EQ(gradient_analytical[3], expected_d3);
+  EXPECT_EQ(gradient_analytical[4], expected_d4);
+  EXPECT_EQ(gradient_analytical[8], expected_d8);
 }

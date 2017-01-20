@@ -11,7 +11,7 @@ namespace super_resolution {
 // The objective function used by the ALGLIB solver to compute residuals. This
 // version uses analyitical differentiation, meaning that the gradient is
 // computed manually.
-void AlglibObjectiveFunctionAnalyticalDiff(
+void AlglibObjectiveFunction(
     const alglib::real_1d_array& estimated_data,
     double& residual_sum,  // NOLINT
     alglib::real_1d_array& gradient,  // NOLINT

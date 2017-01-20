@@ -297,10 +297,6 @@ TEST(MapSolver, RealBigImageTest) {
   // Create the solver and attempt to solve.
   super_resolution::IrlsMapSolver solver(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
-  // TODO: it takes too long (infeasibly long). This needs to be way more
-  // scalable.
-  // TODO: run some analysis on the code and find out where all the memory is
-  // going and where how to make the whole thing way more efficient.
   const ImageData solver_result = solver.Solve(initial_estimate);
 
   const cv::Size disp_size(840, 840);
@@ -439,12 +435,12 @@ TEST(MapSolver, IrlsComputeDataTerm) {
 
   // (Image 1, Channel 1) and hr pixels are identical, so expect all zeros.
   const auto& residual_sum_and_gradient_1 =
-      irls_map_solver.ComputeDataTermAnalyticalDiff(0, 0, hr_pixel_values);
+      irls_map_solver.ComputeDataTerm(0, 0, hr_pixel_values);
   EXPECT_EQ(residual_sum_and_gradient_1.first, 0);
 
   // (Image 1, Channel 2) residuals should be different at each pixel.
   const auto& residual_sum_and_gradient_2 =
-      irls_map_solver.ComputeDataTermAnalyticalDiff(0, 1, hr_pixel_values);
+      irls_map_solver.ComputeDataTerm(0, 1, hr_pixel_values);
   const std::vector<double> expected_residuals = {
       -0.5,  0.0,  0.5,
        0.25, 0.0, -0.25,
@@ -458,7 +454,7 @@ TEST(MapSolver, IrlsComputeDataTerm) {
 
   // (Image 2, channel 1) ("channel_3") should all be -0.5.
   const auto& residual_sum_and_gradient_3 =
-      irls_map_solver.ComputeDataTermAnalyticalDiff(1, 0, hr_pixel_values);
+      irls_map_solver.ComputeDataTerm(1, 0, hr_pixel_values);
   expected_residual_sum = 0.0;
   for (int i = 0; i < 9; ++i) {
     expected_residual_sum += (-0.5 * -0.5);
@@ -475,15 +471,15 @@ TEST(MapSolver, IrlsComputeRegularization) {
   const double image_data[5] = {1, 2, 3, 4, 5};
   const std::vector<double> residuals = {1, 2, 3, 4, 5};
   const auto& residuals_and_residuals = std::make_pair(residuals, residuals);
-  EXPECT_CALL(*mock_regularizer, ApplyToImage(image_data))
-      .Times(3)  // 3 calls: compute residuals, update weights, compute again.
-      .WillRepeatedly(Return(residuals));
+  //EXPECT_CALL(*mock_regularizer, ApplyToImage(image_data))
+  //    .Times(1)  // 1 call: update weights.
+  //    .Will(Return(residuals));
   // TODO
   //EXPECT_CALL(*mock_regularizer, ApplyToImageWithDifferentiation(image_data))
-  //    .Times(2)  // 2 calls: once for each ComputeRegularizationAutomaticDiff.
+  //    .Times(2)  // 2 calls: once for each ComputeRegularization.
   //    .WillRepeatedly(Return(residuals_and_residuals));
   //EXPECT_CALL(*mock_regularizer, GetGradient(_, _))
-  //    .Times(2)  // 2 calls: once for each ComputeRegularizationAnalyticalDiff.
+  //    .Times(2)  // 2 calls: once for each ComputeRegularization.
   //    .WillRepeatedly(Return(residuals));
 
   const std::vector<super_resolution::ImageData> low_res_images = {
@@ -514,11 +510,11 @@ TEST(MapSolver, IrlsComputeRegularization) {
   }
   // Implemented gradient:
   const auto& residual_sum_and_gradient_1 =
-      irls_map_solver.ComputeRegularizationAnalyticalDiff(image_data);
+      irls_map_solver.ComputeRegularization(image_data);
   EXPECT_EQ(residual_sum_and_gradient_1.first, expected_residual_sum);
   // Automatic differentiation:
   const auto& residual_sum_and_gradient_2 =
-      irls_map_solver.ComputeRegularizationAutomaticDiff(image_data);
+      irls_map_solver.ComputeRegularization(image_data);
   EXPECT_EQ(residual_sum_and_gradient_2.first, expected_residual_sum);
 
   // Update weights and test again. The weights are expected to be updated as
@@ -549,11 +545,11 @@ TEST(MapSolver, IrlsComputeRegularization) {
   }
   // Analytical differentiation:
   const auto& residual_sum_and_gradient_3 =
-      irls_map_solver.ComputeRegularizationAnalyticalDiff(image_data);
+      irls_map_solver.ComputeRegularization(image_data);
   EXPECT_EQ(residual_sum_and_gradient_3.first, expected_residual_sum);
   // Automatic differentiation:
   const auto& residual_sum_and_gradient_4 =
-      irls_map_solver.ComputeRegularizationAutomaticDiff(image_data);
+      irls_map_solver.ComputeRegularization(image_data);
   EXPECT_EQ(residual_sum_and_gradient_4.first, expected_residual_sum);
 }
 
@@ -640,7 +636,7 @@ TEST(MapSolver, IrlsDifferentiationTest) {
 
     for (int image_index = 0; image_index < num_images; ++image_index) {
       const auto& residual_sum_and_gradient =
-          irls_map_solver.ComputeDataTermAnalyticalDiff(
+          irls_map_solver.ComputeDataTerm(
               image_index, 0, estimated_data);  // channel 0
       residual_sum += residual_sum_and_gradient.first;
       for (int i = 0; i < num_pixels; ++i) {
@@ -649,7 +645,7 @@ TEST(MapSolver, IrlsDifferentiationTest) {
     }
 
     const auto& residual_sum_and_gradient =
-        irls_map_solver.ComputeRegularizationAnalyticalDiff(estimated_data);
+        irls_map_solver.ComputeRegularization(estimated_data);
     residual_sum += residual_sum_and_gradient.first;
     for (int i = 0; i < num_pixels; ++i) {
       gradient[i] += residual_sum_and_gradient.second[i];

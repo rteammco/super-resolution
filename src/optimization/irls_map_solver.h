@@ -26,17 +26,13 @@ class IrlsMapSolver : public MapSolver {
   // Computes the data fidelity term using analytical (manually computed)
   // differentiation. Returns a pair consisting of the sum of squared errors
   // (i.e. the residual) and the gradient vector values.
-  std::pair<double, std::vector<double>> ComputeDataTermAnalyticalDiff(
+  std::pair<double, std::vector<double>> ComputeDataTerm(
       const int image_index,
       const int channel_index,
       const double* estimated_image_data) const;
 
-  // Computes the regularization term using analytical differentiation.
-  std::pair<double, std::vector<double>> ComputeRegularizationAnalyticalDiff(
-      const double* estimated_image_data) const;
-
   // Computes the regularization term using automatic differentiation.
-  std::pair<double, std::vector<double>> ComputeRegularizationAutomaticDiff(
+  std::pair<double, std::vector<double>> ComputeRegularization(
     const double* estimated_image_data) const;
 
   // Updates the IRLS weights given the current data estimate.

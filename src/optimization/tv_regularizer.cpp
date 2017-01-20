@@ -111,7 +111,6 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     for (int j = 0; j < num_parameters; ++j) {
       const double djdi = residuals[j].d(i);
       if (!isnan(djdi)) {  // If this partial exists...
-        //gradient[i] += djdi;
         const double gradient_ij =
             2 * gradient_constants[j] * residuals[j].x() * djdi;
         gradient[i] += gradient_ij;

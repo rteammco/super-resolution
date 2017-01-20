@@ -74,7 +74,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   // } else {
   alglib::mincgoptimize(
       solver_state,
-      AlglibObjectiveFunctionAnalyticalDiff,
+      AlglibObjectiveFunction,
       AlglibSolverIterationCallback,
       const_cast<void*>(reinterpret_cast<const void*>(this)));
   // }
@@ -84,8 +84,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   return estimated_image;
 }
 
-std::pair<double, std::vector<double>>
-IrlsMapSolver::ComputeDataTermAnalyticalDiff(
+std::pair<double, std::vector<double>> IrlsMapSolver::ComputeDataTerm(
     const int image_index,
     const int channel_index,
     const double* estimated_image_data) const {
@@ -134,63 +133,7 @@ IrlsMapSolver::ComputeDataTermAnalyticalDiff(
   return make_pair(residual_sum, gradient);
 }
 
-std::pair<double, std::vector<double>>
-IrlsMapSolver::ComputeRegularizationAnalyticalDiff(
-    const double* estimated_image_data) const {
-
-  CHECK_NOTNULL(estimated_image_data);
-
-  const int num_pixels = GetNumPixels();
-  std::vector<double> gradient(num_pixels);
-  std::fill(gradient.begin(), gradient.end(), 0);
-  double residual_sum = 0;
-
-  // Apply each regularizer individually.
-  // TODO: fix
-  //for (int i = 0; i < regularizers_.size(); ++i) {
-  //  // Compute the residuals and squared residual sum.
-  //  const double regularization_parameter = regularizers_[i].second;
-  //  std::vector<double> residuals =
-  //      regularizers_[i].first->ApplyToImage(estimated_image_data);
-
-  //  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-  //    const double residual = residuals[pixel_index];
-  //    const double weight = sqrt(irls_weights_.at(pixel_index));
-  //    residual_sum += regularization_parameter * weight * residual * residual;
-  //  }
-
-  //  // Compute the gradient vector.
-  //  std::vector<double> gradient_constants;
-  //  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-  //    // Each derivative is multiplied by
-  //    //   2 * lambda * w^2 * reg_i
-  //    // where 2 comes from the squared norm (L2) term,
-  //    // lambda is the regularization parameter,
-  //    // w^2 is the squared weight (since the weights are square-rooted in the
-  //    //   residual computation, the raw weight is used here),
-  //    // and reg_i is the value of the regularization term at pixel i.
-  //    // These constants are multiplied with the partial derivatives at each
-  //    // pixel w.r.t. all other pixels, which are computed specifically based on
-  //    // the derivative of the regularizer function.
-  //    gradient_constants.push_back(
-  //        2 *
-  //        regularization_parameter *
-  //        irls_weights_[pixel_index] *
-  //        residuals[pixel_index]);
-  //  }
-  //  const std::vector<double> partial_derivatives =
-  //      regularizers_[i].first->GetGradient(
-  //          estimated_image_data, gradient_constants);
-  //  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-  //    gradient[pixel_index] += partial_derivatives[pixel_index];
-  //  }
-  //}
-
-  return make_pair(residual_sum, gradient);
-}
-
-std::pair<double, std::vector<double>>
-IrlsMapSolver::ComputeRegularizationAutomaticDiff(
+std::pair<double, std::vector<double>> IrlsMapSolver::ComputeRegularization(
     const double* estimated_image_data) const {
 
   CHECK_NOTNULL(estimated_image_data);
@@ -228,11 +171,6 @@ IrlsMapSolver::ComputeRegularizationAutomaticDiff(
       residual_sum += regularization_parameter * weight * residual * residual;
 
       gradient[pixel_index] += partials[pixel_index];
-      // TODO: need to integrate weight first.
-      // The actual gradient is for this pixel (i) is:
-      //    2 * lambda * sum_j(w_j * r_j * djdi(r_j))
-      //gradient[pixel_index] +=
-      //    regularization_parameter * 2 * partials[pixel_index];
     }
   }
 
