@@ -1,5 +1,3 @@
-#include <limits>
-
 #include "image/image_data.h"
 #include "util/test_util.h"
 
@@ -138,7 +136,10 @@ TEST(ImageData, AddAndAccessImageData) {
 // correctly builds the ImageData from the pixel value array and copies the
 // data so that modifying the ImageData won't change the original array.
 TEST(ImageData, PixelArrayConstructor) {
-  const double pixel_values[9] = {
+  /* Verify functionality with a single channel. */
+
+  // Not const because we're testing that the data is actually copied.
+  double pixel_values[9] = {
      1.0, 0.5, 0.9,
      100,   0, -50,
     -0.1, 0.0,   1
@@ -146,23 +147,16 @@ TEST(ImageData, PixelArrayConstructor) {
   const cv::Size size(3, 3);
   ImageData image_data(pixel_values, size);
 
-  /* Verify image details. */
-
   EXPECT_EQ(image_data.GetNumChannels(), 1);
   EXPECT_EQ(image_data.GetImageSize(), cv::Size(3, 3));
   EXPECT_EQ(image_data.GetNumPixels(), 9);
 
-  /* Verify that the data is identical. */
-
+  // Make sure that the data is identical.
   for (int i = 0; i < 9; ++i) {
-    EXPECT_NEAR(
-        image_data.GetPixelValue(0, i),
-        pixel_values[i],
-        std::numeric_limits<double>::epsilon());
+    EXPECT_DOUBLE_EQ(image_data.GetPixelValue(0, i), pixel_values[i]);
   }
 
-  /* Verify that changing the image doesn't change the original data. */
-
+  // Make sure that changing the image doesn't change the original data.
   double* image_data_ptr = image_data.GetMutableDataPointer(0);
   image_data_ptr[0] = 0.0;
   image_data_ptr[3] = 1.0;
@@ -171,6 +165,59 @@ TEST(ImageData, PixelArrayConstructor) {
   EXPECT_EQ(pixel_values[0], 1.0);
   EXPECT_EQ(pixel_values[3], 100);
   EXPECT_EQ(pixel_values[8], 1);
+
+  /* Verify this all still works with multiple image channels. */
+
+  double pixel_values_multichannel[9 * 4] = {
+    // Channel 1 (same as before):
+     1.0, 0.5, 0.9,
+     100,   0, -50,
+    -0.1, 0.0,   1,
+    // Channel 2:
+    10, 20, 30,
+    40, 50, 60,
+    70, 80, 90,
+    // Channel 3:
+    1, 2, 3,
+    4, 5, 6,
+    7, 8, 9,
+    // Channel 4:
+    0.1, 0.2, 0.3,
+    0.4, 0.5, 0.6,
+    0.7, 0.8, 0.9
+  };
+  ImageData image_data_multichannel(pixel_values_multichannel, size, 4);
+
+  EXPECT_EQ(image_data_multichannel.GetNumChannels(), 4);
+  EXPECT_EQ(image_data_multichannel.GetImageSize(), cv::Size(3, 3));
+  EXPECT_EQ(image_data_multichannel.GetNumPixels(), 9);
+
+  // Make sure that the data is identical.
+  for (int channel_index = 0; channel_index < 4; ++channel_index) {
+    for (int pixel_index = 0; pixel_index < 9; ++pixel_index) {
+      const int array_index = channel_index * 9 + pixel_index;
+      EXPECT_DOUBLE_EQ(
+          image_data_multichannel.GetPixelValue(channel_index, pixel_index),
+          pixel_values_multichannel[array_index]);
+    }
+  }
+
+  // Make sure that changing the image doesn't change the original data.
+  image_data_ptr = image_data.GetMutableDataPointer(0);
+  image_data_ptr[3] = 1.0;
+  EXPECT_EQ(pixel_values_multichannel[3], 100);
+
+  image_data_ptr = image_data_multichannel.GetMutableDataPointer(1);
+  image_data_ptr[5] = -500;
+  EXPECT_EQ(pixel_values_multichannel[9 + 5], 60);
+
+  image_data_ptr = image_data_multichannel.GetMutableDataPointer(2);
+  image_data_ptr[8] = 25.3;
+  EXPECT_EQ(pixel_values_multichannel[18 + 8], 9);
+
+  image_data_ptr = image_data_multichannel.GetMutableDataPointer(3);
+  image_data_ptr[0] = -10;
+  EXPECT_EQ(pixel_values_multichannel[27 + 0], 0.1);
 }
 
 // This test verifies that the copy constructor works as expected.
@@ -196,10 +243,9 @@ TEST(ImageData, CopyConstructor) {
 
   for (int channel_index = 0; channel_index < 10; ++channel_index) {
     for (int pixel_index = 0; pixel_index < 25 * 25; ++pixel_index) {
-      EXPECT_NEAR(
+      EXPECT_DOUBLE_EQ(
           image_data.GetPixelValue(channel_index, pixel_index),
-          image_data2.GetPixelValue(channel_index, pixel_index),
-          std::numeric_limits<double>::epsilon());
+          image_data2.GetPixelValue(channel_index, pixel_index));
     }
   }
 
@@ -222,10 +268,9 @@ TEST(ImageData, FromOpenCvImageConstructor) {
          55,  1.98, 1000);
   ImageData image_data_not_normalized(invalid_image, false);
   for (int i = 0; i < 9; ++i) {
-    EXPECT_NEAR(
+    EXPECT_DOUBLE_EQ(
         invalid_image.at<double>(i),
-        image_data_not_normalized.GetPixelValue(0, i),
-        std::numeric_limits<double>::epsilon());
+        image_data_not_normalized.GetPixelValue(0, i));
   }
 }
 

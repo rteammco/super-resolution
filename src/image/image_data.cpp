@@ -72,12 +72,26 @@ ImageData::ImageData(const cv::Mat& image, const bool normalize) {
   InitializeFromImage(image, normalize, &image_size_, &channels_);
 }
 
-ImageData::ImageData(const double* pixel_values, const cv::Size& size) {
-  const cv::Mat image(
-      size,
-      util::kOpenCvMatrixType,
-      const_cast<void*>(reinterpret_cast<const void*>(pixel_values)));
-  InitializeFromImage(image, false, &image_size_, &channels_);  // copies data
+ImageData::ImageData(
+    const double* pixel_values, const cv::Size& size, const int num_channels) {
+
+  CHECK_NOTNULL(pixel_values);
+  CHECK_GE(num_channels, 1) << "The image must have at least one channel.";
+
+  // Set image size and make sure the number of pixels is accurate.
+  image_size_ = size;
+  const int num_pixels = GetNumPixels();
+  CHECK_GE(num_pixels, 1) << "Number of pixels must be positive.";
+
+  // Add each channel to the ImageData.
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    const double* channel_pixels = &pixel_values[channel_index * num_pixels];
+    const cv::Mat channel_image(
+        size,
+        util::kOpenCvMatrixType,
+        const_cast<void*>(reinterpret_cast<const void*>(channel_pixels)));
+    channels_.push_back(channel_image.clone());  // copy data
+  }
 }
 
 void ImageData::AddChannel(const cv::Mat& channel_image) {
