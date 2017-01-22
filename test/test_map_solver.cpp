@@ -73,12 +73,13 @@ TEST(MapSolver, SmallDataTest) {
   const cv::Mat lr_image_4 = (cv::Mat_<double>(2, 2)
     << 1.0, 1.0,
        1.0, 1.0);
-  std::vector<ImageData> low_res_images {
-    ImageData(lr_image_1),
-    ImageData(lr_image_2),
-    ImageData(lr_image_3),
-    ImageData(lr_image_4)
+  const std::vector<cv::Mat> lr_image_matrices = {
+    lr_image_1, lr_image_2, lr_image_3, lr_image_4
   };
+  std::vector<ImageData> low_res_images;
+  for (const cv::Mat& lr_image_matrix : lr_image_matrices) {
+    low_res_images.push_back(ImageData(lr_image_matrix));
+  }
 
   // Create the image model.
   const int downsampling_scale = 2;
@@ -101,18 +102,15 @@ TEST(MapSolver, SmallDataTest) {
           downsampling_scale, cv::Size(4, 4)));
   image_model.AddDegradationOperator(std::move(downsampling_module));
 
+  /* Verify solver gets a near-perfect solution for this trivial case. */
+
+  // Expected results:
   const cv::Mat ground_truth_matrix = (cv::Mat_<double>(4, 4)
     << 0.4, 0.2, 0.4, 0.2,
        0.0, 1.0, 0.0, 1.0,
        0.4, 0.2, 0.4, 0.2,
        0.0, 1.0, 0.0, 1.0);
   const ImageData ground_truth_image(ground_truth_matrix);
-
-  /* Verify that the image model produces the correct LR observations. */
-
-  // Create the solver for the model and low-res images.
-  super_resolution::IrlsMapSolver solver(
-      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
 
   // Create the high-res initial estimate.
   const cv::Mat initial_estimate_matrix = (cv::Mat_<double>(4, 4)
@@ -122,9 +120,10 @@ TEST(MapSolver, SmallDataTest) {
          0.0, 0.0, 0.0, 0.0);
   ImageData initial_estimate(initial_estimate_matrix);
 
-  /* Verify solver gets a near-perfect solution for this trivial case. */
-
-  ImageData result = solver.Solve(initial_estimate);
+  // Create the solver for the model and low-res images.
+  super_resolution::IrlsMapSolver solver(
+      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
+  const ImageData result = solver.Solve(initial_estimate);
 
   for (int pixel_index = 0; pixel_index < 16; ++pixel_index) {
     EXPECT_NEAR(
@@ -133,7 +132,46 @@ TEST(MapSolver, SmallDataTest) {
         kSolverResultErrorTolerance);
   }
 
-  // TODO: multichannel image test
+  /* Repeat the same tests, but this time with multiple channels. */
+
+  // Simply replicate the channels for each image.
+  const int num_channels = 10;
+  std::vector<ImageData> low_res_images_multichannel;
+  for (const cv::Mat& lr_image_matrix : lr_image_matrices) {
+    ImageData multichannel_image;
+    for (int j = 0; j < num_channels; ++j)  {
+      multichannel_image.AddChannel(lr_image_matrix);
+    }
+    low_res_images_multichannel.push_back(multichannel_image);
+  }
+
+  // Also replicate channels for the initial estimate and ground truth.
+  ImageData ground_truth_image_multichannel;
+  ImageData initial_estimate_multichannel;
+  for (int i = 0; i < num_channels; ++i) {
+    ground_truth_image_multichannel.AddChannel(ground_truth_matrix);
+    initial_estimate_multichannel.AddChannel(initial_estimate_matrix);
+  }
+
+  // Create the multichannel solver.
+  super_resolution::IrlsMapSolver solver_multichannel(
+      kDefaultSolverOptions,
+      image_model,
+      low_res_images_multichannel,
+      kPrintSolverOutput);
+  const ImageData result_multichannel =
+      solver_multichannel.Solve(initial_estimate_multichannel);
+
+  EXPECT_EQ(result_multichannel.GetNumChannels(), num_channels);
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    for (int pixel_index = 0; pixel_index < 16; ++pixel_index) {
+      EXPECT_NEAR(
+          result_multichannel.GetPixelValue(channel_index, pixel_index),
+          ground_truth_image_multichannel.GetPixelValue(
+              channel_index, pixel_index),
+          kSolverResultErrorTolerance);
+    }
+  }
 }
 
 // Tests on a small icon (real image) and compares the solver result to the
