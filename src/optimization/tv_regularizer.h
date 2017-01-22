@@ -27,7 +27,8 @@ class TotalVariationRegularizer : public Regularizer {
   ApplyToImageWithDifferentiation(
       const double* image_data,
       const std::vector<double>& gradient_constants,
-      const GradientComputationMethod& method = AUTOMATIC) const;
+      const GradientComputationMethod& differentiation_method =
+          AUTOMATIC_DIFFERENTIATION) const;
 
  private:
   // TODO: fix.

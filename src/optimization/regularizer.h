@@ -12,8 +12,8 @@ namespace super_resolution {
 
 // The type of differentiation method used in ApplyToImageWithDifferentiation.
 enum GradientComputationMethod {
-  AUTOMATIC,  // Uses automatic differentiation library.
-  ANALYTICAL  // Direct analytical derivatives if implemented.
+  AUTOMATIC_DIFFERENTIATION,  // Uses automatic differentiation library.
+  ANALYTICAL_DIFFERENTIATION  // Direct analytical derivatives if implemented.
 };
 
 class Regularizer {
@@ -51,7 +51,8 @@ class Regularizer {
   ApplyToImageWithDifferentiation(
       const double* image_data,
       const std::vector<double>& gradient_constants,
-      const GradientComputationMethod& method = AUTOMATIC) const = 0;
+      const GradientComputationMethod& differentiation_method =
+          AUTOMATIC_DIFFERENTIATION) const = 0;
 
  protected:
   // The size of the image to be regularized.

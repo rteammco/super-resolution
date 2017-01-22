@@ -145,7 +145,9 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
 
   const auto& returned_residuals_and_gradient_automatic =
       tv_regularizer.ApplyToImageWithDifferentiation(
-          image1_data, gradient_constants, super_resolution::AUTOMATIC);
+          image1_data,
+          gradient_constants,
+          super_resolution::AUTOMATIC_DIFFERENTIATION);
   const std::vector<double> gradient_automatic =
       returned_residuals_and_gradient_automatic.second;
 
@@ -167,7 +169,9 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
 
   const auto& returned_residuals_and_gradient_analytical =
       tv_regularizer.ApplyToImageWithDifferentiation(
-          image1_data, gradient_constants, super_resolution::ANALYTICAL);
+          image1_data,
+          gradient_constants,
+          super_resolution::ANALYTICAL_DIFFERENTIATION);
   const std::vector<double> gradient_analytical =
       returned_residuals_and_gradient_analytical.second;
 

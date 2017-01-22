@@ -79,7 +79,7 @@ std::pair<std::vector<double>, std::vector<double>>
 TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const double* image_data,
     const std::vector<double>& gradient_constants,
-    const GradientComputationMethod& method) const {
+    const GradientComputationMethod& differentiation_method) const {
 
   // Initialize the derivatives of each parameter with respect to itself.
   const int num_parameters = image_size_.width * image_size_.height;
@@ -89,6 +89,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     parameters[i].diff(i, num_parameters);
   }
 
+  std::vector<double> residual_values(num_parameters);
   std::vector<F<double>> residuals(num_parameters);
   for (int row = 0; row < image_size_.height; ++row) {
     for (int col = 0; col < image_size_.width; ++col) {
@@ -100,14 +101,56 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
       const F<double> total_variation =
           (y_variation * y_variation) + (x_variation * x_variation);
       residuals[index] = fadbad::sqrt(total_variation);
+      residual_values[index] = residuals[index].x();
     }
   }
 
-  std::vector<double> residual_values(num_parameters);
   std::vector<double> gradient(num_parameters);  // inits to 0.
+  //// For each pixel, its gradient is the sum of partial derivatives at all
+  //// other pixels j with respect to pixel i.
+  //for (int row = 0; row < image_size_.height; ++row) {
+  //  for (int col = 0; col < image_size_.width; ++col) {
+  //    // To speed things up, we only look at the partial derivatives that
+  //    // actually get computed (which is, for any pixel, the partial w.r.t. the
+  //    // pixel to the left and w.r.t. the pixel above).
+  //    const int index = row * image_size_.width + col;
+
+  //    // Add partial w.r.t. x_{r,c} (this pixel):
+  //    const double didi = residuals[index].d(index);
+  //    if (!isnan(didi)) {
+  //      gradient[index] +=
+  //          2 * gradient_constants[index] * residuals[index].x() * didi;
+  //    }
+
+  //    // Partial w.r.t. x_{r,c-1} (pixel to the left):
+  //    if (col - 1 >= 0) {  // If left pixel is outside image, the partial is 0.
+  //      const int left_index = row * image_size_.width + (col - 1);
+  //      const double dldi = residuals[left_index].d(index);
+  //      if (!isnan(dldi)) {
+  //        gradient[index] +=
+  //            2 *
+  //            gradient_constants[left_index] *
+  //            residuals[left_index].x() *
+  //            dldi;
+  //      }
+  //    }
+
+  //    // Partial w.r.t. x_{r-1,c} (pixel above):
+  //    if (row - 1 >= 0) {  // If above pixel is outside image, the partial is 0.
+  //      const int above_index = (row - 1) * image_size_.width + col;
+  //      const double dadi = residuals[above_index].d(index);
+  //      if (!isnan(dadi)) {
+  //        gradient[index] +=
+  //            2 *
+  //            gradient_constants[above_index] *
+  //            residuals[above_index].x() *
+  //            dadi;
+  //      }
+  //    }
+  //  }
+  //}
+
   for (int i = 0; i < num_parameters; ++i) {
-    // For each pixel i, its gradient is the sum of partial derivatives at all
-    // other pixels j with respect to pixel i.
     for (int j = 0; j < num_parameters; ++j) {
       const double djdi = residuals[j].d(i);
       if (!isnan(djdi)) {  // If this partial exists...
@@ -116,7 +159,6 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
         gradient[i] += gradient_ij;
       }
     }
-    residual_values[i] = residuals[i].x();
   }
   return std::make_pair(residual_values, gradient);
 }
