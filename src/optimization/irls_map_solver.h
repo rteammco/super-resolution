@@ -28,7 +28,6 @@ class IrlsMapSolver : public MapSolver {
   // (i.e. the residual) and the gradient vector values.
   std::pair<double, std::vector<double>> ComputeDataTerm(
       const int image_index,
-      const int channel_index,
       const double* estimated_image_data) const;
 
   // Computes the regularization term using automatic differentiation.

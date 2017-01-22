@@ -472,14 +472,15 @@ TEST(MapSolver, IrlsComputeDataTerm) {
   };
 
   // (Image 1, Channel 1) and hr pixels are identical, so expect all zeros.
+  // TODO: switch this to multichannel test because of recent changes.
   const auto& residual_sum_and_gradient_1 =
-      irls_map_solver.ComputeDataTerm(0, 0, hr_pixel_values);
+      irls_map_solver.ComputeDataTerm(0, hr_pixel_values);
   EXPECT_EQ(residual_sum_and_gradient_1.first, 0);
   // TODO: also check the gradient.
 
   // (Image 1, Channel 2) residuals should be different at each pixel.
   const auto& residual_sum_and_gradient_2 =
-      irls_map_solver.ComputeDataTerm(0, 1, hr_pixel_values);
+      irls_map_solver.ComputeDataTerm(0, hr_pixel_values);
   const std::vector<double> expected_residuals = {
       -0.5,  0.0,  0.5,
        0.25, 0.0, -0.25,
@@ -494,7 +495,7 @@ TEST(MapSolver, IrlsComputeDataTerm) {
 
   // (Image 2, channel 1) ("channel_3") should all be -0.5.
   const auto& residual_sum_and_gradient_3 =
-      irls_map_solver.ComputeDataTerm(1, 0, hr_pixel_values);
+      irls_map_solver.ComputeDataTerm(1, hr_pixel_values);
   expected_residual_sum = 0.0;
   for (int i = 0; i < 9; ++i) {
     expected_residual_sum += (-0.5 * -0.5);

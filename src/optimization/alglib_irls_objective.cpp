@@ -32,7 +32,7 @@ void AlglibObjectiveFunction(
   for (int image_index = 0; image_index < num_images; ++image_index) {
     const std::pair<double, std::vector<double>> residual_sum_and_gradient =
         irls_map_solver->ComputeDataTerm(
-            image_index, 0, estimated_data.getcontent());  // TODO: channel!?
+            image_index, estimated_data.getcontent());
     residual_sum += residual_sum_and_gradient.first;
     for (int i = 0; i < num_pixels; ++i) {
       gradient[i] += residual_sum_and_gradient.second[i];

@@ -22,6 +22,14 @@ MapSolver::MapSolver(
   CHECK_GT(num_observations, 0)
       << "Cannot super-resolve with 0 low-res images.";
 
+  // Set number of channels, and verify that this is consistent among all of
+  // the given low-res images.
+  num_channels_ = low_res_images[0].GetNumChannels();
+  for (int i = 1; i < low_res_images.size(); ++i) {
+    CHECK_EQ(low_res_images[i].GetNumChannels(), num_channels_)
+        << "Image channel counts do not match up.";
+  }
+
   // Set the size of the HR images. There must be at least one image at
   // low_res_images[0], otherwise the above check will have failed.
   const int upsampling_scale = image_model_.GetDownsamplingScale();

@@ -51,12 +51,18 @@ class MapSolver : public Solver {
     return image_size_.width * image_size_.height;
   }
 
+  int GetNumChannels() const {
+    return num_channels_;
+  }
+
   int GetNumImages() const {
     return observations_.size();
   }
 
  protected:
   const MapSolverOptions solver_options_;
+
+  // TODO: maybe make the following private and use getters for accessing them?
 
   // All regularization terms and their respective regularization parameters to
   // be applied in the cost function.
@@ -68,6 +74,10 @@ class MapSolver : public Solver {
 
   // This is the size of the HR image that is being estimated.
   cv::Size image_size_;
+
+  // This is the number of channels in each image. Guaranteed to be consistent
+  // accross all observations.
+  int num_channels_;
 };
 
 }  // namespace super_resolution
