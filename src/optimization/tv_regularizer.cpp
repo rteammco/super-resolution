@@ -116,61 +116,75 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   }
 
   std::vector<double> gradient(num_parameters);  // inits to 0.
-  //// For each pixel, its gradient is the sum of partial derivatives at all
-  //// other pixels j with respect to pixel i.
-  //for (int row = 0; row < image_size_.height; ++row) {
-  //  for (int col = 0; col < image_size_.width; ++col) {
-  //    // To speed things up, we only look at the partial derivatives that
-  //    // actually get computed (which is, for any pixel, the partial w.r.t. the
-  //    // pixel to the left and w.r.t. the pixel above).
-  //    const int index = row * image_size_.width + col;
+  // For each pixel, its gradient is the sum of partial derivatives at all
+  // other pixels j with respect to pixel i.
+  for (int channel = 0; channel < num_channels_; ++channel) {
+    const int channel_index = channel * num_pixels;
+    for (int row = 0; row < image_size_.height; ++row) {
+      for (int col = 0; col < image_size_.width; ++col) {
+        // To speed things up, we only look at the partial derivatives that
+        // actually get computed (which is, for any pixel, the partial w.r.t.
+        // the pixel to the left and w.r.t. the pixel above).
+        const int index = channel_index + (row * image_size_.width + col);
 
-  //    // Add partial w.r.t. x_{r,c} (this pixel):
-  //    const double didi = residuals[index].d(index);
-  //    if (!isnan(didi)) {
-  //      gradient[index] +=
-  //          2 * gradient_constants[index] * residuals[index].x() * didi;
-  //    }
+        // Add partial w.r.t. x_{r,c} (this pixel):
+        const double didi = residuals[index].d(index);
+        if (!isnan(didi)) {
+          gradient[index] +=
+              2 * gradient_constants[index] * residuals[index].x() * didi;
+        }
 
-  //    // Partial w.r.t. x_{r,c-1} (pixel to the left):
-  //    if (col - 1 >= 0) {  // If left pixel is outside image, the partial is 0.
-  //      const int left_index = row * image_size_.width + (col - 1);
-  //      const double dldi = residuals[left_index].d(index);
-  //      if (!isnan(dldi)) {
-  //        gradient[index] +=
-  //            2 *
-  //            gradient_constants[left_index] *
-  //            residuals[left_index].x() *
-  //            dldi;
-  //      }
-  //    }
+        // Partial w.r.t. x_{r,c-1} (pixel to the left):
+        if (col - 1 >= 0) {
+          const int left_index =
+              channel_index + (row * image_size_.width + (col - 1));
+          const double dldi = residuals[left_index].d(index);
+          if (!isnan(dldi)) {
+            gradient[index] +=
+                2 *
+                gradient_constants[left_index] *
+                residuals[left_index].x() *
+                dldi;
+          }
+        }
 
-  //    // Partial w.r.t. x_{r-1,c} (pixel above):
-  //    if (row - 1 >= 0) {  // If above pixel is outside image, the partial is 0.
-  //      const int above_index = (row - 1) * image_size_.width + col;
-  //      const double dadi = residuals[above_index].d(index);
-  //      if (!isnan(dadi)) {
-  //        gradient[index] +=
-  //            2 *
-  //            gradient_constants[above_index] *
-  //            residuals[above_index].x() *
-  //            dadi;
-  //      }
-  //    }
-  //  }
-  //}
-
-  // TODO: skip over parameters in different channels.
-  for (int i = 0; i < num_parameters; ++i) {
-    for (int j = 0; j < num_parameters; ++j) {
-      const double djdi = residuals[j].d(i);
-      if (!isnan(djdi)) {  // If this partial exists...
-        const double gradient_ij =
-            2 * gradient_constants[j] * residuals[j].x() * djdi;
-        gradient[i] += gradient_ij;
+        // Partial w.r.t. x_{r-1,c} (pixel above):
+        if (row - 1 >= 0) {
+          const int above_index =
+              channel_index + ((row - 1) * image_size_.width + col);
+          const double dadi = residuals[above_index].d(index);
+          if (!isnan(dadi)) {
+            gradient[index] +=
+                2 *
+                gradient_constants[above_index] *
+                residuals[above_index].x() *
+                dadi;
+          }
+        }
       }
     }
   }
+
+//  // TODO: remove this sanity check.
+//  std::vector<double> gradient_2(num_parameters);
+//  for (int i = 0; i < num_parameters; ++i) {
+//    for (int j = 0; j < num_parameters; ++j) {
+//      const double djdi = residuals[j].d(i);
+//      if (!isnan(djdi)) {  // If this partial exists...
+//        const double gradient_ij =
+//            2 * gradient_constants[j] * residuals[j].x() * djdi;
+//        gradient_2[i] += gradient_ij;
+//      }
+//    }
+//  }
+//  for (int i = 0; i < num_parameters; ++i) {
+//    const double absdiff = std::abs(gradient[i] - gradient_2[i]);
+//    if (absdiff > 0.00001) {
+//      LOG(INFO) << "Mismatch at " << i << ": "
+//                << gradient[i] << " vs. " << gradient_2[i];
+//    }
+//  }
+
   return std::make_pair(residual_values, gradient);
 }
 
