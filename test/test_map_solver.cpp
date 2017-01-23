@@ -29,6 +29,9 @@ using testing::ElementsAre;
 using testing::Matcher;
 using testing::Return;
 
+constexpr bool kDisplaySolverResults = true;
+static const cv::Size kDisplayImageSize(840, 840);
+
 constexpr bool kPrintSolverOutput = true;
 constexpr double kSolverResultErrorTolerance = 0.001;
 constexpr double kDerivativeErrorTolerance = 0.000001;
@@ -170,7 +173,9 @@ TEST(MapSolver, SmallDataTest) {
 }
 
 // Tests on a small icon (real image) and compares the solver result to the
-// mathematical derivation result.
+// mathematical derivation result. This will be a single-channel test since
+// it also test the mathematical implementation, which only supports a single
+// channel.
 TEST(MapSolver, RealIconDataTest) {
   const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
   const ImageData ground_truth(image);
@@ -265,32 +270,31 @@ TEST(MapSolver, RealIconDataTest) {
       cropped_ground_truth,
       kSolverResultErrorTolerance));
 
-  /*const cv::Size disp_size(840, 840);
-  ImageData disp_lr_1 = low_res_images[0];
-  disp_lr_1.ResizeImage(disp_size);
-  cv::imshow("upsampled lr 1", disp_lr_1.GetVisualizationImage());
+  if (kDisplaySolverResults) {
+    ImageData disp_lr_1 = low_res_images[0];
+    disp_lr_1.ResizeImage(kDisplayImageSize);
+    cv::imshow("upsampled lr 1", disp_lr_1.GetVisualizationImage());
 
-  ImageData disp_matrix_result(matrix_result);
-  disp_matrix_result.ResizeImage(disp_size);
-  cv::imshow("Matrix Result", disp_matrix_result.GetVisualizationImage());
+    ImageData disp_matrix_result(matrix_result);
+    disp_matrix_result.ResizeImage(kDisplayImageSize);
+    cv::imshow("Matrix Result", disp_matrix_result.GetVisualizationImage());
 
-  ImageData disp_solver_result = solver_result;
-  disp_solver_result.ResizeImage(disp_size);
-  cv::imshow("Solver Result", disp_solver_result.GetVisualizationImage());
+    ImageData disp_solver_result = solver_result;
+    disp_solver_result.ResizeImage(kDisplayImageSize);
+    cv::imshow("Solver Result", disp_solver_result.GetVisualizationImage());
 
-  ImageData disp_ground_truth = ground_truth;
-  disp_ground_truth.ResizeImage(disp_size);
-  cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
+    ImageData disp_ground_truth = ground_truth;
+    disp_ground_truth.ResizeImage(kDisplayImageSize);
+    cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
 
-  cv::waitKey(0);*/
-
-  // TODO: multichannel test
+    cv::waitKey(0);
+  }
 }
 
-// This test is intended to test the solver's efficiency. It make take a
-// little while....
+// This test is intended to test the solver's efficiency as well as its ability
+// to handle real-world multichannel images.
 TEST(MapSolver, RealBigImageTest) {
-  const cv::Mat image = cv::imread(kTestImagePath, CV_LOAD_IMAGE_GRAYSCALE);
+  const cv::Mat image = cv::imread(kTestImagePath, CV_LOAD_IMAGE_COLOR);
   ImageData ground_truth(image);
   ground_truth.ResizeImage(cv::Size(840, 840));
 
@@ -332,20 +336,31 @@ TEST(MapSolver, RealBigImageTest) {
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
 
-  const cv::Size disp_size(840, 840);
-  ImageData disp_lr_1 = low_res_images[0];
-  disp_lr_1.ResizeImage(disp_size);
-  cv::imshow("Upsampled LR #1", disp_lr_1.GetVisualizationImage());
+  const int num_channels = ground_truth.GetNumChannels();
+  EXPECT_EQ(solver_result.GetNumChannels(), num_channels);
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    EXPECT_TRUE(super_resolution::test::AreMatricesEqualCroppedBorder(
+        solver_result.GetChannelImage(channel_index),
+        ground_truth.GetChannelImage(channel_index),
+        1,  // Don't check the border pixels.
+        kSolverResultErrorTolerance));
+  }
 
-  ImageData disp_ground_truth = ground_truth;
-  disp_ground_truth.ResizeImage(disp_size);
-  cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
+  if (kDisplaySolverResults) {
+    ImageData disp_lr_1 = low_res_images[0];
+    disp_lr_1.ResizeImage(kDisplayImageSize);
+    cv::imshow("Upsampled LR #1", disp_lr_1.GetVisualizationImage());
 
-  ImageData disp_result = solver_result;
-  disp_result.ResizeImage(disp_size);
-  cv::imshow("Solver Result", disp_result.GetVisualizationImage());
+    ImageData disp_ground_truth = ground_truth;
+    disp_ground_truth.ResizeImage(kDisplayImageSize);
+    cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
 
-  cv::waitKey(0);
+    ImageData disp_result = solver_result;
+    disp_result.ResizeImage(kDisplayImageSize);
+    cv::imshow("Solver Result", disp_result.GetVisualizationImage());
+
+    cv::waitKey(0);
+  }
 }
 
 // This test uses the full image formation model, including blur, and attempts
@@ -412,20 +427,21 @@ TEST(MapSolver, RegularizationTest) {
   // Solve.
   const ImageData solver_result = solver.Solve(initial_estimate);
 
-  const cv::Size disp_size(840, 840);
-  ImageData disp_ground_truth = ground_truth;
-  disp_ground_truth.ResizeImage(disp_size);
-  cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
+  if (kDisplaySolverResults) {
+    ImageData disp_ground_truth = ground_truth;
+    disp_ground_truth.ResizeImage(kDisplayImageSize);
+    cv::imshow("Ground Truth", disp_ground_truth.GetVisualizationImage());
 
-  ImageData disp_upsampled = initial_estimate;
-  disp_upsampled.ResizeImage(disp_size);
-  cv::imshow("Upsampled", disp_upsampled.GetVisualizationImage());
+    ImageData disp_upsampled = initial_estimate;
+    disp_upsampled.ResizeImage(kDisplayImageSize);
+    cv::imshow("Upsampled", disp_upsampled.GetVisualizationImage());
 
-  ImageData disp_result = solver_result;
-  disp_result.ResizeImage(disp_size);
-  cv::imshow("Solver Result", disp_result.GetVisualizationImage());
+    ImageData disp_result = solver_result;
+    disp_result.ResizeImage(kDisplayImageSize);
+    cv::imshow("Solver Result", disp_result.GetVisualizationImage());
 
-  cv::waitKey(0);
+    cv::waitKey(0);
+  }
 }
 
 // Verifies that the IrlsMapSolver computes the correct data term residuals.

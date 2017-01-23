@@ -16,6 +16,15 @@ namespace test {
 bool AreMatricesEqual(
     const cv::Mat& mat1, const cv::Mat& mat2, const double diff_tolerance = 0);
 
+// Same as AreMatricesEqual, but crops the matrices to exclude a border of the
+// given size. This allows for checking images for equal pixel values excluding
+// certain border case issues.
+bool AreMatricesEqualCroppedBorder(
+    const cv::Mat& mat1,
+    const cv::Mat& mat2,
+    const int crop_border_size,
+    const double diff_tolerance = 0);
+
 }  // namespace test
 }  // namespace super_resolution
 
