@@ -197,7 +197,6 @@ void IrlsMapSolver::UpdateIrlsWeights(const double* estimated_image_data) {
   // TODO: also, this assumes a single regularization term. Scale it up to more
   // (which means we need separate weights for each one).
   const int num_data_points = GetNumDataPoints();
-  // TODO: loop w/ c++11.
   for (const auto& regularizer_and_parameter : regularizers_) {
     std::vector<double> regularization_residuals =
         regularizer_and_parameter.first->ApplyToImage(estimated_image_data);

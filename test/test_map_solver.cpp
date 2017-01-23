@@ -368,7 +368,7 @@ TEST(MapSolver, RealBigImageTest) {
 // to reconstruct the image using total variation regularization. The
 // reconstructed image should not be perfect, but should be close enough.
 TEST(MapSolver, RegularizationTest) {
-  const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_GRAYSCALE);
+  const cv::Mat image = cv::imread(kTestIconPath, CV_LOAD_IMAGE_COLOR);
   ImageData ground_truth(image);
   // Make sure the image size is divisible by the scale.
   ground_truth.ResizeImage(cv::Size(27, 27));

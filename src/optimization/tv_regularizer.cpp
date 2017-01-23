@@ -59,18 +59,22 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
 
   CHECK_NOTNULL(image_data);
 
-  // TODO: handle multiple channels (num_channels_).
-  std::vector<double> residuals(image_size_.width * image_size_.height);
-  for (int row = 0; row < image_size_.height; ++row) {
-    for (int col = 0; col < image_size_.width; ++col) {
-      const int index = row * image_size_.width + col;
-      const double y_variation =
-          GetYGradientAtPixel<double>(image_data, image_size_, row, col);
-      const double x_variation =
-          GetXGradientAtPixel<double>(image_data, image_size_, row, col);
-      const double total_variation =
-          (y_variation * y_variation) + (x_variation * x_variation);
-      residuals[index] = sqrt(total_variation);
+  const int num_pixels = image_size_.width * image_size_.height;
+  std::vector<double> residuals(num_pixels * num_channels_);
+  for (int channel = 0; channel < num_channels_; ++channel) {
+    const int channel_index = channel * num_pixels;
+    const double* data_ptr = image_data + channel_index;
+    for (int row = 0; row < image_size_.height; ++row) {
+      for (int col = 0; col < image_size_.width; ++col) {
+        const double y_variation =
+            GetYGradientAtPixel<double>(data_ptr, image_size_, row, col);
+        const double x_variation =
+            GetXGradientAtPixel<double>(data_ptr, image_size_, row, col);
+        const double total_variation =
+            (y_variation * y_variation) + (x_variation * x_variation);
+        const int index = channel_index + (row * image_size_.width + col);
+        residuals[index] = sqrt(total_variation);
+      }
     }
   }
   return residuals;
@@ -82,9 +86,9 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const std::vector<double>& gradient_constants,
     const GradientComputationMethod& differentiation_method) const {
 
-  // TODO: handle multiple channels (num_channels_).
   // Initialize the derivatives of each parameter with respect to itself.
-  const int num_parameters = image_size_.width * image_size_.height;
+  const int num_pixels = image_size_.width * image_size_.height;
+  const int num_parameters = num_pixels * num_channels_;
   std::vector<F<double>> parameters(
       image_data, image_data + num_parameters);
   for (int i = 0; i < num_parameters; ++i) {
@@ -93,17 +97,21 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
 
   std::vector<double> residual_values(num_parameters);
   std::vector<F<double>> residuals(num_parameters);
-  for (int row = 0; row < image_size_.height; ++row) {
-    for (int col = 0; col < image_size_.width; ++col) {
-      const int index = row * image_size_.width + col;
-      const F<double> y_variation = GetYGradientAtPixel<F<double>>(
-          parameters.data(), image_size_, row, col);
-      const F<double> x_variation = GetXGradientAtPixel<F<double>>(
-          parameters.data(), image_size_, row, col);
-      const F<double> total_variation =
-          (y_variation * y_variation) + (x_variation * x_variation);
-      residuals[index] = fadbad::sqrt(total_variation);
-      residual_values[index] = residuals[index].x();
+  for (int channel = 0; channel < num_channels_; ++channel) {
+    const int channel_index = channel * num_pixels;
+    const F<double>* data_ptr = parameters.data() + channel_index;
+    for (int row = 0; row < image_size_.height; ++row) {
+      for (int col = 0; col < image_size_.width; ++col) {
+        const F<double> y_variation = GetYGradientAtPixel<F<double>>(
+            data_ptr, image_size_, row, col);
+        const F<double> x_variation = GetXGradientAtPixel<F<double>>(
+            data_ptr, image_size_, row, col);
+        const F<double> total_variation =
+            (y_variation * y_variation) + (x_variation * x_variation);
+        const int index = channel_index + (row * image_size_.width + col);
+        residuals[index] = fadbad::sqrt(total_variation);
+        residual_values[index] = residuals[index].x();
+      }
     }
   }
 
@@ -152,6 +160,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   //  }
   //}
 
+  // TODO: skip over parameters in different channels.
   for (int i = 0; i < num_parameters; ++i) {
     for (int j = 0; j < num_parameters; ++j) {
       const double djdi = residuals[j].d(i);
