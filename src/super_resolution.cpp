@@ -1,4 +1,3 @@
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -56,22 +55,18 @@ int main(int argc, char** argv) {
   });
 
   // Create the forward image model degradation components.
-  std::unique_ptr<DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(
-          3, cv::Size(100, 100)));  // TODO: use the real image size.
-  std::unique_ptr<DegradationOperator> motion_module(
-      new super_resolution::MotionModule(motion_shift_sequence));
-  std::unique_ptr<DegradationOperator> blur_module(
-      new super_resolution::BlurModule(5, 1.0));
-  std::unique_ptr<DegradationOperator> noise_module(
-      new super_resolution::AdditiveNoiseModule(5.0));
+  const super_resolution::DownsamplingModule downsampling_module(
+      3, cv::Size(100, 100));  // TODO: use the real image size.
+  const super_resolution::MotionModule motion_module(motion_shift_sequence);
+  const super_resolution::BlurModule blur_module(5, 1.0);
+  const super_resolution::AdditiveNoiseModule noise_module(5.0);
 
   // Create the forward image model: y = DBx + n
   super_resolution::ImageModel image_model(3);
-  image_model.AddDegradationOperator(std::move(motion_module));
-  image_model.AddDegradationOperator(std::move(blur_module));
-  image_model.AddDegradationOperator(std::move(downsampling_module));
-  image_model.AddDegradationOperator(std::move(noise_module));
+  image_model.AddDegradationOperator(motion_module);
+  image_model.AddDegradationOperator(blur_module);
+  image_model.AddDegradationOperator(downsampling_module);
+  image_model.AddDegradationOperator(noise_module);
 
   const std::vector<cv::Mat>& frames = video_loader.GetFrames();
   for (int i = 0; i < frames.size(); ++i) {

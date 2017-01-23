@@ -18,9 +18,9 @@ ImageModel::ImageModel(const int downsampling_scale)
 }
 
 void ImageModel::AddDegradationOperator(
-    std::unique_ptr<DegradationOperator> degradation_operator) {
+    const DegradationOperator& degradation_operator) {
 
-  degradation_operators_.push_back(std::move(degradation_operator));
+  degradation_operators_.push_back(&degradation_operator);
 }
 
 ImageData ImageModel::ApplyToImage(

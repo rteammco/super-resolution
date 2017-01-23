@@ -33,7 +33,7 @@ class ImageModel {
   // should be M, B, D, n.
   // Note that additive operators come last due to the order of operations.
   void AddDegradationOperator(
-      std::unique_ptr<DegradationOperator> degradation_operator);
+      const DegradationOperator& degradation_operator);
 
   // Apply this forward model to the given image at the given index in the
   // multiframe sequence. The degraded image is returned as a new image, with
@@ -78,7 +78,7 @@ class ImageModel {
  private:
   // An ordered list of degradation operators, to be applied in this order. We
   // keep pointers because the DegradationOperator class is pure virtual.
-  std::vector<std::unique_ptr<DegradationOperator>> degradation_operators_;
+  std::vector<const DegradationOperator*> degradation_operators_;
 
   // The ImageModel keeps track of the downsampling scale factor.
   const int downsampling_scale_;

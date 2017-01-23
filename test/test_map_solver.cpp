@@ -1,4 +1,3 @@
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -19,7 +18,10 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
+using super_resolution::BlurModule;
+using super_resolution::DownsamplingModule;
 using super_resolution::ImageData;
+using super_resolution::MotionModule;
 using super_resolution::test::AreMatricesEqual;
 
 using testing::_;
@@ -96,15 +98,13 @@ TEST(MapSolver, SmallDataTest) {
     super_resolution::MotionShift(0, -1),
     super_resolution::MotionShift(-1, -1)
   });
-  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
-      new super_resolution::MotionModule(motion_shift_sequence));
-  image_model.AddDegradationOperator(std::move(motion_module));
+  const MotionModule motion_module(motion_shift_sequence);
+  image_model.AddDegradationOperator(motion_module);
 
   // Add downsampling:
-  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(
-          downsampling_scale, cv::Size(4, 4)));
-  image_model.AddDegradationOperator(std::move(downsampling_module));
+  const DownsamplingModule downsampling_module(
+      downsampling_scale, cv::Size(4, 4));
+  image_model.AddDegradationOperator(downsampling_module);
 
   /* Verify solver gets a near-perfect solution for this trivial case. */
 
@@ -193,19 +193,17 @@ TEST(MapSolver, RealIconDataTest) {
     super_resolution::MotionShift(0, 1),
     super_resolution::MotionShift(1, 1)
   });
-  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
-      new super_resolution::MotionModule(motion_shift_sequence));
+  const MotionModule motion_module(motion_shift_sequence);
   // Save the matrix for image 0 to make sure the correct matrix operations are
   // being performed.
-  const cv::Mat motion_matrix = motion_module->GetOperatorMatrix(image_size, 0);
-  image_model.AddDegradationOperator(std::move(motion_module));
+  const cv::Mat motion_matrix = motion_module.GetOperatorMatrix(image_size, 0);
+  image_model.AddDegradationOperator(motion_module);
 
   // Downsampling.
-  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(downsampling_scale, image_size));
+  const DownsamplingModule downsampling_module(downsampling_scale, image_size);
   const cv::Mat downsampling_matrix =
-      downsampling_module->GetOperatorMatrix(image_size, 0);
-  image_model.AddDegradationOperator(std::move(downsampling_module));
+      downsampling_module.GetOperatorMatrix(image_size, 0);
+  image_model.AddDegradationOperator(downsampling_module);
 
   // Generate the low-res images using the image model.
   const std::vector<ImageData> low_res_images {
@@ -310,14 +308,12 @@ TEST(MapSolver, RealBigImageTest) {
     super_resolution::MotionShift(0, 1),
     super_resolution::MotionShift(1, 1)
   });
-  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
-      new super_resolution::MotionModule(motion_shift_sequence));
-  image_model.AddDegradationOperator(std::move(motion_module));
+  const MotionModule motion_module(motion_shift_sequence);
+  image_model.AddDegradationOperator(motion_module);
 
-  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(
-          downsampling_scale, ground_truth.GetImageSize()));
-  image_model.AddDegradationOperator(std::move(downsampling_module));
+  const DownsamplingModule downsampling_module(
+      downsampling_scale, ground_truth.GetImageSize());
+  image_model.AddDegradationOperator(downsampling_module);
 
   // Generate the low-res images using the image model.
   const std::vector<ImageData> low_res_images {
@@ -390,19 +386,16 @@ TEST(MapSolver, RegularizationTest) {
     super_resolution::MotionShift(2, 1),
     super_resolution::MotionShift(2, 2)
   });
-  std::unique_ptr<super_resolution::DegradationOperator> motion_module(
-      new super_resolution::MotionModule(motion_shift_sequence));
-  image_model.AddDegradationOperator(std::move(motion_module));
+  const MotionModule motion_module(motion_shift_sequence);
+  image_model.AddDegradationOperator(motion_module);
 
   // Blur.
-  std::unique_ptr<super_resolution::DegradationOperator> blur_module(
-      new super_resolution::BlurModule(3, 3));
-  image_model.AddDegradationOperator(std::move(blur_module));
+  const BlurModule blur_module(3, 3);
+  image_model.AddDegradationOperator(blur_module);
 
   // Downsampling.
-  std::unique_ptr<super_resolution::DegradationOperator> downsampling_module(
-      new super_resolution::DownsamplingModule(downsampling_scale, image_size));
-  image_model.AddDegradationOperator(std::move(downsampling_module));
+  const DownsamplingModule downsampling_module(downsampling_scale, image_size);
+  image_model.AddDegradationOperator(downsampling_module);
 
   // Generate the low-res images using the image model.
   const int num_images = motion_shift_sequence.GetNumMotionShifts();
