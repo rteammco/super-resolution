@@ -277,8 +277,64 @@ TEST(ImageData, FromOpenCvImageConstructor) {
 // This test verifies that the image is correctly resized, with one or more
 // channels.
 TEST(ImageData, ResizeImage) {
-  // TODO: implement.
-  // ResizeImage(scale, interp.meth)
+  const cv::Mat image_pixels = (cv::Mat_<double>(4, 4)
+      << 0.1, 0.2, 0.3, 0.4,
+         0.5, 0.6, 0.7, 0.8,
+         0.9, 1.0, 0.0, 0.2,
+         0.4, 0.6, 0.8, 1.0);
+  ImageData image;
+  const int num_channels = 10;
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    image.AddChannel(image_pixels);
+  }
+
+  /* Verify that downsampling works. */
+
+  const cv::Mat expected_smaller_image = (cv::Mat_<double>(2, 2)
+      << 0.1, 0.3,
+         0.9, 0.0);
+  // Try with cv::Size(2, 2).
+  ImageData smaller_image_1 = image;  // copy
+  smaller_image_1.ResizeImage(cv::Size(2, 2), cv::INTER_NEAREST);
+  // Try with scale factor of 0.5.
+  ImageData smaller_image_2 = image;
+  smaller_image_2.ResizeImage(0.5, cv::INTER_NEAREST);
+  // Check results.
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        smaller_image_1.GetChannelImage(channel_index),
+        expected_smaller_image));
+    EXPECT_TRUE(AreMatricesEqual(
+        smaller_image_2.GetChannelImage(channel_index),
+        expected_smaller_image));
+  }
+
+  /* Verify that upsampling works. */
+
+  const cv::Mat expected_bigger_image = (cv::Mat_<double>(8, 8)
+      << 0.1, 0.1, 0.2, 0.2, 0.3, 0.3, 0.4, 0.4,
+         0.1, 0.1, 0.2, 0.2, 0.3, 0.3, 0.4, 0.4,
+         0.5, 0.5, 0.6, 0.6, 0.7, 0.7, 0.8, 0.8,
+         0.5, 0.5, 0.6, 0.6, 0.7, 0.7, 0.8, 0.8,
+         0.9, 0.9, 1.0, 1.0, 0.0, 0.0, 0.2, 0.2,
+         0.9, 0.9, 1.0, 1.0, 0.0, 0.0, 0.2, 0.2,
+         0.4, 0.4, 0.6, 0.6, 0.8, 0.8, 1.0, 1.0,
+         0.4, 0.4, 0.6, 0.6, 0.8, 0.8, 1.0, 1.0);
+  // Try with cv::Size(8, 8).
+  ImageData bigger_image_1 = image;
+  bigger_image_1.ResizeImage(cv::Size(8, 8), cv::INTER_NEAREST);
+  // Try with scale factor of 2.0.
+  ImageData bigger_image_2 = image;
+  bigger_image_2.ResizeImage(2.0, cv::INTER_NEAREST);
+  // Check results.
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        bigger_image_1.GetChannelImage(channel_index),
+        expected_bigger_image));
+    EXPECT_TRUE(AreMatricesEqual(
+        bigger_image_2.GetChannelImage(channel_index),
+        expected_bigger_image));
+  }
 }
 
 // This test verifies that the GetCroppedPatch method correctly returns cropped
