@@ -22,8 +22,8 @@ void AlglibObjectiveFunction(
 
   // Need to zero out the residual sum and the gradient vector.
   residual_sum = 0;
-  const int num_pixels = irls_map_solver->GetNumPixels();
-  for (int i = 0; i < num_pixels; ++i) {
+  const int num_data_points = irls_map_solver->GetNumDataPoints();
+  for (int i = 0; i < num_data_points; ++i) {
     gradient[i] = 0;
   }
 
@@ -34,7 +34,7 @@ void AlglibObjectiveFunction(
         irls_map_solver->ComputeDataTerm(
             image_index, estimated_data.getcontent());
     residual_sum += residual_sum_and_gradient.first;
-    for (int i = 0; i < num_pixels; ++i) {
+    for (int i = 0; i < num_data_points; ++i) {
       gradient[i] += residual_sum_and_gradient.second[i];
     }
   }
@@ -43,7 +43,7 @@ void AlglibObjectiveFunction(
   const std::pair<double, std::vector<double>> residual_sum_and_gradient =
       irls_map_solver->ComputeRegularization(estimated_data.getcontent());
   residual_sum += residual_sum_and_gradient.first;
-  for (int i = 0; i < num_pixels; ++i) {
+  for (int i = 0; i < num_data_points; ++i) {
     gradient[i] += residual_sum_and_gradient.second[i];
   }
 

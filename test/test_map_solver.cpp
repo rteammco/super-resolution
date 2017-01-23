@@ -118,19 +118,17 @@ TEST(MapSolver, SmallDataTest) {
          0.0, 0.0, 0.0, 0.0,
          0.0, 0.0, 0.0, 0.0,
          0.0, 0.0, 0.0, 0.0);
-  ImageData initial_estimate(initial_estimate_matrix);
+  const ImageData initial_estimate(initial_estimate_matrix);
 
   // Create the solver for the model and low-res images.
   super_resolution::IrlsMapSolver solver(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   const ImageData result = solver.Solve(initial_estimate);
 
-  for (int pixel_index = 0; pixel_index < 16; ++pixel_index) {
-    EXPECT_NEAR(
-        result.GetPixelValue(0, pixel_index),
-        ground_truth_image.GetPixelValue(0, pixel_index),
-        kSolverResultErrorTolerance);
-  }
+  EXPECT_TRUE(AreMatricesEqual(
+      result.GetChannelImage(0),
+      ground_truth_matrix,
+      kSolverResultErrorTolerance));
 
   /* Repeat the same tests, but this time with multiple channels. */
 
@@ -164,13 +162,10 @@ TEST(MapSolver, SmallDataTest) {
 
   EXPECT_EQ(result_multichannel.GetNumChannels(), num_channels);
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
-    for (int pixel_index = 0; pixel_index < 16; ++pixel_index) {
-      EXPECT_NEAR(
-          result_multichannel.GetPixelValue(channel_index, pixel_index),
-          ground_truth_image_multichannel.GetPixelValue(
-              channel_index, pixel_index),
-          kSolverResultErrorTolerance);
-    }
+    EXPECT_TRUE(AreMatricesEqual(
+        result_multichannel.GetChannelImage(channel_index),
+        ground_truth_matrix,
+        kSolverResultErrorTolerance));
   }
 }
 

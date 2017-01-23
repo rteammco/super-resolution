@@ -250,8 +250,6 @@ TEST(ImageModel, DownsamplingModule) {
 }
 
 // Tests the implemented functionality of the MotionModule.
-// TODO: implement ApplyToImage test.
-// TODO: implement ApplyTransposeToImage test.
 TEST(ImageModel, MotionModule) {
   /* Verify that the returned patch radius is correct. */
 
@@ -458,7 +456,8 @@ TEST(ImageModel, BlurModule) {
 // return the right values of the degraded image. This does not test the
 // method's efficiency, but verifies its correctness and compares the two
 // functions to make sure they both return the same values.
-TEST(ImageModel, ApplyModel) {
+// TODO: implement ApplyTransposeToImage test.
+TEST(ImageModel, ApplyToImage) {
   // TODO: finish implementing this and fix the test.
   /*
   const super_resolution::ImageData input_image(kSmallTestImage);

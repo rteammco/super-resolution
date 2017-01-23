@@ -47,22 +47,37 @@ class MapSolver : public Solver {
       std::unique_ptr<Regularizer> regularizer,
       const double regularization_parameter);
 
+  // Returns the number of pixels in a single image channel. This is NOT the
+  // total number of pixels in the entire image.
   int GetNumPixels() const {
     return image_size_.width * image_size_.height;
   }
 
+  // Returns the spatial size (width, height) of the image.
+  cv::Size GetImageSize() const {
+    return image_size_;
+  }
+
+  // Returns the number of channels (spectral bands) in each observation image.
+  // This will be the number of channels in the high-resolution estimate.
   int GetNumChannels() const {
     return num_channels_;
   }
 
+  // Returns the number of observations (low-resolution images) in the solver
+  // system.
   int GetNumImages() const {
     return observations_.size();
   }
 
+  // Returns the number of data points, which is the total number of pixels in
+  // an image across all channels.
+  int GetNumDataPoints() const {
+    return GetNumPixels() * GetNumChannels();
+  }
+
  protected:
   const MapSolverOptions solver_options_;
-
-  // TODO: maybe make the following private and use getters for accessing them?
 
   // All regularization terms and their respective regularization parameters to
   // be applied in the cost function.
@@ -72,6 +87,7 @@ class MapSolver : public Solver {
   // function.
   std::vector<ImageData> observations_;
 
+ private:
   // This is the size of the HR image that is being estimated.
   cv::Size image_size_;
 

@@ -29,12 +29,15 @@ IrlsMapSolver::IrlsMapSolver(
       solver_options, image_model, low_res_images, print_solver_output) {
 
   // Initialize IRLS weights to 1.
-  irls_weights_.resize(GetNumPixels());
+  irls_weights_.resize(GetNumPixels() * GetNumChannels());
   std::fill(irls_weights_.begin(), irls_weights_.end(), 1.0);
 }
 
 ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
-  CHECK_EQ(initial_estimate.GetNumChannels(), num_channels_);
+  const int num_pixels = GetNumPixels();
+  const int num_channels = GetNumChannels();
+  CHECK_EQ(initial_estimate.GetNumPixels(), GetNumPixels());
+  CHECK_EQ(initial_estimate.GetNumChannels(), GetNumChannels());
 
   // Reset all weights to 1.0.
   std::fill(irls_weights_.begin(), irls_weights_.end(), 1.0);
@@ -49,15 +52,12 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
 
   // Copy the initial estimate data to the solver's array.
   alglib::real_1d_array solver_data;
-  const int num_pixels = GetNumPixels();
-  const int num_data_points = num_pixels * num_channels_;
+  const int num_data_points = GetNumDataPoints();
   solver_data.setlength(num_data_points);
-  for (int channel_index = 0; channel_index < num_channels_; ++channel_index) {
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     double* data_ptr = solver_data.getcontent() + (num_pixels * channel_index);
-    std::copy(
-        data_ptr,
-        data_ptr + num_pixels,
-        initial_estimate.GetMutableDataPointer(channel_index));
+    double* channel_ptr = initial_estimate.GetMutableDataPointer(channel_index);
+    std::copy(channel_ptr, channel_ptr + num_pixels, data_ptr);
   }
 
   alglib::mincgstate solver_state;
@@ -89,7 +89,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   alglib::mincgresults(solver_state, solver_data, solver_report);
 
   const ImageData estimated_image(
-      solver_data.getcontent(), image_size_, num_channels_);
+      solver_data.getcontent(), GetImageSize(), num_channels);
   return estimated_image;
 }
 
@@ -100,41 +100,42 @@ std::pair<double, std::vector<double>> IrlsMapSolver::ComputeDataTerm(
   CHECK_NOTNULL(estimated_image_data);
 
   // Degrade (and re-upsample) the HR estimate with the image model.
-  ImageData degraded_hr_image(estimated_image_data, image_size_, num_channels_);
+  const int num_channels = GetNumChannels();
+  const cv::Size image_size = GetImageSize();
+  ImageData degraded_hr_image(estimated_image_data, image_size, num_channels);
   image_model_.ApplyToImage(&degraded_hr_image, image_index);
-  degraded_hr_image.ResizeImage(image_size_, cv::INTER_NEAREST);
-
-  const int num_pixels = GetNumPixels();
+  degraded_hr_image.ResizeImage(image_size, cv::INTER_NEAREST);
 
   // Compute the individual residuals by comparing pixel values. Sum them up
   // for the final residual sum.
   double residual_sum = 0;
-  std::vector<double> residuals;
-  residuals.reserve(num_pixels);
-  for (int channel_index = 0; channel_index < num_channels_; ++channel_index) {
+  const int num_data_points = GetNumDataPoints();
+  std::vector<double> residuals(num_data_points);
+  const int num_pixels = GetNumPixels();
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       const double residual =
           degraded_hr_image.GetPixelValue(channel_index, pixel_index) -
           observations_.at(image_index).GetPixelValue(
               channel_index, pixel_index);
-      residuals.push_back(residual);
+      const int data_index = channel_index * num_pixels + pixel_index;
+      residuals[data_index] = residual;
       residual_sum += (residual * residual);
     }
   }
 
   // Apply transpose operations to the residual image. This is used to compute
   // the gradient.
-  ImageData residual_image(residuals.data(), image_size_, num_channels_);
+  ImageData residual_image(residuals.data(), image_size, num_channels);
   const int scale = image_model_.GetDownsamplingScale();
   residual_image.ResizeImage(cv::Size(
-      image_size_.width / scale,
-      image_size_.height / scale));
+      image_size.width / scale,
+      image_size.height / scale));
   image_model_.ApplyTransposeToImage(&residual_image, image_index);
 
   // Build the gradient vector.
-  std::vector<double> gradient(num_pixels * num_channels_);
-  std::fill(gradient.begin(), gradient.end(), 0);
-  for (int channel_index = 0; channel_index < num_channels_; ++channel_index) {
+  std::vector<double> gradient(num_data_points);
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       const double gradient_at_pixel =
           2 * residual_image.GetPixelValue(channel_index, pixel_index);
@@ -153,7 +154,7 @@ std::pair<double, std::vector<double>> IrlsMapSolver::ComputeRegularization(
 
   // TODO: multiple channels.
   const int num_pixels = GetNumPixels();
-  std::vector<double> gradient(num_pixels);
+  std::vector<double> gradient(GetNumDataPoints());
   double residual_sum = 0;
 
   // Apply each regularizer individually.
