@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "image/image_data.h"
+#include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
@@ -18,6 +19,7 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
+using super_resolution::AdditiveNoiseModule;
 using super_resolution::BlurModule;
 using super_resolution::DownsamplingModule;
 using super_resolution::ImageData;
@@ -397,12 +399,16 @@ TEST(MapSolver, RegularizationTest) {
   const DownsamplingModule downsampling_module(downsampling_scale, image_size);
   image_model.AddDegradationOperator(downsampling_module);
 
+  super_resolution::ImageModel image_model_with_noise = image_model;
+  const super_resolution::AdditiveNoiseModule noise_module(10);
+  image_model_with_noise.AddDegradationOperator(noise_module);
+
   // Generate the low-res images using the image model.
   const int num_images = motion_shift_sequence.GetNumMotionShifts();
   std::vector<ImageData> low_res_images;
   for (int i = 0; i < num_images; ++i) {
     const super_resolution::ImageData low_res_image =
-        image_model.ApplyToImage(ground_truth, i);
+        image_model_with_noise.ApplyToImage(ground_truth, i);
     low_res_images.push_back(low_res_image);
   }
 
