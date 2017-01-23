@@ -50,39 +50,6 @@ void ImageModel::ApplyTransposeToImage(
   }
 }
 
-double ImageModel::ApplyToPixel(
-    const ImageData& image_data,
-    const int image_index,
-    const int channel_index,
-    const int pixel_index) const {
-
-  // Sum up the patch radii required by each operator and create a patch of
-  // that size cropped out from the given image data.
-  int patch_radius = 0;
-  for (const auto& degradation_operator : degradation_operators_) {
-    patch_radius += degradation_operator->GetPixelPatchRadius();
-  }
-
-  // TODO: implement all of this and test it. That's hopefully the solution! :)
-  // TODO: if making patches is too inefficient, maybe we can just do this
-  // directly (manually) on the array.
-  const int patch_size = patch_radius * 2 + 1;
-  // TODO: channel 0!
-  cv::Mat patch = image_data.GetCroppedPatch(
-      0, pixel_index, cv::Size(patch_size, patch_size));
-
-  // Apply each degradation operator on the patch. The patch gets transformed
-  // and resized after every operator.
-  for (const auto& degradation_operator : degradation_operators_) {
-    patch = degradation_operator->ApplyToPatch(
-        patch, image_index, channel_index, pixel_index);
-  }
-
-  // The resulting patch should be just a single pixel.
-  CHECK(patch.size() == cv::Size(1, 1));
-  return patch.at<double>(0);
-}
-
 cv::Mat ImageModel::GetModelMatrix(
     const cv::Size& image_size, const int index) const {
 

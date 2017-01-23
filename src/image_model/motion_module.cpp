@@ -47,46 +47,6 @@ void MotionModule::ApplyTransposeToImage(
   ApplyWarpKernel(reverse_shift_kernel, image_data);
 }
 
-int MotionModule::GetPixelPatchRadius() const {
-  int radius = 0;
-  const int num_motion_shifts = motion_shift_sequence_.GetNumMotionShifts();
-  for (int i = 0; i < num_motion_shifts; ++i) {
-    const MotionShift motion_shift = motion_shift_sequence_[i];
-    const int dx = static_cast<int>(ceil(std::abs(motion_shift.dx)));
-    const int dy = static_cast<int>(ceil(std::abs(motion_shift.dx)));
-    radius = std::max(radius, std::max(dx, dy));
-  }
-  return radius;
-}
-
-cv::Mat MotionModule::ApplyToPatch(
-    const cv::Mat& patch,
-    const int image_index,
-    const int channel_index,
-    const int pixel_index) const {
-
-  const int patch_radius = GetPixelPatchRadius();
-  const cv::Size patch_size = patch.size();
-  CHECK_GE((patch_size.width / 2), patch_radius)
-      << "Patch is too small to apply motion module.";
-  CHECK_GE((patch_size.height / 2), patch_radius)
-      << "Patch is too small to apply motion module.";
-
-  // Apply the motion warp to the patch.
-  const MotionShift motion_shift = motion_shift_sequence_[image_index];
-  const cv::Mat shift_kernel = (cv::Mat_<double>(2, 3)
-      << 1, 0, motion_shift.dx,
-         0, 1, motion_shift.dy);
-  cv::Mat degraded_patch;
-  cv::warpAffine(patch, degraded_patch, shift_kernel, patch_size);
-
-  // Crop out only the relevant part of the patch.
-  const int degraded_patch_width = patch_size.width - (patch_radius * 2);
-  const int degraded_patch_height = patch_size.height - (patch_radius * 2);
-  return degraded_patch(cv::Rect(
-      patch_radius, patch_radius, degraded_patch_width, degraded_patch_height));
-}
-
 cv::Mat MotionModule::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 

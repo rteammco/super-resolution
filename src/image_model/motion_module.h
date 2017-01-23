@@ -24,20 +24,6 @@ class MotionModule : public DegradationOperator {
   virtual void ApplyTransposeToImage(
       ImageData* image_data, const int index) const;
 
-  // The radius is the maximum possible pixel shift in either direction. Rounds
-  // up to the nearest whole integer value if the shifts are sub-pixel amounts.
-  //
-  // TODO: if we're given an image index, we can return a potentially smaller
-  // radius for some images with a smaller motion shift.
-  virtual int GetPixelPatchRadius() const;
-
-  // TODO: implement.
-  virtual cv::Mat ApplyToPatch(
-    const cv::Mat& patch,
-    const int image_index,
-    const int channel_index,
-    const int pixel_index) const;
-
   virtual cv::Mat GetOperatorMatrix(
       const cv::Size& image_size, const int index) const;
 

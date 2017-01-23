@@ -49,21 +49,6 @@ class ImageModel {
   // transpose implementations must be defined in every DegradationOperator.
   void ApplyTransposeToImage(ImageData* image_data, const int index) const;
 
-  // Return the pixel value at the given channel and pixel index after applying
-  // the image model for the given image_index.
-  //
-  // This method is effectively identical to calling ApplyToImage and then
-  // extracting a single pixel from that result. However, this implementation
-  // is very efficient by only processing pixels of the given image that
-  // influence the pixel in question.
-  //
-  // TODO: this method may be obsolete due to the changes in the solver.
-  double ApplyToPixel(
-      const ImageData& image_data,
-      const int image_index,
-      const int channel_index,
-      const int pixel_index) const;
-
   // NOTE: This function is very slow, and its only purpose is to test solver
   // implementations on very small data sets. Some operators may not support
   // parameters exceeding a certain matrix size.

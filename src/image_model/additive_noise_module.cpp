@@ -43,16 +43,4 @@ void AdditiveNoiseModule::ApplyTransposeToImage(
   // TODO: implement.
 }
 
-cv::Mat AdditiveNoiseModule::ApplyToPatch(
-    const cv::Mat& patch,
-    const int image_index,
-    const int channel_index,
-    const int pixel_index) const {
-
-  // TODO: implement.
-  LOG(WARNING) << "Method not implemented. Returning empty patch.";
-  const cv::Mat empty_patch;
-  return empty_patch;
-}
-
 }  // namespace super_resolution

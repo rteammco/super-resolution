@@ -40,18 +40,6 @@ class MockDegradationOperator : public super_resolution::DegradationOperator {
       ApplyTransposeToImage,
       void(super_resolution::ImageData* image_data, const int index));
 
-  // We also have to mock this because it's pure virtual.
-  MOCK_CONST_METHOD4(
-      ApplyToPatch,
-      cv::Mat(
-          const cv::Mat& patch,
-          const int image_index,
-          const int channel_index,
-          const int pixel_index));
-
-  // We also have to mock this because it's pure virtual.
-  MOCK_CONST_METHOD0(GetPixelPatchRadius, int());
-
   // Returns a cv::Mat degradation operator in matrix form.
   MOCK_CONST_METHOD2(
       GetOperatorMatrix, cv::Mat(const cv::Size& image_size, const int index));
@@ -93,24 +81,13 @@ TEST(ImageModel, AdditiveNoiseModule) {
   // Patch radius for single pixel degradation should be 0 since it only needs
   // the pixel value itself.
   const super_resolution::AdditiveNoiseModule additive_noise_module(5);
-  EXPECT_EQ(additive_noise_module.GetPixelPatchRadius(), 0);
-
-  // TODO: implement other tests.
+  // TODO: implement tests.
 }
 
 TEST(ImageModel, DownsamplingModule) {
   const cv::Size image_size(5, 5);
 
   /* Verify functionality of downsampling a single patch. */
-
-  // Patch radius for single pixel degradation should be s/2 where s is the
-  // downsampling scale.
-  for (int scale = 1; scale <= 5; ++scale) {
-    const super_resolution::DownsamplingModule downsampling_module(
-        scale, image_size);
-    const int expected_radius = scale - 1;
-    EXPECT_EQ(downsampling_module.GetPixelPatchRadius(), expected_radius);
-  }
 
   const super_resolution::DownsamplingModule downsampling_module(2, image_size);
 
@@ -137,7 +114,7 @@ TEST(ImageModel, DownsamplingModule) {
   //   |   |   |   |   |   |
   //   | x |   | x |   | x |
   const cv::Mat expected_patch_1 = (cv::Mat_<double>(1, 1) << 0.2);
-  const cv::Mat output_patch_1 =
+/*  const cv::Mat output_patch_1 =
       downsampling_module.ApplyToPatch(test_patch, 0, 0, 6);
   EXPECT_TRUE(AreMatricesEqual(output_patch_1, expected_patch_1));
 
@@ -191,6 +168,7 @@ TEST(ImageModel, DownsamplingModule) {
   const cv::Mat output_patch_6 =
       downsampling_module.ApplyToPatch(test_patch, 0, 0, 24);
   EXPECT_TRUE(AreMatricesEqual(output_patch_6, expected_patch_6));
+*/
 
   /* Verify that the returned operator matrix is correct. */
 
@@ -253,28 +231,12 @@ TEST(ImageModel, DownsamplingModule) {
 TEST(ImageModel, MotionModule) {
   /* Verify that the returned patch radius is correct. */
 
-  // Patch radius even for negative values should always be the max abs shift
-  // possible. In this case, -2.2 is the largest, so the shift should round up
-  // to 3.
-  super_resolution::MotionShiftSequence radius_test_motion_shift_sequence({
-    super_resolution::MotionShift(1, 1),
-    super_resolution::MotionShift(1, -1),
-    super_resolution::MotionShift(-2.2, -1)
-  });
-  const super_resolution::MotionModule radius_test_motion_module(
-      radius_test_motion_shift_sequence);
-  EXPECT_EQ(radius_test_motion_module.GetPixelPatchRadius(), 3);
-
   super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
     super_resolution::MotionShift(1, 1),
     super_resolution::MotionShift(-1, 0)
   });
   const super_resolution::MotionModule motion_module(motion_shift_sequence);
-
-  // This test motion module should have a patch radius of 1, since 1 is the
-  // largest motion shift in either direction.
-  EXPECT_EQ(motion_module.GetPixelPatchRadius(), 1);
 
   /* Verify that ApplyToPatch correctly applies motion as expected. */
 
@@ -286,7 +248,7 @@ TEST(ImageModel, MotionModule) {
   // For motion shift (0, 0), nothing should move. Since radius is 1, expect a
   // single-value matrix containing the middle element, 0.9.
   const cv::Mat expected_patch_1 = (cv::Mat_<double>(1, 1) << 0.9);
-  const cv::Mat returned_patch_1 =
+/*  const cv::Mat returned_patch_1 =
       motion_module.ApplyToPatch(input_patch_3x3, 0, 0, 0);
   EXPECT_TRUE(AreMatricesEqual(expected_patch_1, returned_patch_1));
 
@@ -322,6 +284,7 @@ TEST(ImageModel, MotionModule) {
   const cv::Mat returned_patch_4 =
       motion_module.ApplyToPatch(input_patch_5x5, 2, 0, 0);
   EXPECT_TRUE(AreMatricesEqual(expected_patch_4, returned_patch_4));
+*/
 
   /* Verify that the correct motion operator matrices are returned. */
 
@@ -387,14 +350,6 @@ TEST(ImageModel, MotionModule) {
 }
 
 TEST(ImageModel, BlurModule) {
-  // Patch radius for single pixel degradation should be the same size as the
-  // blur kernel radius. Note that radius must be odd.
-  for (int blur_radius = 1; blur_radius <= 9; blur_radius += 2) {
-    const double sigma = (blur_radius - 0.5) * 3;  // sigma doesn't matter
-    const super_resolution::BlurModule blur_module(blur_radius, sigma);
-    EXPECT_EQ(blur_module.GetPixelPatchRadius(), blur_radius);
-  }
-
   /* Verify that blur operator works as expected. */
 
   // For a 3x3 kernel, a sigma of 0.849321 is almost exactly the "standard"

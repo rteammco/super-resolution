@@ -35,18 +35,6 @@ void BlurModule::ApplyTransposeToImage(
   util::ApplyConvolutionToImage(image_data, blur_kernel_.t());
 }
 
-cv::Mat BlurModule::ApplyToPatch(
-    const cv::Mat& patch,
-    const int image_index,
-    const int channel_index,
-    const int pixel_index) const {
-
-  // TODO: implement.
-  LOG(WARNING) << "Method not implemented. Returning empty patch.";
-  const cv::Mat empty_patch;
-  return empty_patch;
-}
-
 cv::Mat BlurModule::GetOperatorMatrix(
     const cv::Size& image_size, const int index) const {
 

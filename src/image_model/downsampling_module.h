@@ -24,22 +24,6 @@ class DownsamplingModule : public DegradationOperator {
   virtual void ApplyTransposeToImage(
       ImageData* image_data, const int index) const;
 
-  // The radius depends on the scale. For example, a 2x downsampling requires
-  // at least 2 pixels - the center pixel and one other in any direction to
-  // account for different subsampling shifts. Hence, a radius of at least 1 is
-  // required. A 3x downsampling operator would require 2 pixels on either side
-  // of the center pixel, so the radius would be 2.
-  virtual int GetPixelPatchRadius() const {
-    return scale_  - 1;
-  }
-
-  // TODO: implementation only works for scale = 2 and 3x3 patches for now.
-  virtual cv::Mat ApplyToPatch(
-    const cv::Mat& patch,
-    const int image_index,
-    const int channel_index,
-    const int pixel_index) const;
-
   virtual cv::Mat GetOperatorMatrix(
       const cv::Size& image_size, const int index) const;
 
