@@ -43,8 +43,8 @@ class MapSolver : public Solver {
       const bool print_solver_output = true);
 
   // Adds a regularizer term to the objective function.
-  void AddRegularizer(  // TODO: virtual or not?
-      std::unique_ptr<Regularizer> regularizer,
+  virtual void AddRegularizer(
+      const Regularizer& regularizer,
       const double regularization_parameter);
 
   // Returns the number of pixels in a single image channel. This is NOT the
@@ -81,7 +81,7 @@ class MapSolver : public Solver {
 
   // All regularization terms and their respective regularization parameters to
   // be applied in the cost function.
-  std::vector<std::pair<std::unique_ptr<Regularizer>, double>> regularizers_;
+  std::vector<std::pair<const Regularizer*, double>> regularizers_;
 
   // The observed LR images scaled up to the HR image size for use in the cost
   // function.

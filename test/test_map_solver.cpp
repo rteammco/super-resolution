@@ -415,10 +415,9 @@ TEST(MapSolver, RegularizationTest) {
   super_resolution::IrlsMapSolver solver(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   // Add regularizer.
-  std::unique_ptr<super_resolution::TotalVariationRegularizer> regularizer(
-      new super_resolution::TotalVariationRegularizer(
-          image_size, ground_truth.GetNumChannels()));
-  solver.AddRegularizer(std::move(regularizer), 0.01);
+  const super_resolution::TotalVariationRegularizer regularizer(
+      image_size, ground_truth.GetNumChannels());
+  solver.AddRegularizer(regularizer, 0.01);
   // Solve.
   const ImageData solver_result = solver.Solve(initial_estimate);
 
@@ -516,7 +515,7 @@ TEST(MapSolver, IrlsComputeDataTerm) {
 // Verifies that the IrlsMapSolver returns the correct regularization residuals.
 TEST(MapSolver, IrlsComputeRegularization) {
   // Mocked Regularizer.
-  std::unique_ptr<MockRegularizer> mock_regularizer(new MockRegularizer());
+  MockRegularizer mock_regularizer;
   const double image_data[5] = {1, 2, 3, 4, 5};
   const double lambda = 0.5;  // Regularization parameter.
 
@@ -544,7 +543,7 @@ TEST(MapSolver, IrlsComputeRegularization) {
   };
 
   // First expected call before reweighting.
-  EXPECT_CALL(*mock_regularizer, ApplyToImageWithDifferentiation(
+  EXPECT_CALL(mock_regularizer, ApplyToImageWithDifferentiation(
       image_data,
       gradient_constants_1,
       super_resolution::AUTOMATIC_DIFFERENTIATION))
@@ -552,7 +551,7 @@ TEST(MapSolver, IrlsComputeRegularization) {
 
   /* Test 2 will just return the residuals used to update the weights. */
 
-  EXPECT_CALL(*mock_regularizer, ApplyToImage(image_data))
+  EXPECT_CALL(mock_regularizer, ApplyToImage(image_data))
       .WillOnce(Return(residuals));
 
   // New weights should now be as follows:
@@ -588,7 +587,7 @@ TEST(MapSolver, IrlsComputeRegularization) {
       residuals[4] * residuals[4] * updated_weights[4] * lambda;
 
   // Second call after reweighting.
-  EXPECT_CALL(*mock_regularizer, ApplyToImageWithDifferentiation(
+  EXPECT_CALL(mock_regularizer, ApplyToImageWithDifferentiation(
       image_data,
       gradient_constants_2,
       super_resolution::AUTOMATIC_DIFFERENTIATION))
@@ -604,8 +603,7 @@ TEST(MapSolver, IrlsComputeRegularization) {
       kDefaultSolverOptions,
       empty_image_model,
       low_res_images);
-  irls_map_solver.AddRegularizer(
-      std::move(mock_regularizer), lambda);
+  irls_map_solver.AddRegularizer(mock_regularizer, lambda);
 
   /* Run TEST 1 */
 
