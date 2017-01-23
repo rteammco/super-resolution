@@ -152,26 +152,24 @@ std::pair<double, std::vector<double>> IrlsMapSolver::ComputeRegularization(
 
   CHECK_NOTNULL(estimated_image_data);
 
-  // TODO: multiple channels.
-  const int num_pixels = GetNumPixels();
-  std::vector<double> gradient(GetNumDataPoints());
-  double residual_sum = 0;
+  const int num_data_points = GetNumDataPoints();
+  std::vector<double> gradient(num_data_points);
 
   // Apply each regularizer individually.
-  for (int i = 0; i < regularizers_.size(); ++i) {
-    const double regularization_parameter = regularizers_[i].second;
+  double residual_sum = 0;
+  for (const auto& regularizer_and_parameter : regularizers_) {
+    const double regularization_parameter = regularizer_and_parameter.second;
 
     // Precompute the constant terms in the gradients at each pixel. This is
     // the regularization parameter (lambda) and the IRLS weights.
-    std::vector<double> gradient_constants(num_pixels);
-    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-      gradient_constants[pixel_index] =
-          regularization_parameter * irls_weights_.at(pixel_index);
+    std::vector<double> gradient_constants(num_data_points);
+    for (int i = 0; i < num_data_points; ++i) {
+      gradient_constants[i] = regularization_parameter * irls_weights_.at(i);
     }
 
     // Compute the residuals and squared residual sum.
     std::pair<std::vector<double>, std::vector<double>> values_and_partials =
-        regularizers_[i].first->ApplyToImageWithDifferentiation(
+        regularizer_and_parameter.first->ApplyToImageWithDifferentiation(
             estimated_image_data, gradient_constants);
 
     // The values are the regularizer values at each pixel and the partials are
@@ -179,13 +177,12 @@ std::pair<double, std::vector<double>> IrlsMapSolver::ComputeRegularization(
     const std::vector<double>& values = values_and_partials.first;
     const std::vector<double>& partials = values_and_partials.second;
 
-    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-      const double residual = values[pixel_index];
-      const double weight = irls_weights_.at(pixel_index);
+    for (int i = 0; i < num_data_points; ++i) {
+      const double residual = values[i];
+      const double weight = irls_weights_.at(i);
 
       residual_sum += regularization_parameter * weight * residual * residual;
-
-      gradient[pixel_index] += partials[pixel_index];
+      gradient[i] += partials[i];
     }
   }
 
@@ -199,17 +196,18 @@ void IrlsMapSolver::UpdateIrlsWeights(const double* estimated_image_data) {
   // norm based on the regularizer's properties.
   // TODO: also, this assumes a single regularization term. Scale it up to more
   // (which means we need separate weights for each one).
-  const int num_pixels = GetNumPixels();
-  for (int i = 0; i < regularizers_.size(); ++i) {
+  const int num_data_points = GetNumDataPoints();
+  // TODO: loop w/ c++11.
+  for (const auto& regularizer_and_parameter : regularizers_) {
     std::vector<double> regularization_residuals =
-        regularizers_[i].first->ApplyToImage(estimated_image_data);
-    CHECK_EQ(regularization_residuals.size(), num_pixels)
+        regularizer_and_parameter.first->ApplyToImage(estimated_image_data);
+    CHECK_EQ(regularization_residuals.size(), num_data_points)
         << "Number of residuals does not match number of weights.";
-    for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+    for (int i = 0; i < num_data_points; ++i) {
       // TODO: this assumes L1 loss!
       // w = |r|^(p-2)
-      irls_weights_[pixel_index] = 1.0 / std::max(
-          kMinResidualValue, regularization_residuals[pixel_index]);
+      irls_weights_[i] =
+          1.0 / std::max(kMinResidualValue, regularization_residuals[i]);
     }
   }
 }

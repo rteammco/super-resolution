@@ -47,8 +47,9 @@ static const std::string kTestImagePath = "../test_data/goat.jpg";
 
 class MockRegularizer : public super_resolution::Regularizer {
  public:
-  // Handle super constructor, since we don't need the image_size_ field.
-  MockRegularizer() : super_resolution::Regularizer(cv::Size(0, 0)) {}
+  // Handle super constructor, since we don't need the image_size_ or the
+  // num_channels_ fields.
+  MockRegularizer() : super_resolution::Regularizer(cv::Size(0, 0), 1) {}
 
   MOCK_CONST_METHOD1(
       ApplyToImage, std::vector<double>(const double* image_data));
@@ -422,7 +423,8 @@ TEST(MapSolver, RegularizationTest) {
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   // Add regularizer.
   std::unique_ptr<super_resolution::TotalVariationRegularizer> regularizer(
-      new super_resolution::TotalVariationRegularizer(image_size));
+      new super_resolution::TotalVariationRegularizer(
+          image_size, ground_truth.GetNumChannels()));
   solver.AddRegularizer(std::move(regularizer), 0.01);
   // Solve.
   const ImageData solver_result = solver.Solve(initial_estimate);

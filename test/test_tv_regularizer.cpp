@@ -47,7 +47,7 @@ const std::vector<double> test_image_expected_residuals = {
 // for an image.
 TEST(TotalVariationRegularizer, ApplyToImage) {
   const super_resolution::TotalVariationRegularizer tv_regularizer(
-      test_image_size);
+      test_image_size, 1);  // TODO: testing only 1 channel. Test multiple.
   const std::vector<double> returned_residuals =
       tv_regularizer.ApplyToImage(test_image_data);
   EXPECT_THAT(returned_residuals, ContainerEq(test_image_expected_residuals));
@@ -56,7 +56,7 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
 // Verifies that the derivatives are also being computed correctly.
 TEST(TotalVariationRegularizer, ApplyToImageWithDifferentiation) {
   const super_resolution::TotalVariationRegularizer tv_regularizer(
-      test_image_size);
+      test_image_size, 1);  // TODO: testing only 1 channel. Test multiple.
 
   // Given the following indices of the image:
   //

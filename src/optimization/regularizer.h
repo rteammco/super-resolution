@@ -21,7 +21,8 @@ class Regularizer {
   // Initialize the regularization term object with the image size, which is
   // needed to compute the number of pixels, and in most implementations to
   // know the dimensions of the image.
-  explicit Regularizer(const cv::Size& image_size) : image_size_(image_size) {}
+  Regularizer(const cv::Size& image_size, const int num_channels)
+      : image_size_(image_size), num_channels_(num_channels) {}
 
   // Virtual destructor for derived classes.
   virtual ~Regularizer() = default;
@@ -57,6 +58,11 @@ class Regularizer {
  protected:
   // The size of the image to be regularized.
   const cv::Size image_size_;
+
+  // This is the number of channels in each image given to be regularized. The
+  // total number of data points is (image_size_.width * image_size_.height *
+  // num_channels_).
+  const int num_channels_;
 };
 
 }  // namespace super_resolution

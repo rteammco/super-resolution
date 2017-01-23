@@ -59,6 +59,7 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
 
   CHECK_NOTNULL(image_data);
 
+  // TODO: handle multiple channels (num_channels_).
   std::vector<double> residuals(image_size_.width * image_size_.height);
   for (int row = 0; row < image_size_.height; ++row) {
     for (int col = 0; col < image_size_.width; ++col) {
@@ -81,6 +82,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const std::vector<double>& gradient_constants,
     const GradientComputationMethod& differentiation_method) const {
 
+  // TODO: handle multiple channels (num_channels_).
   // Initialize the derivatives of each parameter with respect to itself.
   const int num_parameters = image_size_.width * image_size_.height;
   std::vector<F<double>> parameters(
