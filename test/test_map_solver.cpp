@@ -2,6 +2,7 @@
 #include <utility>
 #include <vector>
 
+#include "evaluation/peak_signal_to_noise_ratio.h"
 #include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
@@ -417,15 +418,31 @@ TEST(MapSolver, RegularizationTest) {
   ImageData initial_estimate = low_res_images[0];
   initial_estimate.ResizeImage(downsampling_scale, cv::INTER_LINEAR);
 
-  // Create the solver and attempt to solve.
-  super_resolution::IrlsMapSolver solver(
+  // Create the solver and attempt to solve with regularization.
+  super_resolution::IrlsMapSolver solver_with_regularization(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   // Add regularizer.
   const super_resolution::TotalVariationRegularizer regularizer(
       image_size, ground_truth.GetNumChannels());
-  solver.AddRegularizer(regularizer, 0.01);
+  solver_with_regularization.AddRegularizer(regularizer, 0.01);
   // Solve.
-  const ImageData solver_result = solver.Solve(initial_estimate);
+  const ImageData solver_result_with_regularization =
+      solver_with_regularization.Solve(initial_estimate);
+
+  // Create the solver without regularization.
+  super_resolution::IrlsMapSolver solver_unregularized(
+      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
+  const ImageData solver_result_unregularized =
+      solver_unregularized.Solve(initial_estimate);
+
+  // PSNR is a relative quality metric, so expect PSNR
+  const super_resolution::PeakSignalToNoiseRatioEvaluator psnr_evaluator(
+      ground_truth);
+  const double psnr_with_regularization =
+      psnr_evaluator.Evaluate(solver_result_with_regularization);
+  const double psnr_without_regularization =
+      psnr_evaluator.Evaluate(solver_result_unregularized);
+  EXPECT_GT(psnr_with_regularization, psnr_without_regularization);
 
   if (kDisplaySolverResults) {
     ImageData disp_ground_truth = ground_truth;
@@ -436,9 +453,18 @@ TEST(MapSolver, RegularizationTest) {
     disp_upsampled.ResizeImage(kDisplayImageSize);
     cv::imshow("Upsampled", disp_upsampled.GetVisualizationImage());
 
-    ImageData disp_result = solver_result;
-    disp_result.ResizeImage(kDisplayImageSize);
-    cv::imshow("Solver Result", disp_result.GetVisualizationImage());
+    ImageData disp_result_unregularized = solver_result_unregularized;
+    disp_result_unregularized.ResizeImage(kDisplayImageSize);
+    cv::imshow(
+        "Solver Result Not Regularized",
+        disp_result_unregularized.GetVisualizationImage());
+
+    ImageData disp_result_with_regularization =
+        solver_result_with_regularization;
+    disp_result_with_regularization.ResizeImage(kDisplayImageSize);
+    cv::imshow(
+        "Solver Result With Regularization",
+        disp_result_with_regularization.GetVisualizationImage());
 
     cv::waitKey(0);
   }
