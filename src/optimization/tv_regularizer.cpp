@@ -86,6 +86,8 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const std::vector<double>& gradient_constants,
     const GradientComputationMethod& differentiation_method) const {
 
+  CHECK_NOTNULL(image_data);
+
   // Initialize the derivatives of each parameter with respect to itself.
   const int num_pixels = image_size_.width * image_size_.height;
   const int num_parameters = num_pixels * num_channels_;
