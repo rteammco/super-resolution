@@ -1,7 +1,7 @@
 // Provides an API to load and store FT-IR data sets.
 
-#ifndef SRC_FTIR_DATA_LOADER_H_
-#define SRC_FTIR_DATA_LOADER_H_
+#ifndef SRC_HYPERSPECTRAL_DATA_LOADER_H_
+#define SRC_HYPERSPECTRAL_DATA_LOADER_H_
 
 #include <string>
 #include <vector>
@@ -9,7 +9,7 @@
 #include "opencv2/core/core.hpp"
 
 namespace super_resolution {
-namespace ftir {
+namespace hyperspectral {
 
 // Dimensions of the Hyperspectral cube.
 struct HyperspectralCubeSize {
@@ -54,7 +54,7 @@ class DataLoader {
   const HyperspectralCubeSize data_size_;
 };
 
-}  // namespace ftir
+}  // namespace hyperspectral
 }  // namespace super_resolution
 
-#endif  // SRC_FTIR_DATA_LOADER_H_
+#endif  // SRC_HYPERSPETRAL_DATA_LOADER_H_

@@ -1,4 +1,4 @@
-#include "ftir/data_loader.h"
+#include "hyperspectral/data_loader.h"
 
 #include <fstream>
 #include <sstream>
@@ -12,7 +12,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
-namespace ftir {
+namespace hyperspectral {
 
 constexpr char kDataDelimiter = ',';
 
@@ -106,5 +106,5 @@ cv::Mat DataLoader::GetPixelData() const {
   return pixels;
 }
 
-}  // namespace ftir
+}  // namespace hyperspectral
 }  // namespace super_resolution

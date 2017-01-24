@@ -33,20 +33,20 @@ file(GLOB SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 # Create a library for all of the added Super Resolution dependencies (i.e. all
 # the classes).
-file(GLOB   alglib_SRC         "libs/alglib/src/*.cpp")
-file(GLOB   ftir_SRC           "src/ftir/*.cpp")
-file(GLOB   evaluation_SRC     "src/evaluation/*.cpp")
-file(GLOB   image_SRC          "src/image/*.cpp")
-file(GLOB   image_model_SRC    "src/image_model/*.cpp")
-file(GLOB   motion_SRC         "src/motion/*.cpp")
-file(GLOB   optimization_SRC   "src/optimization/*.cpp")
-file(GLOB   util_SRC           "src/util/*.cpp")
-file(GLOB   video_SRC          "src/video/*.cpp")
+file(GLOB   alglib_SRC          "libs/alglib/src/*.cpp")
+file(GLOB   hyperspectral_SRC   "src/hyperspectral/*.cpp")
+file(GLOB   evaluation_SRC      "src/evaluation/*.cpp")
+file(GLOB   image_SRC           "src/image/*.cpp")
+file(GLOB   image_model_SRC     "src/image_model/*.cpp")
+file(GLOB   motion_SRC          "src/motion/*.cpp")
+file(GLOB   optimization_SRC    "src/optimization/*.cpp")
+file(GLOB   util_SRC            "src/util/*.cpp")
+file(GLOB   video_SRC           "src/video/*.cpp")
 
 add_library(
   LibSuperResolution
   ${alglib_SRC}
-  ${ftir_SRC}
+  ${hyperspectral_SRC}
   ${evaluation_SRC}
   ${image_SRC}
   ${image_model_SRC}

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "ftir/data_loader.h"
+#include "hyperspectral/data_loader.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -13,21 +13,23 @@
 // smaller and more optimal for testing.
 static const std::string kTestDataPath = "../test_data/ftir_test.txt";
 
-TEST(FtirDataLoader, DataLoaderTest) {
-  const super_resolution::ftir::HyperspectralCubeSize data_size(128, 128, 5);
-  super_resolution::ftir::DataLoader ftir_data_loader(kTestDataPath, data_size);
+TEST(HyperspectralDataLoader, DataLoaderTest) {
+  const super_resolution::hyperspectral::HyperspectralCubeSize data_size(
+      128, 128, 5);
+  super_resolution::hyperspectral::DataLoader hs_data_loader(
+      kTestDataPath, data_size);
 
-  EXPECT_EQ(ftir_data_loader.GetNumSpectralBands(), data_size.bands);
+  EXPECT_EQ(hs_data_loader.GetNumSpectralBands(), data_size.bands);
 
   const int num_pixels = data_size.rows * data_size.cols;
-  const cv::Mat pixels = ftir_data_loader.GetPixelData();
+  const cv::Mat pixels = hs_data_loader.GetPixelData();
   EXPECT_EQ(pixels.size(), cv::Size(data_size.bands, num_pixels));
 
-  cv::Mat band_0_image = ftir_data_loader.GetSpectralBandImage(0);
+  cv::Mat band_0_image = hs_data_loader.GetSpectralBandImage(0);
   EXPECT_EQ(band_0_image.size(), cv::Size(data_size.cols, data_size.rows));
 
   for (int b = 0; b < data_size.bands; ++b) {
-    cv::imshow("test window", ftir_data_loader.GetSpectralBandImage(b));
+    cv::imshow("test window", hs_data_loader.GetSpectralBandImage(b));
     cv::waitKey(0);
   }
 

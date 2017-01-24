@@ -1,7 +1,7 @@
 #include <utility>
 #include <vector>
 
-#include "ftir/data_loader.h"
+#include "hyperspectral/data_loader.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
