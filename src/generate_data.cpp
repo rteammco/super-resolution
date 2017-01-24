@@ -1,5 +1,6 @@
 // This binary is used to generate low-resolution images from a given
-// high-resolution ground truth image.
+// high-resolution ground truth image. Use this to generate data before running
+// the SuperResolution binary for algorithm testing and evaluation.
 
 #include <string>
 #include <utility>
@@ -8,7 +9,6 @@
 #include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
-#include "image_model/degradation_operator.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
@@ -22,8 +22,6 @@
 
 #include "gflags/gflags.h"
 #include "glog/logging.h"
-
-using super_resolution::DegradationOperator;
 
 // Required input and output files.
 DEFINE_string(input_image, "",

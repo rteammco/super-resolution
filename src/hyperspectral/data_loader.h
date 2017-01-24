@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "opencv2/core/core.hpp"
+#include "image/image_data.h"
 
 namespace super_resolution {
 namespace hyperspectral {
@@ -27,31 +27,26 @@ class DataLoader {
   explicit DataLoader(
       const std::string& file_path, const HyperspectralCubeSize& data_size);
 
-  // Returns the number of bands (channels) in this hyperspectral image.
-  int GetNumSpectralBands() const {
-    return data_size_.bands;
-  }
+  // Call this to actually execute the data load process using the information
+  // provided to the constructor. If the data load process was unsuccessful or
+  // if the data file size does not matche the given data_size value, an error
+  // check will fail.
+  void LoadData();
 
-  // Returns the image for a given spectral band index. The index must be
-  // valid: 0 <= band_index < GetNumSpectralBands().
-  cv::Mat GetSpectralBandImage(const int band_index) const;
-
-  // Returns the data in pixel form, where each row of the returned matrix
-  // represents the values for each band in that pixel. Hence the returned
-  // matrix is (num_rows * num_cols) by num_bands.
-  //
-  // The pixels from the raw image are ordered rows before columns; that is,
-  // the first M rows of the returned matrix is the first row (of M columns) in
-  // the image, the next M elements is the second row of the image, and so on.
-  cv::Mat GetPixelData() const;
+  // Returns the ImageData object containing the hyperspectral image data. The
+  // image will be empty if LoadData() was not called.
+  const ImageData& GetImage() const;
 
  private:
-  // The data is stored as independent matrices because the channel count is
-  // generally very high.
-  std::vector<cv::Mat> data_;
+  // The name of the data file to be loaded.
+  const std::string& file_path_;
 
-  // The size of the data.
+  // The size of the hyperspectral data cube. This must be known to correctly
+  // parse the hyperspectral data file.
   const HyperspectralCubeSize data_size_;
+
+  // The data is stored in an ImageData container.
+  ImageData hyperspectral_image_;
 };
 
 }  // namespace hyperspectral
