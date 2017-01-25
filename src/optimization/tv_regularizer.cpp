@@ -54,6 +54,24 @@ T GetYGradientAtPixel(
   return 0;
 }
 
+// Computes the full total variation for a pixel at (row, col) of the given
+// image_data. Returned value will be 0 for invalid row and col values.
+template<typename T>
+T GetTotalVariationSquared(
+    const T* image_data,
+    const cv::Size& image_size,
+    const int row,
+    const int col) {
+
+  const T y_variation =
+      GetYGradientAtPixel<T>(image_data, image_size, row, col);
+  const T x_variation =
+      GetXGradientAtPixel<T>(image_data, image_size, row, col);
+  const T total_variation =
+      (y_variation * y_variation) + (x_variation * x_variation);
+  return total_variation;
+}
+
 std::vector<double> TotalVariationRegularizer::ApplyToImage(
     const double* image_data) const {
 
@@ -66,14 +84,9 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
     const double* data_ptr = image_data + channel_index;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const double y_variation =
-            GetYGradientAtPixel<double>(data_ptr, image_size_, row, col);
-        const double x_variation =
-            GetXGradientAtPixel<double>(data_ptr, image_size_, row, col);
-        const double total_variation =
-            (y_variation * y_variation) + (x_variation * x_variation);
         const int index = channel_index + (row * image_size_.width + col);
-        residuals[index] = sqrt(total_variation);
+        residuals[index] = sqrt(GetTotalVariationSquared<double>(
+            data_ptr, image_size_, row, col));
       }
     }
   }
@@ -104,14 +117,9 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const F<double>* data_ptr = parameters.data() + channel_index;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const F<double> y_variation = GetYGradientAtPixel<F<double>>(
-            data_ptr, image_size_, row, col);
-        const F<double> x_variation = GetXGradientAtPixel<F<double>>(
-            data_ptr, image_size_, row, col);
-        const F<double> total_variation =
-            (y_variation * y_variation) + (x_variation * x_variation);
         const int index = channel_index + (row * image_size_.width + col);
-        residuals[index] = fadbad::sqrt(total_variation);
+        residuals[index] = fadbad::sqrt(GetTotalVariationSquared<F<double>>(
+            data_ptr, image_size_, row, col));
         residual_values[index] = residuals[index].x();
       }
     }

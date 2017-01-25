@@ -16,14 +16,16 @@ using fadbad::F;  // FADBAD++ forward derivative template.
 
 namespace super_resolution {
 
+// Returns the bilateral total variation value for the pixel at the given row
+// and col. Returned value will be 0 for invalid row and col values.
 template<typename T>
 T GetBilateralTotalVariation(
-  const T* image_data,
-  const cv::Size& image_size,
-  const int row,
-  const int col,
-  const int scale_range,
-  const double spatial_decay) {
+    const T* image_data,
+    const cv::Size& image_size,
+    const int row,
+    const int col,
+    const int scale_range,
+    const double spatial_decay) {
 
   T total_variation = T(0);
   const int index = row * image_size.width + col;
