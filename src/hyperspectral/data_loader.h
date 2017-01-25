@@ -52,4 +52,4 @@ class DataLoader {
 }  // namespace hyperspectral
 }  // namespace super_resolution
 
-#endif  // SRC_HYPERSPETRAL_DATA_LOADER_H_
+#endif  // SRC_HYPERSPECTRAL_DATA_LOADER_H_

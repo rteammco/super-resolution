@@ -42,8 +42,7 @@ T GetBilateralTotalVariation(
       if (absdiff < T(0)) {
         absdiff *= T(-1);
       }
-      const T val = decay * absdiff;
-      total_variation += val;//decay * absdiff;
+      total_variation += decay * absdiff;
     }
   }
   return total_variation;
