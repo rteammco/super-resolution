@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "optimization/regularizer.h"
+#include "opencv2/core/core.hpp"
 
 #include "FADBAD++/fadiff.h"
 

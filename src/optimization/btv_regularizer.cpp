@@ -4,11 +4,48 @@
 #include <utility>
 #include <vector>
 
+#include "optimization/regularizer.h"
+
 #include "opencv2/core/core.hpp"
+
+#include "FADBAD++/fadiff.h"
 
 #include "glog/logging.h"
 
+using fadbad::F;  // FADBAD++ forward derivative template.
+
 namespace super_resolution {
+
+template<typename T>
+T GetBilateralTotalVariation(
+  const T* image_data,
+  const cv::Size& image_size,
+  const int row,
+  const int col,
+  const int scale_range,
+  const double spatial_decay) {
+
+  T total_variation = T(0);
+  const int index = row * image_size.width + col;
+  for (int i = 0; i <= scale_range; ++i) {
+    for (int j = 0; j <= scale_range; ++j) {
+      const int offset_row = row + i;
+      const int offset_col = col + j;
+      if (offset_row >= image_size.height || offset_col >= image_size.width) {
+        continue;
+      }
+      const int offset_index = offset_row * image_size.width + offset_col;
+      const T decay = T(std::pow(spatial_decay, i + j));
+      T absdiff = image_data[index] - image_data[offset_index];
+      if (absdiff < T(0)) {
+        absdiff *= T(-1);
+      }
+      const T val = decay * absdiff;
+      total_variation += val;//decay * absdiff;
+    }
+  }
+  return total_variation;
+}
 
 BilateralTotalVariationRegularizer::BilateralTotalVariationRegularizer(
     const cv::Size& image_size,
@@ -38,21 +75,8 @@ std::vector<double> BilateralTotalVariationRegularizer::ApplyToImage(
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = channel_index + (row * image_size_.width + col);
-        for (int i = 0; i <= scale_range_; ++i) {
-          for (int j = 0; j <= scale_range_; ++j) {
-            const int offset_row = row + i;
-            const int offset_col = col + j;
-            if (offset_row >= image_size_.height ||
-                offset_col >= image_size_.width) {
-              continue;
-            }
-            const int offset_index =
-                channel_index + (offset_row * image_size_.width + offset_col);
-            const double decay = std::pow(spatial_decay_, i + j);
-            const double diff = image_data[index] - image_data[offset_index];
-            residuals[index] += decay * std::abs(diff);
-          }
-        }
+        residuals[index] = GetBilateralTotalVariation<double>(
+            data_ptr, image_size_, row, col, scale_range_, spatial_decay_);
       }
     }
   }
@@ -67,11 +91,52 @@ BilateralTotalVariationRegularizer::ApplyToImageWithDifferentiation(
 
   CHECK_NOTNULL(image_data);
 
-  // TODO: implement.
+  // Initialize the derivatives of each parameter with respect to itself.
   const int num_pixels = image_size_.width * image_size_.height;
   const int num_parameters = num_pixels * num_channels_;
+  std::vector<F<double>> parameters(
+      image_data, image_data + num_parameters);
+  for (int i = 0; i < num_parameters; ++i) {
+    parameters[i].diff(i, num_parameters);
+  }
+
+  // TODO: copy/pasted >.>
   std::vector<double> residual_values(num_parameters);
+  std::vector<F<double>> residuals(num_parameters);
+  for (int channel = 0; channel < num_channels_; ++channel) {
+    const int channel_index = channel * num_pixels;
+    const F<double>* data_ptr = parameters.data() + channel_index;
+    for (int row = 0; row < image_size_.height; ++row) {
+      for (int col = 0; col < image_size_.width; ++col) {
+        const int index = channel_index + (row * image_size_.width + col);
+        residuals[index] = GetBilateralTotalVariation<F<double>>(
+            data_ptr, image_size_, row, col, scale_range_, spatial_decay_);
+        residual_values[index] = residuals[index].x();
+      }
+    }
+  }
+
+  // TODO: perhaps we can do a more efficient implementation here, as in the
+  // regular total variation implementation.
   std::vector<double> gradient(num_parameters);
+  for (int i = 0; i < num_parameters; ++i) {
+    for (int j = 0; j < num_parameters; ++j) {
+      const double djdi = residuals[j].d(i);
+      if (!isnan(djdi)) {  // If this partial exists...
+        const double gradient_ij =
+            2 * gradient_constants[j] * residuals[j].x() * djdi;
+        gradient[i] += gradient_ij;
+      }
+    }
+  }
+//  for (int i = 0; i < num_parameters; ++i) {
+//    const double absdiff = std::abs(gradient_2[i] - gradient[i]);
+//    if (absdiff > 0.00001) {
+//      LOG(INFO) << "Mismatch at " << i << ": "
+//                << gradient_2[i] << " vs. " << gradient[i];
+//    }
+//  }
+
   return std::make_pair(residual_values, gradient);
 }
 
