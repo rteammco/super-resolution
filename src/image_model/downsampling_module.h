@@ -17,7 +17,7 @@ class DownsamplingModule : public DegradationOperator {
  public:
   // The given scale parameter is the scale by which the resized image will
   // be modified. The scale should be greater than or equal to 1.
-  DownsamplingModule(const int scale, const cv::Size& image_size);
+  explicit DownsamplingModule(const int scale);
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
 
@@ -30,10 +30,6 @@ class DownsamplingModule : public DegradationOperator {
  private:
   // The downsampling scale.
   const int scale_;
-
-  // The size of the image being downsampled. This is required for ApplyToPatch
-  // method to compute the pixel's row and col from its index.
-  const cv::Size image_size_;
 };
 
 }  // namespace super_resolution

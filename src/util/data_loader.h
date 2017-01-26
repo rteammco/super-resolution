@@ -23,7 +23,7 @@ bool IsDirectory(const std::string& path);
 // The given data_path should be an image file or directory containing
 // multiple image files. The file(s) can be one of the following formats:
 //   - Standard image file (.jpg, .png, etc.)
-//   - Standard video file (.avi, .mpg, etc.)
+//   - TODO: Standard video file (.avi, .mpg, etc.)
 //   - Hyperspectral data in text format.
 //   - TODO: Binary hyperspectral data files.
 // Unsupported or invalid files or directories will result in an error.

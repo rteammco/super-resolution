@@ -12,10 +12,7 @@
 
 namespace super_resolution {
 
-DownsamplingModule::DownsamplingModule(
-    const int scale, const cv::Size& image_size)
-    : scale_(scale), image_size_(image_size) {
-
+DownsamplingModule::DownsamplingModule(const int scale) : scale_(scale) {
   CHECK_GE(scale_, 1);
 }
 

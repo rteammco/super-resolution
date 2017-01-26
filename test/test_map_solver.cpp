@@ -106,8 +106,7 @@ TEST(MapSolver, SmallDataTest) {
   image_model.AddDegradationOperator(motion_module);
 
   // Add downsampling:
-  const DownsamplingModule downsampling_module(
-      downsampling_scale, cv::Size(4, 4));
+  const DownsamplingModule downsampling_module(downsampling_scale);
   image_model.AddDegradationOperator(downsampling_module);
 
   /* Verify solver gets a near-perfect solution for this trivial case. */
@@ -204,7 +203,7 @@ TEST(MapSolver, RealIconDataTest) {
   image_model.AddDegradationOperator(motion_module);
 
   // Downsampling.
-  const DownsamplingModule downsampling_module(downsampling_scale, image_size);
+  const DownsamplingModule downsampling_module(downsampling_scale);
   const cv::Mat downsampling_matrix =
       downsampling_module.GetOperatorMatrix(image_size, 0);
   image_model.AddDegradationOperator(downsampling_module);
@@ -315,8 +314,7 @@ TEST(MapSolver, RealBigImageTest) {
   const MotionModule motion_module(motion_shift_sequence);
   image_model.AddDegradationOperator(motion_module);
 
-  const DownsamplingModule downsampling_module(
-      downsampling_scale, ground_truth.GetImageSize());
+  const DownsamplingModule downsampling_module(downsampling_scale);
   image_model.AddDegradationOperator(downsampling_module);
 
   // Generate the low-res images using the image model.
@@ -398,7 +396,7 @@ TEST(MapSolver, RegularizationTest) {
   image_model.AddDegradationOperator(blur_module);
 
   // Downsampling.
-  const DownsamplingModule downsampling_module(downsampling_scale, image_size);
+  const DownsamplingModule downsampling_module(downsampling_scale);
   image_model.AddDegradationOperator(downsampling_module);
 
   // Additive noise (degradation image model only).

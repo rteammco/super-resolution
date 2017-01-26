@@ -85,11 +85,9 @@ TEST(ImageModel, AdditiveNoiseModule) {
 }
 
 TEST(ImageModel, DownsamplingModule) {
-  const cv::Size image_size(5, 5);
-
   /* Verify functionality of downsampling a single patch. */
 
-  const super_resolution::DownsamplingModule downsampling_module(2, image_size);
+  const super_resolution::DownsamplingModule downsampling_module(2);
 
   // Check that we can downsample a 3x3 patch correctly with different image
   // indices.

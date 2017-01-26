@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
 
   // Add downsampling.
   const super_resolution::DownsamplingModule downsampling_module(
-      FLAGS_downsampling_scale, image_data.GetImageSize());
+      FLAGS_downsampling_scale);
   image_model.AddDegradationOperator(downsampling_module);
 
   // Add additive noise if the parameter was specified.

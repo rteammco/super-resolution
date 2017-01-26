@@ -25,8 +25,19 @@
 
 using super_resolution::ImageData;
 
+// Input images (required):
 DEFINE_string(data_path, "",
     "Path to an input file or directory to super resolve.");
+
+// Image model parameters:
+DEFINE_int32(upsampling_scale, 2,
+    "The amount by which to super-resolve the image(s).");
+DEFINE_int32(blur_radius, 3,
+    "The radius of the blur kernel. Set to 0 to inactivate blurring.");
+DEFINE_double(blur_sigma, 1.0,
+    "The sigma value of the Gaussian blur. Set to 0 to inactivate blurring.");
+DEFINE_string(motion_sequence_path, "",
+    "Path to a file containing the motion shifts for each image.");
 
 int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Super resolution.");
@@ -35,54 +46,34 @@ int main(int argc, char** argv) {
 
   std::vector<ImageData> images = super_resolution::util::LoadImages(
       FLAGS_data_path);
-  for (const ImageData& image : images) {
-    if (image.GetNumChannels() == 0) {
-      continue;
-    }
-    cv::imshow("Image", image.GetVisualizationImage());
-    cv::waitKey(0);
-  }
-  return 0;
 
-  super_resolution::video::VideoLoader video_loader;
-  video_loader.LoadFramesFromVideo(FLAGS_data_path);
-  video_loader.PlayOriginalVideo();
+  // Create the forward image model.
+  super_resolution::ImageModel image_model(FLAGS_upsampling_scale);
 
-  // Create the motion estimates.
-  super_resolution::MotionShiftSequence motion_shift_sequence({
-      super_resolution::MotionShift(10, 3),
-      super_resolution::MotionShift(-10, 15),
-      super_resolution::MotionShift(0, 0),
-      super_resolution::MotionShift(5, 10),
-      super_resolution::MotionShift(-8, -10),
-      super_resolution::MotionShift(3, -15)
-  });
+  // TODO: fix this issue.
+  //if (!FLAGS_motion_sequence_path.empty()) {
+  //  super_resolution::MotionShiftSequence motion_shift_sequence;
+  //  motion_shift_sequence.LoadSequenceFromFile(FLAGS_motion_sequence_path);
+  //  const super_resolution::MotionModule motion_module(motion_shift_sequence);
+  //  image_model.AddDegradationOperator(motion_module);
+  //}
 
-  // Create the forward image model degradation components.
+  //if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
+    const super_resolution::BlurModule blur_module(
+        FLAGS_blur_radius, FLAGS_blur_sigma);
+    image_model.AddDegradationOperator(blur_module);
+  //}
+
   const super_resolution::DownsamplingModule downsampling_module(
-      3, cv::Size(100, 100));  // TODO: use the real image size.
-  const super_resolution::MotionModule motion_module(motion_shift_sequence);
-  const super_resolution::BlurModule blur_module(5, 1.0);
-  const super_resolution::AdditiveNoiseModule noise_module(5.0);
-
-  // Create the forward image model: y = DBx + n
-  super_resolution::ImageModel image_model(3);
-  image_model.AddDegradationOperator(motion_module);
-  image_model.AddDegradationOperator(blur_module);
+      FLAGS_upsampling_scale);
   image_model.AddDegradationOperator(downsampling_module);
-  image_model.AddDegradationOperator(noise_module);
 
-  const std::vector<cv::Mat>& frames = video_loader.GetFrames();
-  for (int i = 0; i < frames.size(); ++i) {
-    cv::Mat low_res_frame = frames[i].clone();
-    // image_model.ApplyToImage(&low_res_frame, i); // TODO: fix
-
-    // Display the degradated frame.
-    // TODO: remove, and remove OpenCV includes.
-    cv::resize(low_res_frame, low_res_frame, frames[i].size());
-    cv::imshow("test", low_res_frame);
-    cv::waitKey(0);
-  }
+  LOG(INFO) << "Running super-resolution on " << images.size() << " images.";
+  // TODO: super-resolve.
+  ImageData x = images[0];
+  image_model.ApplyToImage(&x, 0);
+  cv::imshow("Image", x.GetVisualizationImage());
+  cv::waitKey(0);
 
   return EXIT_SUCCESS;
 }
