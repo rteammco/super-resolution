@@ -117,24 +117,53 @@ BilateralTotalVariationRegularizer::ApplyToImageWithDifferentiation(
     }
   }
 
-  // TODO: perhaps we can do a more efficient implementation here, as in the
-  // regular total variation implementation.
+  // Compute the gradient vector. Only consider gradients of pixels within
+  // range of each other to avoid O(n^2) comparison.
   std::vector<double> gradient(num_parameters);
-  for (int i = 0; i < num_parameters; ++i) {
-    for (int j = 0; j < num_parameters; ++j) {
-      const double djdi = residuals[j].d(i);
-      if (!isnan(djdi)) {  // If this partial exists...
-        const double gradient_ij =
-            2 * gradient_constants[j] * residuals[j].x() * djdi;
-        gradient[i] += gradient_ij;
+  for (int channel = 0; channel < num_channels_; ++channel) {
+    const int channel_index = channel * num_pixels;
+    for (int row = 0; row < image_size_.height; ++row) {
+      for (int col = 0; col < image_size_.width; ++col) {
+        const int index = channel_index + (row * image_size_.width + col);
+        for (int i = 0; i <= scale_range_; ++i) {
+          for (int j = 0; j <= scale_range_; ++j) {
+            const int offset_row = row - i;
+            const int offset_col = col - j;
+            if (offset_row >= 0 && offset_col >= 0) {
+              const int offset_index =
+                  channel_index + (offset_row * image_size_.width + offset_col);
+              const double dodi = residuals[offset_index].d(index);
+              if (!isnan(dodi)) {
+                gradient[index] +=
+                    2 *
+                    gradient_constants[offset_index] *
+                    residual_values[offset_index] *
+                    dodi;
+              }
+            }
+          }
+        }
       }
     }
   }
+
+//  // TODO: Remove this sanity check.
+//  std::vector<double> gradient_2(num_parameters);
+//  for (int i = 0; i < num_parameters; ++i) {
+//    for (int j = 0; j < num_parameters; ++j) {
+//      const double djdi = residuals[j].d(i);
+//      if (!isnan(djdi)) {  // If this partial exists...
+//        const double gradient_ij =
+//            2 * gradient_constants[j] * residual_values[j] * djdi;
+//        gradient_2[i] += gradient_ij;
+//      }
+//    }
+//  }
 //  for (int i = 0; i < num_parameters; ++i) {
 //    const double absdiff = std::abs(gradient_2[i] - gradient[i]);
 //    if (absdiff > 0.00001) {
-//      LOG(INFO) << "Mismatch at " << i << ": "
-//                << gradient_2[i] << " vs. " << gradient[i];
+//      LOG(INFO) << "Mismatch at " << i << "(" << i / num_channels_ << "): "
+//                << gradient[i] << " vs. " << gradient_2[i];
 //    }
 //  }
 

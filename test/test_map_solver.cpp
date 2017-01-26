@@ -10,6 +10,7 @@
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
+#include "optimization/btv_regularizer.h"
 #include "optimization/irls_map_solver.h"
 #include "optimization/tv_regularizer.h"
 #include "util/test_util.h"
@@ -418,16 +419,25 @@ TEST(MapSolver, RegularizationTest) {
   ImageData initial_estimate = low_res_images[0];
   initial_estimate.ResizeImage(downsampling_scale, cv::INTER_LINEAR);
 
-  // Create the solver and attempt to solve with regularization.
-  super_resolution::IrlsMapSolver solver_with_regularization(
+  // Create the solver and attempt to solve with TV regularization.
+  super_resolution::IrlsMapSolver solver_with_tv_regularization(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   // Add regularizer.
-  const super_resolution::TotalVariationRegularizer regularizer(
+  const super_resolution::TotalVariationRegularizer tv_regularizer(
       image_size, ground_truth.GetNumChannels());
-  solver_with_regularization.AddRegularizer(regularizer, 0.01);
+  solver_with_tv_regularization.AddRegularizer(tv_regularizer, 0.01);
   // Solve.
-  const ImageData solver_result_with_regularization =
-      solver_with_regularization.Solve(initial_estimate);
+  const ImageData solver_result_with_tv_regularization =
+      solver_with_tv_regularization.Solve(initial_estimate);
+
+  // Create a solver with BTV regularization.
+  super_resolution::IrlsMapSolver solver_with_btv_regularization(
+      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
+  const super_resolution::BilateralTotalVariationRegularizer btv_regularizer(
+      image_size, ground_truth.GetNumChannels(), 3, 0.5);
+  solver_with_btv_regularization.AddRegularizer(btv_regularizer, 0.01);
+  const ImageData solver_result_with_btv_regularization =
+      solver_with_btv_regularization.Solve(initial_estimate);
 
   // Create the solver without regularization.
   super_resolution::IrlsMapSolver solver_unregularized(
@@ -438,11 +448,11 @@ TEST(MapSolver, RegularizationTest) {
   // PSNR is a relative quality metric, so expect PSNR
   const super_resolution::PeakSignalToNoiseRatioEvaluator psnr_evaluator(
       ground_truth);
-  const double psnr_with_regularization =
-      psnr_evaluator.Evaluate(solver_result_with_regularization);
+  const double psnr_with_tv_regularization =
+      psnr_evaluator.Evaluate(solver_result_with_tv_regularization);
   const double psnr_without_regularization =
       psnr_evaluator.Evaluate(solver_result_unregularized);
-  EXPECT_GT(psnr_with_regularization, psnr_without_regularization);
+  EXPECT_GT(psnr_with_tv_regularization, psnr_without_regularization);
 
   if (kDisplaySolverResults) {
     ImageData disp_ground_truth = ground_truth;
@@ -459,12 +469,19 @@ TEST(MapSolver, RegularizationTest) {
         "Solver Result Not Regularized",
         disp_result_unregularized.GetVisualizationImage());
 
-    ImageData disp_result_with_regularization =
-        solver_result_with_regularization;
-    disp_result_with_regularization.ResizeImage(kDisplayImageSize);
+    ImageData disp_result_with_tv_regularization =
+        solver_result_with_tv_regularization;
+    disp_result_with_tv_regularization.ResizeImage(kDisplayImageSize);
     cv::imshow(
-        "Solver Result With Regularization",
-        disp_result_with_regularization.GetVisualizationImage());
+        "Solver Result With TV Regularization",
+        disp_result_with_tv_regularization.GetVisualizationImage());
+
+    ImageData disp_result_with_btv_regularization =
+        solver_result_with_btv_regularization;
+    disp_result_with_btv_regularization.ResizeImage(kDisplayImageSize);
+    cv::imshow(
+        "Solver Result With BTV Regularization",
+        disp_result_with_btv_regularization.GetVisualizationImage());
 
     cv::waitKey(0);
   }
