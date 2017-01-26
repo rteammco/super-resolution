@@ -1,14 +1,16 @@
 #include "util/data_loader.h"
 
-#include <algorithm>
 #include <dirent.h>
-#include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <algorithm>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
+#include "hyperspectral/hyperspectral_data_loader.h"
 #include "image/image_data.h"
 
 #include "opencv2/core/core.hpp"
@@ -32,13 +34,9 @@ static const std::unordered_set<std::string> kSupportedImageExtensions({
 });
 
 // Supported text-based hyperspectral data file extensions.
-static const std::unordered_set<std::string> kSupportedTextHSExtensions({
+static const std::unordered_set<std::string> kSupportedHyperspectralExtensions({
     "txt"
-});
-
-// Supported binary hyperspectral data file extensions.
-static const std::unordered_set<std::string> kSupportedBinaryHSExtensions({
-    // TODO: add support.
+    // TODO: add support for binary extensions.
 });
 
 // Returns true if the given set contains the given value.
@@ -53,22 +51,22 @@ bool DoesSetContain(
 // This is not a publically accessible function.
 ImageData LoadImage(const std::string& file_path) {
   LOG(INFO) << "FILE: " << file_path;
-  ImageData image_data;
   std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
   std::transform(
       extension.begin(), extension.end(), extension.begin(), tolower);
   if (DoesSetContain(kSupportedImageExtensions, extension)) {
     const cv::Mat image = cv::imread(file_path, CV_LOAD_IMAGE_COLOR);
-    image_data.AddChannel(image);
-  } else if (DoesSetContain(kSupportedTextHSExtensions, extension)) {
-    // TODO: the HyperspectralDataLoader needs the data size to be known...
-  } else if (DoesSetContain(kSupportedBinaryHSExtensions, extension)) {
-    // TODO: support binary hyperspectral data as well.
-  } else {
-    LOG(WARNING) << "Could not load image " << file_path
-                 << ": extension is not recognized.";
+    return ImageData(image);
+  } else if (DoesSetContain(kSupportedHyperspectralExtensions, extension)) {
+    hyperspectral::HyperspectralDataLoader hs_data_loader(file_path);
+    hs_data_loader.LoadData();
+    return hs_data_loader.GetImage();
   }
-  return image_data;
+
+  // Unsupported/unknown extension, so return empty image.
+  LOG(WARNING) << "Could not load image " << file_path
+               << ": extension is not recognized.";
+  return ImageData();
 }
 
 bool IsDirectory(const std::string& path) {
