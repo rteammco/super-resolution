@@ -1,4 +1,4 @@
-#include "hyperspectral/data_loader.h"
+#include "hyperspectral/hyperspectral_data_loader.h"
 
 #include <fstream>
 #include <sstream>
@@ -17,7 +17,7 @@ namespace hyperspectral {
 
 constexpr char kDataDelimiter = ',';
 
-DataLoader::DataLoader(
+HyperspectralDataLoader::HyperspectralDataLoader(
     const std::string& file_path,
     const HyperspectralCubeSize& data_size)
     : file_path_(file_path), data_size_(data_size) {
@@ -30,7 +30,7 @@ DataLoader::DataLoader(
 
 // TODO: Currently, this only loads a single hyperspectral image from text
 // format exported from Matlab using dlmwrite.
-void DataLoader::LoadData() {
+void HyperspectralDataLoader::LoadData() {
   std::ifstream fin(file_path_);
   CHECK(fin.is_open()) << "Could not open file " << file_path_;
 
@@ -85,7 +85,7 @@ void DataLoader::LoadData() {
             << "image with " << data_size_.bands << " spectral bands.";
 }
 
-const ImageData& DataLoader::GetImage() const {
+const ImageData& HyperspectralDataLoader::GetImage() const {
   CHECK_GT(hyperspectral_image_.GetNumChannels(), 0)
       << "The hyperspectral image is empty. "
       << "Make sure to call LoadData() first.";

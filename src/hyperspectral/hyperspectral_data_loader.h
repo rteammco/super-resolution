@@ -1,7 +1,7 @@
 // Provides an API to load and store FT-IR data sets.
 
-#ifndef SRC_HYPERSPECTRAL_DATA_LOADER_H_
-#define SRC_HYPERSPECTRAL_DATA_LOADER_H_
+#ifndef SRC_HYPERSPECTRAL_HYPERSPECTRAL_DATA_LOADER_H_
+#define SRC_HYPERSPECTRAL_HYPERSPECTRAL_DATA_LOADER_H_
 
 #include <string>
 #include <vector>
@@ -21,10 +21,10 @@ struct HyperspectralCubeSize {
   const int bands;
 };
 
-class DataLoader {
+class HyperspectralDataLoader {
  public:
   // Provide a data file name that will be processed.
-  explicit DataLoader(
+  HyperspectralDataLoader(
       const std::string& file_path, const HyperspectralCubeSize& data_size);
 
   // Call this to actually execute the data load process using the information
@@ -52,4 +52,4 @@ class DataLoader {
 }  // namespace hyperspectral
 }  // namespace super_resolution
 
-#endif  // SRC_HYPERSPECTRAL_DATA_LOADER_H_
+#endif  // SRC_HYPERSPECTRAL_HYPERSPECTRAL_DATA_LOADER_H_

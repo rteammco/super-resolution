@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "hyperspectral/data_loader.h"
+#include "hyperspectral/hyperspectral_data_loader.h"
 #include "image/image_data.h"
 
 #include "opencv2/core/core.hpp"
@@ -17,7 +17,7 @@ static const std::string kTestDataPath = "../test_data/ftir_test.txt";
 TEST(HyperspectralDataLoader, DataLoaderTest) {
   const super_resolution::hyperspectral::HyperspectralCubeSize data_size(
       128, 128, 5);
-  super_resolution::hyperspectral::DataLoader hs_data_loader(
+  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader(
       kTestDataPath, data_size);
   hs_data_loader.LoadData();
   const super_resolution::ImageData& hs_image = hs_data_loader.GetImage();

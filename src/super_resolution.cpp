@@ -1,7 +1,7 @@
 #include <utility>
 #include <vector>
 
-#include "hyperspectral/data_loader.h"
+#include "hyperspectral/hyperspectral_data_loader.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
@@ -23,25 +23,16 @@
 
 using super_resolution::DegradationOperator;
 
-DEFINE_string(data_type, "",
-    "The type of data to apply super-resolution to. Default is RGB video.");
-DEFINE_string(video_path, "", "Path to a video file to super resolve.");
+DEFINE_string(data_path, "",
+    "Path to an input file or directory to super resolve.");
 
 int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Super resolution.");
 
-  if (FLAGS_data_type == "hyperspectral") {
-    // super_resolution::hyperspectral::HyperspectralModel model;
-    LOG(INFO) << "HS";
-  } else {
-    // super_resolution::video::VideoModel model;
-    LOG(INFO) << "VID";
-  }
-
-  REQUIRE_ARG(FLAGS_video_path);
+  REQUIRE_ARG(FLAGS_data_path);
 
   super_resolution::video::VideoLoader video_loader;
-  video_loader.LoadFramesFromVideo(FLAGS_video_path);
+  video_loader.LoadFramesFromVideo(FLAGS_data_path);
   video_loader.PlayOriginalVideo();
 
   // Create the motion estimates.
