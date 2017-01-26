@@ -381,14 +381,14 @@ TEST(MapSolver, RegularizationTest) {
   // Motion.
   const super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
-    super_resolution::MotionShift(0, 1),
+    // super_resolution::MotionShift(0, 1),
     super_resolution::MotionShift(0, 2),
     super_resolution::MotionShift(1, 0),
-    super_resolution::MotionShift(1, 1),
+    // super_resolution::MotionShift(1, 1),
     super_resolution::MotionShift(1, 2),
     super_resolution::MotionShift(2, 0),
-    super_resolution::MotionShift(2, 1),
-    super_resolution::MotionShift(2, 2)
+    // super_resolution::MotionShift(2, 1),
+    // super_resolution::MotionShift(2, 2)
   });
   const MotionModule motion_module(motion_shift_sequence);
   image_model.AddDegradationOperator(motion_module);
@@ -401,6 +401,7 @@ TEST(MapSolver, RegularizationTest) {
   const DownsamplingModule downsampling_module(downsampling_scale, image_size);
   image_model.AddDegradationOperator(downsampling_module);
 
+  // Additive noise (degradation image model only).
   super_resolution::ImageModel image_model_with_noise = image_model;
   const super_resolution::AdditiveNoiseModule noise_module(10);
   image_model_with_noise.AddDegradationOperator(noise_module);
