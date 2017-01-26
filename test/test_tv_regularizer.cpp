@@ -19,9 +19,9 @@ constexpr double kMinDivisor = 0.000001;
 // Small test image and expected returned values for this data.
 const cv::Size test_image_size(3, 3);
 const double test_image_data[9] = {
-   0,  0, 1,
-   0,  1, 3,
-  -3, -1, 0
+     0,  0, 1,
+     0,  1, 3,
+    -3, -1, 0
 };
 // The x-direction gradients (not squared) should be:
 //

@@ -175,26 +175,6 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     }
   }
 
-//  // TODO: remove this sanity check.
-//  std::vector<double> gradient_2(num_parameters);
-//  for (int i = 0; i < num_parameters; ++i) {
-//    for (int j = 0; j < num_parameters; ++j) {
-//      const double djdi = residuals[j].d(i);
-//      if (!isnan(djdi)) {  // If this partial exists...
-//        const double gradient_ij =
-//            2 * gradient_constants[j] * residuals[j].x() * djdi;
-//        gradient_2[i] += gradient_ij;
-//      }
-//    }
-//  }
-//  for (int i = 0; i < num_parameters; ++i) {
-//    const double absdiff = std::abs(gradient[i] - gradient_2[i]);
-//    if (absdiff > 0.00001) {
-//      LOG(INFO) << "Mismatch at " << i << ": "
-//                << gradient[i] << " vs. " << gradient_2[i];
-//    }
-//  }
-
   return std::make_pair(residual_values, gradient);
 }
 

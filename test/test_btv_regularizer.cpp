@@ -1,7 +1,7 @@
-#include "optimization/btv_regularizer.h"
-
 #include <algorithm>
 #include <vector>
+
+#include "optimization/btv_regularizer.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -11,11 +11,11 @@ using testing::SizeIs;
 // Small test image and expected returned values for this data.
 const cv::Size test_image_size(5, 5);
 const double test_image_data[25] = {
-   0,  0, 1, 2,  1,
-   0,  1, 3, 2,  3,
-   5,  4, 3, -2, 1,
-   4,  6, 9, 3,  0,
-  -3, -1, 0, 6,  0
+     0,  0, 1, 2,  1,
+     0,  1, 3, 2,  3,
+     5,  4, 3, -2, 1,
+     4,  6, 9, 3,  0,
+    -3, -1, 0, 6,  0
 };
 
 TEST(BilateralTotalVariationRegularizer, ApplyToImage) {
@@ -55,10 +55,10 @@ TEST(BilateralTotalVariationRegularizer, ApplyToImage) {
       test_image_size, 2, 1, 0.25);
   // If scale_range_ is 1 and spatial_decay is 0.25, then:
   // for pixel at (1, 2) - index 7 - is:
-  //   BTV = pow(0.25, 0) * |3 - 3|  = 0                   <- compare to itself
-  //       + pow(0.25, 1) * |3 - 2|  = 0.25 * 1 = 0.25     <- one left
-  //       + pow(0.25, 1) * |3 - 3|  = 0.25 * 0 = 0        <- one down
-  //       + pow(0.25, 2) * |3 - -2| = 0.0625 * 5 = 0.3125  <- one down, one left
+  //   BTV = pow(0.25, 0) * |3 - 3|  = 0                    <- compare to itself
+  //       + pow(0.25, 1) * |3 - 2|  = 0.25 * 1 = 0.25      <- 1 left
+  //       + pow(0.25, 1) * |3 - 3|  = 0.25 * 0 = 0         <- 1 down
+  //       + pow(0.25, 2) * |3 - -2| = 0.0625 * 5 = 0.3125  <- 1 down, 1 left
   //   = 0.5625
   // Since both channels are identical, expect the same value in both.
   const std::vector<double> result_2 =
