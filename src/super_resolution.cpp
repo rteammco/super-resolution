@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "hyperspectral/hyperspectral_data_loader.h"
+#include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
@@ -9,6 +10,7 @@
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
 #include "optimization/map_solver.h"
+#include "util/data_loader.h"
 #include "util/macros.h"
 #include "util/util.h"
 #include "video/super_resolver.h"
@@ -21,7 +23,7 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
-using super_resolution::DegradationOperator;
+using super_resolution::ImageData;
 
 DEFINE_string(data_path, "",
     "Path to an input file or directory to super resolve.");
@@ -30,6 +32,17 @@ int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Super resolution.");
 
   REQUIRE_ARG(FLAGS_data_path);
+
+  std::vector<ImageData> images = super_resolution::util::LoadImages(
+      FLAGS_data_path);
+  for (const ImageData& image : images) {
+    if (image.GetNumChannels() == 0) {
+      continue;
+    }
+    cv::imshow("Image", image.GetVisualizationImage());
+    cv::waitKey(0);
+  }
+  return 0;
 
   super_resolution::video::VideoLoader video_loader;
   video_loader.LoadFramesFromVideo(FLAGS_data_path);
