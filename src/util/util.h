@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "opencv2/core/core.hpp"
+#include "image/image_data.h"
 
 namespace super_resolution {
 namespace util {
@@ -21,6 +21,10 @@ void InitApp(int argc, char** argv, const std::string& usage_message = "");
 // returns an empty list. Subdirectories and hidden files are not included in
 // the listing.
 std::vector<std::string> ListFilesInDirectory(const std::string& directory);
+
+// Displays a given image until the user presses any key to close the window.
+void DisplayImage(
+    const ImageData& image, const std::string& window_name = "Image");
 
 }  // namespace util
 }  // namespace super_resolution

@@ -1,24 +1,18 @@
+#include <memory>
 #include <utility>
 #include <vector>
 
-#include "hyperspectral/hyperspectral_data_loader.h"
 #include "image/image_data.h"
-#include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
-#include "optimization/map_solver.h"
+#include "optimization/irls_map_solver.h"
+#include "optimization/tv_regularizer.h"
 #include "util/data_loader.h"
 #include "util/macros.h"
 #include "util/util.h"
-#include "video/super_resolver.h"
-#include "video/video_loader.h"
-
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 
 #include "gflags/gflags.h"
 #include "glog/logging.h"
@@ -50,30 +44,43 @@ int main(int argc, char** argv) {
   // Create the forward image model.
   super_resolution::ImageModel image_model(FLAGS_upsampling_scale);
 
-  // TODO: fix this issue.
-  //if (!FLAGS_motion_sequence_path.empty()) {
-  //  super_resolution::MotionShiftSequence motion_shift_sequence;
-  //  motion_shift_sequence.LoadSequenceFromFile(FLAGS_motion_sequence_path);
-  //  const super_resolution::MotionModule motion_module(motion_shift_sequence);
-  //  image_model.AddDegradationOperator(motion_module);
-  //}
+  // Add motion module if user specified motion shift sequence. We use a
+  // pointer to avoid scoping issues of creating the module in the if block.
+  std::unique_ptr<super_resolution::MotionModule> motion_module;
+  if (!FLAGS_motion_sequence_path.empty()) {
+    super_resolution::MotionShiftSequence motion_shift_sequence;
+    motion_shift_sequence.LoadSequenceFromFile(FLAGS_motion_sequence_path);
+    motion_module = std::unique_ptr<super_resolution::MotionModule>(
+        new super_resolution::MotionModule(motion_shift_sequence));
+    image_model.AddDegradationOperator(*motion_module);
+  }
 
-  //if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
-    const super_resolution::BlurModule blur_module(
-        FLAGS_blur_radius, FLAGS_blur_sigma);
-    image_model.AddDegradationOperator(blur_module);
-  //}
+  // Add a blur module if user-specified blurring values are positive.
+  std::unique_ptr<super_resolution::BlurModule> blur_module;
+  if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
+    blur_module = std::unique_ptr<super_resolution::BlurModule>(
+        new super_resolution::BlurModule(FLAGS_blur_radius, FLAGS_blur_sigma));
+    image_model.AddDegradationOperator(*blur_module);
+  }
 
+  // Add downsampling.
   const super_resolution::DownsamplingModule downsampling_module(
       FLAGS_upsampling_scale);
   image_model.AddDegradationOperator(downsampling_module);
 
-  LOG(INFO) << "Running super-resolution on " << images.size() << " images.";
-  // TODO: super-resolve.
-  ImageData x = images[0];
-  image_model.ApplyToImage(&x, 0);
-  cv::imshow("Image", x.GetVisualizationImage());
-  cv::waitKey(0);
+  // Set initial estimate.
+  ImageData initial_estimate = images[0];
+  initial_estimate.ResizeImage(FLAGS_upsampling_scale);
+
+  // Set up the solver with TV regularization.
+  super_resolution::MapSolverOptions solver_options;
+  super_resolution::IrlsMapSolver solver(solver_options, image_model, images);
+  const super_resolution::TotalVariationRegularizer tv_regularizer(
+      initial_estimate.GetImageSize(), initial_estimate.GetNumChannels());
+  solver.AddRegularizer(tv_regularizer, 0.01);
+
+  const ImageData result = solver.Solve(initial_estimate);
+  super_resolution::util::DisplayImage(result, "Result");
 
   return EXIT_SUCCESS;
 }

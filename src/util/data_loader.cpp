@@ -50,7 +50,6 @@ bool DoesSetContain(
 // supported type that contains image data.
 // This is not a publically accessible function.
 ImageData LoadImage(const std::string& file_path) {
-  LOG(INFO) << "FILE: " << file_path;
   std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
   std::transform(
       extension.begin(), extension.end(), extension.begin(), tolower);

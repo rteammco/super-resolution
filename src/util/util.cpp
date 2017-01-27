@@ -4,6 +4,11 @@
 #include <string>
 #include <vector>
 
+#include "image/image_data.h"
+
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
@@ -47,6 +52,13 @@ std::vector<std::string> ListFilesInDirectory(const std::string& directory) {
   closedir(dir_ptr);
 
   return list_of_files;
+}
+
+void DisplayImage(const ImageData& image, const std::string& window_name) {
+  cv::namedWindow(window_name, CV_WINDOW_AUTOSIZE);
+  cv::imshow(window_name, image.GetVisualizationImage());
+  cv::waitKey(0);
+  cv::destroyWindow(window_name);
 }
 
 }  // namespace util
