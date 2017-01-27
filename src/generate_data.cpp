@@ -1,9 +1,11 @@
 // This binary is used to generate low-resolution images from a given
 // high-resolution ground truth image. Use this to generate data before running
 // the SuperResolution binary for algorithm testing and evaluation.
+//
+// TODO: This currently only supports RGB or Grayscale images. Extend this to
+// support hyperspectral data as well.
 
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "image/image_data.h"
@@ -18,10 +20,11 @@
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 
 #include "gflags/gflags.h"
 #include "glog/logging.h"
+
+using super_resolution::ImageData;
 
 // Required input and output files.
 DEFINE_string(input_image, "",
@@ -30,7 +33,7 @@ DEFINE_string(output_image_dir, "",
     "Path to a directory that will contain all of the generated LR images.");
 
 // Motion estimate file I/O parameters.
-DEFINE_string(input_motion_sequence, "",
+DEFINE_string(motion_sequence_path, "",
     "Path to a text file containing a simulated motion sequence.");
 
 // Parameters for the low-resolution image generation.
@@ -52,28 +55,30 @@ int main(int argc, char** argv) {
   REQUIRE_ARG(FLAGS_input_image);
   REQUIRE_ARG(FLAGS_output_image_dir);
 
-  const cv::Mat image = cv::imread(FLAGS_input_image, CV_LOAD_IMAGE_GRAYSCALE);
-  const super_resolution::ImageData image_data(image);
-
-  // Set up a motion sequence from a file if the user specified one.
-  super_resolution::MotionShiftSequence motion_shift_sequence;
-  if (!FLAGS_input_motion_sequence.empty()) {
-    motion_shift_sequence.LoadSequenceFromFile(FLAGS_input_motion_sequence);
-  }
+  const cv::Mat image = cv::imread(FLAGS_input_image, cv::IMREAD_UNCHANGED);
+  const ImageData image_data(image);
 
   // Set up the ImageModel with all the parameters specified by the user. This
   // model will be used to generate the degradated images.
   super_resolution::ImageModel image_model(FLAGS_downsampling_scale);
 
-  // Add motion.
-  const super_resolution::MotionModule motion_module(motion_shift_sequence);
-  image_model.AddDegradationOperator(motion_module);
+  // Add motion module if user specified motion shift sequence. We use a
+  // pointer to avoid scoping issues of creating the module in the if block.
+  std::unique_ptr<super_resolution::MotionModule> motion_module;
+  if (!FLAGS_motion_sequence_path.empty()) {
+    super_resolution::MotionShiftSequence motion_shift_sequence;
+    motion_shift_sequence.LoadSequenceFromFile(FLAGS_motion_sequence_path);
+    motion_module = std::unique_ptr<super_resolution::MotionModule>(
+        new super_resolution::MotionModule(motion_shift_sequence));
+    image_model.AddDegradationOperator(*motion_module);
+  }
 
   // Add blur if the parameters are specified.
+  std::unique_ptr<super_resolution::BlurModule> blur_module;
   if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
-    const super_resolution::BlurModule blur_module(
-        FLAGS_blur_radius, FLAGS_blur_sigma);
-    image_model.AddDegradationOperator(blur_module);
+    blur_module = std::unique_ptr<super_resolution::BlurModule>(
+        new super_resolution::BlurModule(FLAGS_blur_radius, FLAGS_blur_sigma));
+    image_model.AddDegradationOperator(*blur_module);
   }
 
   // Add downsampling.
@@ -82,14 +87,15 @@ int main(int argc, char** argv) {
   image_model.AddDegradationOperator(downsampling_module);
 
   // Add additive noise if the parameter was specified.
+  std::unique_ptr<super_resolution::AdditiveNoiseModule> noise_module;
   if (FLAGS_noise_sigma > 0) {
-    const super_resolution::AdditiveNoiseModule noise_module(FLAGS_noise_sigma);
-    image_model.AddDegradationOperator(noise_module);
+    noise_module = std::unique_ptr<super_resolution::AdditiveNoiseModule>(
+        new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma));
+    image_model.AddDegradationOperator(*noise_module);
   }
 
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {
-    const super_resolution::ImageData low_res_frame =
-        image_model.ApplyToImage(image_data, i);
+    const ImageData low_res_frame = image_model.ApplyToImage(image_data, i);
     // Write the file.
     std::string image_path =
         FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";

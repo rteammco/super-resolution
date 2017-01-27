@@ -54,7 +54,7 @@ ImageData LoadImage(const std::string& file_path) {
   std::transform(
       extension.begin(), extension.end(), extension.begin(), tolower);
   if (DoesSetContain(kSupportedImageExtensions, extension)) {
-    const cv::Mat image = cv::imread(file_path, CV_LOAD_IMAGE_COLOR);
+    const cv::Mat image = cv::imread(file_path, cv::IMREAD_UNCHANGED);
     return ImageData(image);
   } else if (DoesSetContain(kSupportedHyperspectralExtensions, extension)) {
     hyperspectral::HyperspectralDataLoader hs_data_loader(file_path);

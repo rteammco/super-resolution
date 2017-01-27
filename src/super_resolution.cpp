@@ -1,5 +1,8 @@
+// This binary is used to run the implemented super-resolution algorithm(s) on
+// a given set of images or a video. It provides an interface for the user to
+// specify parameters of the algorithm without needing to code it directly.
+
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include "image/image_data.h"
