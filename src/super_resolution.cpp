@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "image/image_data.h"
+#include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
 #include "image_model/downsampling_module.h"
 #include "image_model/image_model.h"
@@ -25,6 +26,18 @@ using super_resolution::ImageData;
 // Input images (required):
 DEFINE_string(data_path, "",
     "Path to an input file or directory to super resolve.");
+
+// Set to true to generate the low-resolution images from an image file given
+// as the data_path argument. If this is not set, data_path should be a
+// directory of low-resolution images to super-resolve. Use this flag for
+// testing and evaluation purposes. Number of images generated depends on the
+// motion sequence.
+DEFINE_bool(generate_lr_images, false,
+    "Super-resolve images generated from high-res file at data_path.");
+DEFINE_double(noise_sigma, 0.0,
+    "Additive noise std. deviation (only if --generate_lr_images is set).");
+DEFINE_int32(number_of_frames, 4,
+    "The number of frames to generate (only if --generate_lr_images is set).");
 
 // Image model parameters:
 DEFINE_int32(upsampling_scale, 2,
@@ -46,9 +59,6 @@ int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Super resolution.");
 
   REQUIRE_ARG(FLAGS_data_path);
-
-  std::vector<ImageData> images = super_resolution::util::LoadImages(
-      FLAGS_data_path);
 
   // Create the forward image model.
   super_resolution::ImageModel image_model(FLAGS_upsampling_scale);
@@ -76,6 +86,29 @@ int main(int argc, char** argv) {
   const super_resolution::DownsamplingModule downsampling_module(
       FLAGS_upsampling_scale);
   image_model.AddDegradationOperator(downsampling_module);
+
+  // Load in or generate the low-resolution images.
+  std::vector<ImageData> images;
+  if (FLAGS_generate_lr_images) {
+    LOG(INFO) << "Generating low-resolution images from ground truth.";
+    const ImageData high_res_image =
+        super_resolution::util::LoadImage(FLAGS_data_path);
+    super_resolution::ImageModel image_model_with_noise = image_model;
+    std::unique_ptr<super_resolution::AdditiveNoiseModule> noise_module;
+    if (FLAGS_noise_sigma > 0.0) {
+      noise_module = std::unique_ptr<super_resolution::AdditiveNoiseModule>(
+          new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma));
+      image_model_with_noise.AddDegradationOperator(*noise_module);
+      LOG(INFO) << "Added noise! " << FLAGS_noise_sigma;
+    }
+    for (int i = 0; i < FLAGS_number_of_frames; ++i) {
+      const ImageData low_res_frame =
+          image_model_with_noise.ApplyToImage(high_res_image, i);
+      images.push_back(low_res_frame);
+    }
+  } else {
+    images = super_resolution::util::LoadImages(FLAGS_data_path);
+  }
 
   // Set initial estimate.
   ImageData initial_estimate = images[0];

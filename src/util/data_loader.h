@@ -17,8 +17,9 @@ namespace util {
 bool IsDirectory(const std::string& path);
 
 // Returns a list of images loaded from the given data_path. If the data_path
-// points to a directory, the list will contain images loaded from all files
-// in that directory.
+// points to a directory, the list will contain images loaded from all files in
+// that directory. If it is the name of a file, the returned list will contain
+// that single image.
 //
 // The given data_path should be an image file or directory containing
 // multiple image files. The file(s) can be one of the following formats:
@@ -28,6 +29,9 @@ bool IsDirectory(const std::string& path);
 //   - TODO: Binary hyperspectral data files.
 // Unsupported or invalid files or directories will result in an error.
 std::vector<ImageData> LoadImages(const std::string& data_path);
+
+// A shortcut for LoadImages if only a single image is needed.
+ImageData LoadImage(const std::string& data_path);
 
 // Saves the given image to a file at the given path. If the image has one or
 // three channels (monochrome or RGB, respectively), it will be saved as an

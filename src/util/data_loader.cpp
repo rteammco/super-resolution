@@ -48,7 +48,6 @@ bool DoesSetContain(
 
 // Returns a single image loaded from the given file path. The file can be any
 // supported type that contains image data.
-// This is not a publically accessible function.
 ImageData LoadImage(const std::string& file_path) {
   std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
   std::transform(

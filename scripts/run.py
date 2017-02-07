@@ -8,12 +8,13 @@ configuration = {
   'scale': 2,
   'blur_radius': 5,
   'blur_sigma': 0.7,
-  'noise_sigma': 0.0,
+  'noise_sigma': 10.0,
   'number_of_frames': 4,
   'hr_image_path': '../test_data/fb.png',
-  'lr_image_dir': '../test_data/OUT',
+  'lr_image_dir': '../test/OUT',
   'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
-  'display_mode': 'compare'
+  'display_mode': 'compare',
+  'generate_lr_images': True  # for SR binary testing
 }
 
 def run_generate_data(binary_path, config):
@@ -36,12 +37,17 @@ def run_super_resolution(binary_path, config):
   """ Runs the SuperResolution binary.
   """
   command = binary_path + '/SuperResolution'
-  command += ' --data_path={}'.format(config['lr_image_dir'])
   command += ' --upsampling_scale={}'.format(config['scale'])
   command += ' --blur_radius={}'.format(config['blur_radius'])
   command += ' --blur_sigma={}'.format(config['blur_sigma'])
   command += ' --motion_sequence_path={}'.format(config['motion_sequence_path'])
   command += ' --display_mode={}'.format(config['display_mode'])
+  if config['generate_lr_images']:
+    command += ' --generate_lr_images'
+    command += ' --noise_sigma={}'.format(config['noise_sigma'])
+    command += ' --data_path={}'.format(config['hr_image_path'])
+  else:
+    command += ' --data_path={}'.format(config['lr_image_dir'])
   print 'Running SuperResolution command:'
   print command
   subprocess.call(command.split(' '))

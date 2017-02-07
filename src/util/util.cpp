@@ -1,7 +1,8 @@
 #include "util/util.h"
 
-#include <algorithm>
 #include <dirent.h>
+
+#include <algorithm>
 #include <string>
 #include <vector>
 
