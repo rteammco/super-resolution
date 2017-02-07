@@ -54,8 +54,30 @@ T GetYGradientAtPixel(
   return 0;
 }
 
-// Computes the full total variation for a pixel at (row, col) of the given
-// image_data. Returned value will be 0 for invalid row and col values.
+// Computes the full total variation 1-norm for a pixel at (row, col) of the
+// given image_data. Returned value will be 0 for invalid row and col values.
+template<typename T>
+T GetTotalVariationAbs(
+    const T* image_data,
+    const cv::Size& image_size,
+    const int row,
+    const int col) {
+
+  T y_variation =
+      GetYGradientAtPixel<T>(image_data, image_size, row, col);
+  if (y_variation < T(0)) {
+    y_variation *= T(-1);
+  }
+  T x_variation =
+      GetXGradientAtPixel<T>(image_data, image_size, row, col);
+  if (x_variation < T(0)) {
+    x_variation *= T(-1);
+  }
+  return y_variation + x_variation;
+}
+
+// Computes the full squared (for a 2-norm) total variation for a pixel at
+// (row, col).
 template<typename T>
 T GetTotalVariationSquared(
     const T* image_data,
@@ -85,8 +107,13 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = channel_index + (row * image_size_.width + col);
-        residuals[index] = sqrt(GetTotalVariationSquared<double>(
-            data_ptr, image_size_, row, col));
+        if (use_two_norm_) {
+          residuals[index] = sqrt(GetTotalVariationSquared<double>(
+              data_ptr, image_size_, row, col));
+        } else {
+          residuals[index] = GetTotalVariationAbs<double>(
+              data_ptr, image_size_, row, col);
+        }
       }
     }
   }
@@ -118,8 +145,13 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = channel_index + (row * image_size_.width + col);
-        residuals[index] = fadbad::sqrt(GetTotalVariationSquared<F<double>>(
-            data_ptr, image_size_, row, col));
+        if (use_two_norm_) {
+          residuals[index] = fadbad::sqrt(GetTotalVariationSquared<F<double>>(
+              data_ptr, image_size_, row, col));
+        } else {
+          residuals[index] = GetTotalVariationAbs<F<double>>(
+              data_ptr, image_size_, row, col);
+        }
         residual_values[index] = residuals[index].x();
       }
     }

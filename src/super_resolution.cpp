@@ -99,7 +99,6 @@ int main(int argc, char** argv) {
       noise_module = std::unique_ptr<super_resolution::AdditiveNoiseModule>(
           new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma));
       image_model_with_noise.AddDegradationOperator(*noise_module);
-      LOG(INFO) << "Added noise! " << FLAGS_noise_sigma;
     }
     for (int i = 0; i < FLAGS_number_of_frames; ++i) {
       const ImageData low_res_frame =
