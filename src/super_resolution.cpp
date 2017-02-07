@@ -36,6 +36,12 @@ DEFINE_double(blur_sigma, 1.0,
 DEFINE_string(motion_sequence_path, "",
     "Path to a file containing the motion shifts for each image.");
 
+// What to do with the results (optional):
+DEFINE_string(display_mode, "",
+    "'result' to display; 'compare' to also display bilinear upsampling.");
+DEFINE_string(result_path, "",
+    "Name of file (with path) where the result image will be saved.");
+
 int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Super resolution.");
 
@@ -73,7 +79,7 @@ int main(int argc, char** argv) {
 
   // Set initial estimate.
   ImageData initial_estimate = images[0];
-  initial_estimate.ResizeImage(FLAGS_upsampling_scale);
+  initial_estimate.ResizeImage(FLAGS_upsampling_scale, cv::INTER_LINEAR);
 
   // Set up the solver with TV regularization.
   // TODO: let the user choose the regularizer and parameter.
@@ -83,8 +89,16 @@ int main(int argc, char** argv) {
       initial_estimate.GetImageSize(), initial_estimate.GetNumChannels());
   solver.AddRegularizer(tv_regularizer, 0.01);
 
+  LOG(INFO) << "Super-resolving...";
   const ImageData result = solver.Solve(initial_estimate);
-  super_resolution::util::DisplayImage(result, "Result");
+
+  if (FLAGS_display_mode == "result") {
+    super_resolution::util::DisplayImage(result, "Result");
+  } else if (FLAGS_display_mode == "compare") {
+    super_resolution::util::DisplayImagesSideBySide(
+        {result, initial_estimate},
+        "Super-Resolution vs. Linear Interpolation");
+  }
 
   return EXIT_SUCCESS;
 }
