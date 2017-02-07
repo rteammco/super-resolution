@@ -29,6 +29,13 @@ bool IsDirectory(const std::string& path);
 // Unsupported or invalid files or directories will result in an error.
 std::vector<ImageData> LoadImages(const std::string& data_path);
 
+// Saves the given image to a file at the given path. If the image has one or
+// three channels (monochrome or RGB, respectively), it will be saved as an
+// OpenCV image. Otherwise, it will be saved as a hyperspectral image. The user
+// provides the extension which defines the type of image that is saved (e.g.
+// JPEG or PNG).
+void SaveImage(const ImageData& image, const std::string& data_path);
+
 }  // namespace util
 }  // namespace super_resolution
 

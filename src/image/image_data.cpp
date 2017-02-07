@@ -195,13 +195,20 @@ cv::Mat ImageData::GetChannelImage(const int index) const {
 double ImageData::GetPixelValue(
     const int channel_index, const int pixel_index) const {
 
-  CHECK_GE(channel_index, 0) << "Channel index must be at least 0.";
-  CHECK_LT(channel_index, channels_.size()) << "Channel index out of bounds.";
-
   const cv::Point image_coordinates =
       GetPixelCoordinatesFromIndex(pixel_index);  // Checks pixel index range.
-  return channels_[channel_index].at<double>(
-      image_coordinates.y, image_coordinates.x);
+  return GetPixelValue(channel_index, image_coordinates.y, image_coordinates.x);
+}
+
+double ImageData::GetPixelValue(
+    const int channel_index, const int row, const int col) const {
+
+  CHECK(0 <= channel_index && channel_index < channels_.size())
+      << "Channel index is out of bounds.";
+  CHECK(0 <= row && row < image_size_.height) << "Row index is out of bounds.";
+  CHECK(0 <= col && col < image_size_.width) << "Col index is out of bounds.";
+
+  return channels_[channel_index].at<double>(row, col);
 }
 
 double* ImageData::GetMutableDataPointer(const int channel_index) const {

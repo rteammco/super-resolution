@@ -124,6 +124,11 @@ class ImageData {
   // channel and pixel indices must be valid.
   double GetPixelValue(const int channel_index, const int pixel_index) const;
 
+  // Same as GetPixelValue(channel_index, pixel_index) but allows the user to
+  // specify the row, col coordinates instead of a pre-computed pixel index.
+  double GetPixelValue(
+      const int channel_index, const int row, const int col) const;
+
   // Returns a mutable data pointer (for the solver to adjust) at the given
   // channel index. The size of the array will be the number of pixels in this
   // image (use GetNumPixels()).

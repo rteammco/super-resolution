@@ -15,6 +15,7 @@
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
+#include "util/data_loader.h"
 #include "util/macros.h"
 #include "util/util.h"
 
@@ -99,7 +100,8 @@ int main(int argc, char** argv) {
     // Write the file.
     std::string image_path =
         FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";
-    cv::imwrite(image_path, low_res_frame.GetVisualizationImage());
+    super_resolution::util::SaveImage(low_res_frame, image_path);
+    LOG(INFO) << "Generated output image " << image_path;
   }
 
   return EXIT_SUCCESS;

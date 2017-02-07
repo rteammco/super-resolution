@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
   initial_estimate.ResizeImage(FLAGS_upsampling_scale);
 
   // Set up the solver with TV regularization.
+  // TODO: let the user choose the regularizer and parameter.
   super_resolution::MapSolverOptions solver_options;
   super_resolution::IrlsMapSolver solver(solver_options, image_model, images);
   const super_resolution::TotalVariationRegularizer tv_regularizer(

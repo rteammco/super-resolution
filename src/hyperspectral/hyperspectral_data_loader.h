@@ -13,8 +13,9 @@ namespace hyperspectral {
 
 class HyperspectralDataLoader {
  public:
-  // Provide a data file name that will be processed. The file should contain
-  // meta information about the image size and number of spectral bands.
+  // Provide a data file name that will be processed or written out to. If the
+  // data is being read from a file, the file should contain meta information
+  // about the image size and number of spectral bands.
   explicit HyperspectralDataLoader(const std::string& file_path)
       : file_path_(file_path) {}
 
@@ -27,6 +28,13 @@ class HyperspectralDataLoader {
   // Returns the ImageData object containing the hyperspectral image data. The
   // image will be empty if LoadData() was not called.
   ImageData GetImage() const;
+
+  // Writes the given image to the data path. This will not store the image for
+  // the GetImage() method.
+  //
+  // TODO: Allow specifying the type of file to be generated (e.g. binary or
+  // text).
+  void WriteImage(const ImageData& image) const;
 
  private:
   // The name of the data file to be loaded.

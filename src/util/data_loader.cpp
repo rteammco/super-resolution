@@ -96,5 +96,20 @@ std::vector<ImageData> LoadImages(const std::string& data_path) {
   return images;
 }
 
+void SaveImage(const ImageData& image, const std::string& data_path) {
+  const int num_channels = image.GetNumChannels();
+  if (num_channels == 1 || num_channels == 3) {
+    // Monochrome or RGB images are put back together and saved with OpenCV.
+    cv::imwrite(data_path, image.GetVisualizationImage());
+  } else if (num_channels > 0) {
+    // 2 or 4+ channel images are saved as hyperspectral images.
+    const hyperspectral::HyperspectralDataLoader hs_data_loader(data_path);
+    hs_data_loader.WriteImage(image);
+  } else {
+    // Can't save an empty image.
+    LOG(WARNING) << "Cannot save an empty image. Nothing was saved.";
+  }
+}
+
 }  // namespace util
 }  // namespace super_resolution

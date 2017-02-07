@@ -92,5 +92,34 @@ ImageData HyperspectralDataLoader::GetImage() const {
   return hyperspectral_image_;
 }
 
+void HyperspectralDataLoader::WriteImage(const ImageData& image) const {
+  const cv::Size image_size = image.GetImageSize();
+  const int num_channels = image.GetNumChannels();
+  const int num_rows = image_size.height;
+  const int num_cols = image_size.width;
+  CHECK_GT(num_rows, 0) << "Number of rows in the image must be positive.";
+  CHECK_GT(num_cols, 0) << "Number of columns in the image must be positive.";
+  CHECK_GT(num_channels, 0) << "Number of bands in the image must be positive.";
+
+  std::ofstream fout(file_path_);
+  CHECK(fout.is_open()) << "Could not open file " << file_path_;
+
+  // Write the meta data (number of rows, cols, and bands).
+  fout << num_rows << " " << num_cols << " " << num_channels << "\n";
+
+  // Write the data line by line.
+  const int num_pixels = image.GetNumPixels();
+  for (int row = 0; row < num_rows; ++row) {
+    for (int col = 0; col < num_cols; ++col) {
+      for (int channel = 0; channel < num_channels; ++channel) {
+        fout << image.GetPixelValue(channel, row, col) << " ";
+      }
+    }
+    fout << "\n";
+  }
+
+  fout.close();
+}
+
 }  // namespace hyperspectral
 }  // namespace super_resolution

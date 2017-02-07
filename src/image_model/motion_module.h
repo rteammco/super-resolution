@@ -16,7 +16,7 @@ class MotionModule : public DegradationOperator {
  public:
   // The given MotionShiftSequence should provide motion information for each
   // image in the frame sequence.
-  explicit MotionModule(const MotionShiftSequence& motion_shift_sequence)
+  explicit MotionModule(const MotionShiftSequence motion_shift_sequence)
       : motion_shift_sequence_(motion_shift_sequence) {}
 
   virtual void ApplyToImage(ImageData* image_data, const int index) const;
@@ -28,7 +28,7 @@ class MotionModule : public DegradationOperator {
       const cv::Size& image_size, const int index) const;
 
  private:
-  const MotionShiftSequence& motion_shift_sequence_;
+  const MotionShiftSequence motion_shift_sequence_;
 };
 
 }  // namespace super_resolution

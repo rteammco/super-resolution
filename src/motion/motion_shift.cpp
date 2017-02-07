@@ -45,11 +45,11 @@ void MotionShiftSequence::SaveSequenceToFile(
 }
 
 const MotionShift& MotionShiftSequence::GetMotionShift(const int index) const {
-    CHECK(index >= 0 && index < motion_shifts_.size())
-        << "The given index " << index << " is out of range. "
-        << "It must be between 0 and " << (motion_shifts_.size() - 1);
+  CHECK(index >= 0 && index < motion_shifts_.size())
+      << "The given index " << index << " is out of range. "
+      << "It must be between 0 and " << (motion_shifts_.size() - 1);
 
-    return motion_shifts_[index];
+  return motion_shifts_[index];
 }
 
 }  // namespace super_resolution
