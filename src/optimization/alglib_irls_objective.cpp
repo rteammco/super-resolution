@@ -58,7 +58,9 @@ void AlglibSolverIterationCallback(
   IrlsMapSolver* irls_map_solver =
       reinterpret_cast<IrlsMapSolver*>(irls_map_solver_ptr);
   irls_map_solver->UpdateIrlsWeights(estimated_data.getcontent());
-  LOG(INFO) << "Callback: residual sum = " << residual_sum;
+  if (irls_map_solver->IsVerbose()) {
+    LOG(INFO) << "Callback: residual sum = " << residual_sum;
+  }
 }
 
 }  // namespace super_resolution

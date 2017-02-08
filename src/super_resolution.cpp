@@ -56,6 +56,8 @@ DEFINE_string(regularizer, "tv",
     "The regularizer to use ('tv', 'btv', '3dtv').");
 DEFINE_double(regularization_parameter, 0.01,
     "The regularization parameter (lambda). 0 to not use regularization.");
+DEFINE_bool(verbose, false,
+    "Setting this will cause the solver to log progress.");
 
 // What to do with the results (optional):
 DEFINE_string(display_mode, "",
@@ -125,6 +127,9 @@ int main(int argc, char** argv) {
   // TODO: let the user choose the solver (once more solvers are supported).
   super_resolution::MapSolverOptions solver_options;
   super_resolution::IrlsMapSolver solver(solver_options, image_model, images);
+  if (!FLAGS_verbose) {
+    solver.Stfu();
+  }
 
   // Add the appropriate regularizer based on user input.
   // TODO: support for different and multiple regularizers.

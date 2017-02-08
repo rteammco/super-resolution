@@ -17,7 +17,8 @@ configuration = {
   'regularizer': 'tv',
   'regularization_parameter': 0.01,
   'display_mode': 'compare',
-  'generate_lr_images': True  # for SR binary testing
+  'generate_lr_images': True,  # for SR binary testing
+  'verbose_solver': True  # for SR binary testing
 }
 
 def run_generate_data(binary_path, config):
@@ -54,6 +55,8 @@ def run_super_resolution(binary_path, config):
     command += ' --data_path={}'.format(config['hr_image_path'])
   else:
     command += ' --data_path={}'.format(config['lr_image_dir'])
+  if config['verbose_solver']:
+     command += ' --verbose'
   print 'Running SuperResolution command:'
   print command
   subprocess.call(command.split(' '))

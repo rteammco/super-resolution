@@ -31,6 +31,12 @@ class Solver {
     print_solver_output_ = false;
   }
 
+  // Returns true if the solver should print or log progress output. Use Stfu()
+  // to silence the solver.
+  virtual bool IsVerbose() const {
+    return print_solver_output_;
+  }
+
  protected:
   const ImageModel& image_model_;
 
