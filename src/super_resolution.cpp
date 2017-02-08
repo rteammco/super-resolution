@@ -49,6 +49,14 @@ DEFINE_double(blur_sigma, 1.0,
 DEFINE_string(motion_sequence_path, "",
     "Path to a file containing the motion shifts for each image.");
 
+// Solver parameters:
+// TODO: add support for these regularizers.
+// TODO: add support for multiple regularizers simultaneously.
+DEFINE_string(regularizer, "tv",
+    "The regularizer to use ('tv', 'btv', '3dtv').");
+DEFINE_double(regularization_parameter, 0.01,
+    "The regularization parameter (lambda). 0 to not use regularization.");
+
 // What to do with the results (optional):
 DEFINE_string(display_mode, "",
     "'result' to display; 'compare' to also display bilinear upsampling.");
@@ -113,13 +121,25 @@ int main(int argc, char** argv) {
   ImageData initial_estimate = images[0];
   initial_estimate.ResizeImage(FLAGS_upsampling_scale, cv::INTER_LINEAR);
 
-  // Set up the solver with TV regularization.
-  // TODO: let the user choose the regularizer and parameter.
+  // Set up the solver.
+  // TODO: let the user choose the solver (once more solvers are supported).
   super_resolution::MapSolverOptions solver_options;
   super_resolution::IrlsMapSolver solver(solver_options, image_model, images);
-  const super_resolution::TotalVariationRegularizer tv_regularizer(
-      initial_estimate.GetImageSize(), initial_estimate.GetNumChannels());
-  solver.AddRegularizer(tv_regularizer, 0.01);
+
+  // Add the appropriate regularizer based on user input.
+  // TODO: support for different and multiple regularizers.
+  std::unique_ptr<super_resolution::Regularizer> regularizer;
+  if (FLAGS_regularization_parameter > 0.0) {
+    // TODO: if (FLAGS_regularizer == "tv") { ... }
+    regularizer = std::unique_ptr<super_resolution::Regularizer>(
+        new super_resolution::TotalVariationRegularizer(
+            initial_estimate.GetImageSize(),
+            initial_estimate.GetNumChannels()));
+    solver.AddRegularizer(*regularizer, FLAGS_regularization_parameter);
+    LOG(INFO) << "Added " << FLAGS_regularizer
+              << " regularizer with regularization parameter "
+              << FLAGS_regularization_parameter;
+  }
 
   LOG(INFO) << "Super-resolving...";
   const ImageData result = solver.Solve(initial_estimate);

@@ -8,12 +8,14 @@ configuration = {
   'scale': 2,
   'blur_radius': 5,
   'blur_sigma': 0.7,
-  'noise_sigma': 10.0,
+  'noise_sigma': 30.0,
   'number_of_frames': 4,
-  'hr_image_path': '../test_data/fb.png',
-  'hr_image_path': '../test_data/dallas.jpg',
+#  'hr_image_path': '../test_data/fb.png',
+  'hr_image_path': '../test_data/dallas_qtr.jpg',
   'lr_image_dir': '../test/OUT',
   'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
+  'regularizer': 'tv',
+  'regularization_parameter': 0.01,
   'display_mode': 'compare',
   'generate_lr_images': True  # for SR binary testing
 }
@@ -42,6 +44,9 @@ def run_super_resolution(binary_path, config):
   command += ' --blur_radius={}'.format(config['blur_radius'])
   command += ' --blur_sigma={}'.format(config['blur_sigma'])
   command += ' --motion_sequence_path={}'.format(config['motion_sequence_path'])
+  command += ' --regularizer={}'.format(config['regularizer'])
+  command += ' --regularization_parameter={}'.format(
+      config['regularization_parameter'])
   command += ' --display_mode={}'.format(config['display_mode'])
   if config['generate_lr_images']:
     command += ' --generate_lr_images'
