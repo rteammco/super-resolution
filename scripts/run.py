@@ -11,6 +11,7 @@ configuration = {
   'noise_sigma': 10.0,
   'number_of_frames': 4,
   'hr_image_path': '../test_data/fb.png',
+  'hr_image_path': '../test_data/dallas.jpg',
   'lr_image_dir': '../test/OUT',
   'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
   'display_mode': 'compare',
