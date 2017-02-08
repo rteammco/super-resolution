@@ -45,11 +45,6 @@ class TotalVariationRegularizer : public Regularizer {
   // of the gradient instead of the absolute value to compute the residuals.
   // The 1-norm is more stable.
   const bool use_two_norm_;
-
-  // TODO: fix.
-  std::vector<double> GetGradient(
-      const double* image_data,
-      const std::vector<double>& gradient_constants) const;
 };
 
 }  // namespace super_resolution

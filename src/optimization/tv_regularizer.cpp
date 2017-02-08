@@ -131,161 +131,146 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   // Initialize the derivatives of each parameter with respect to itself.
   const int num_pixels = image_size_.width * image_size_.height;
   const int num_parameters = num_pixels * num_channels_;
-  std::vector<F<double>> parameters(
-      image_data, image_data + num_parameters);
-  for (int i = 0; i < num_parameters; ++i) {
-    parameters[i].diff(i, num_parameters);
-  }
+//  std::vector<F<double>> parameters(
+//      image_data, image_data + num_parameters);
+//  for (int i = 0; i < num_parameters; ++i) {
+//    parameters[i].diff(i, num_parameters);
+//  }
 
-  std::vector<double> residual_values(num_parameters);
-  std::vector<F<double>> residuals(num_parameters);
+//  std::vector<double> residual_values(num_parameters);
+//  std::vector<F<double>> residuals(num_parameters);
+  std::vector<double> residuals(num_parameters);
   for (int channel = 0; channel < num_channels_; ++channel) {
     const int channel_index = channel * num_pixels;
-    const F<double>* data_ptr = parameters.data() + channel_index;
+//    const F<double>* data_ptr = parameters.data() + channel_index;
+    const double* data_ptr = image_data + channel_index;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = channel_index + (row * image_size_.width + col);
         if (use_two_norm_) {
-          residuals[index] = fadbad::sqrt(GetTotalVariationSquared<F<double>>(
-              data_ptr, image_size_, row, col));
+          // TODO: put back?
+//          residuals[index] = fadbad::sqrt(GetTotalVariationSquared<F<double>>(
+//              data_ptr, image_size_, row, col));
         } else {
-          residuals[index] = GetTotalVariationAbs<F<double>>(
+          residuals[index] = GetTotalVariationAbs<double>(
               data_ptr, image_size_, row, col);
+//          residuals[index] = GetTotalVariationAbs<F<double>>(
+//              data_ptr, image_size_, row, col);
         }
-        residual_values[index] = residuals[index].x();
+//        residual_values[index] = residuals[index].x();
       }
     }
   }
 
-  std::vector<double> gradient(num_parameters);  // inits to 0.
-  // For each pixel, its gradient is the sum of partial derivatives at all
-  // other pixels j with respect to pixel i.
+//  std::vector<double> gradient(num_parameters);  // inits to 0.
+//  // For each pixel, its gradient is the sum of partial derivatives at all
+//  // other pixels j with respect to pixel i.
+//  for (int channel = 0; channel < num_channels_; ++channel) {
+//    const int channel_index = channel * num_pixels;
+//    for (int row = 0; row < image_size_.height; ++row) {
+//      for (int col = 0; col < image_size_.width; ++col) {
+//        // To speed things up, we only look at the partial derivatives that
+//        // actually get computed (which is, for any pixel, the partial w.r.t.
+//        // the pixel to the left and w.r.t. the pixel above).
+//        const int index = channel_index + (row * image_size_.width + col);
+//
+//        // Add partial w.r.t. x_{r,c} (this pixel):
+//        const double didi = residuals[index].d(index);
+//        if (!isnan(didi)) {
+//          gradient[index] +=
+//              2 * gradient_constants[index] * residuals[index].x() * didi;
+//        }
+//
+//        // Partial w.r.t. x_{r,c-1} (pixel to the left):
+//        if (col - 1 >= 0) {
+//          const int left_index =
+//              channel_index + (row * image_size_.width + (col - 1));
+//          const double dldi = residuals[left_index].d(index);
+//          if (!isnan(dldi)) {
+//            gradient[index] +=
+//                2 *
+//                gradient_constants[left_index] *
+//                residuals[left_index].x() *
+//                dldi;
+//          }
+//        }
+//
+//        // Partial w.r.t. x_{r-1,c} (pixel above):
+//        if (row - 1 >= 0) {
+//          const int above_index =
+//              channel_index + ((row - 1) * image_size_.width + col);
+//          const double dadi = residuals[above_index].d(index);
+//          if (!isnan(dadi)) {
+//            gradient[index] +=
+//                2 *
+//                gradient_constants[above_index] *
+//                residuals[above_index].x() *
+//                dadi;
+//          }
+//        }
+//      }
+//    }
+//  }
+
+  std::vector<double> gradient(num_parameters);
   for (int channel = 0; channel < num_channels_; ++channel) {
     const int channel_index = channel * num_pixels;
+    const double* data_ptr = image_data + channel_index;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        // To speed things up, we only look at the partial derivatives that
-        // actually get computed (which is, for any pixel, the partial w.r.t.
-        // the pixel to the left and w.r.t. the pixel above).
         const int index = channel_index + (row * image_size_.width + col);
-
-        // Add partial w.r.t. x_{r,c} (this pixel):
-        const double didi = residuals[index].d(index);
-        if (!isnan(didi)) {
-          gradient[index] +=
-              2 * gradient_constants[index] * residuals[index].x() * didi;
+        // Derivative w.r.t. the pixel itself.
+        double didi = 0.0;
+        const double x_gradient =
+            GetXGradientAtPixel<double>(data_ptr, image_size_, row, col);
+        if (x_gradient < 0) {
+          didi += 1.0;
+        } else if (x_gradient > 0) {
+          didi -= 1.0;
         }
-
-        // Partial w.r.t. x_{r,c-1} (pixel to the left):
+        const double y_gradient =
+            GetYGradientAtPixel<double>(data_ptr, image_size_, row, col);
+        if (y_gradient < 0) {
+          didi += 1.0;
+        } else if (y_gradient > 0) {
+          didi -= 1.0;
+        }
+        gradient[index] +=
+            2 * gradient_constants[index] * residuals[index] * didi;
+        // Derivative w.r.t. the pixel to the left.
         if (col - 1 >= 0) {
           const int left_index =
               channel_index + (row * image_size_.width + (col - 1));
-          const double dldi = residuals[left_index].d(index);
-          if (!isnan(dldi)) {
-            gradient[index] +=
-                2 *
-                gradient_constants[left_index] *
-                residuals[left_index].x() *
-                dldi;
+          const double left_gradient =
+              GetXGradientAtPixel<double>(data_ptr, image_size_, row, col - 1);
+          double didl = 1.0;
+          if (left_gradient < 0) {
+            didl = -1.0;
           }
+          gradient[index] +=
+              2 * gradient_constants[left_index] * residuals[left_index] * didl;
         }
-
-        // Partial w.r.t. x_{r-1,c} (pixel above):
+        // Derivative w.r.t. the pixel above.
         if (row - 1 >= 0) {
           const int above_index =
               channel_index + ((row - 1) * image_size_.width + col);
-          const double dadi = residuals[above_index].d(index);
-          if (!isnan(dadi)) {
-            gradient[index] +=
-                2 *
-                gradient_constants[above_index] *
-                residuals[above_index].x() *
-                dadi;
+          const double above_gradient =
+              GetYGradientAtPixel<double>(data_ptr, image_size_, row - 1, col);
+          double dida = 1.0;
+          if (above_gradient < 0) {
+            dida = -1.0;
           }
+          gradient[index] +=
+              2 *
+              gradient_constants[above_index] *
+              residuals[above_index] *
+              dida;
         }
       }
     }
   }
 
-  return std::make_pair(residual_values, gradient);
-}
-
-std::vector<double> TotalVariationRegularizer::GetGradient(
-    const double* image_data,
-    const std::vector<double>& gradient_constants) const {
-
-  CHECK_NOTNULL(image_data);
-
-  const int num_pixels = image_size_.width * image_size_.height;
-  CHECK_EQ(gradient_constants.size(), num_pixels)
-    << "There must be exactly one const term per pixel in the image. "
-    << "Use 1 for identity or 0 to ignore the derivative.";
-
-  const std::vector<double> total_variation = ApplyToImage(image_data);
-  // Convert all values to non-zero to avoid division by zero.
-  std::vector<double> total_variation_nz;
-  for (const double tv_value : total_variation) {
-    total_variation_nz.push_back(std::max(tv_value, kMinTotalVariation));
-  }
-
-  std::vector<double> derivatives(num_pixels);
-  for (int row = 0; row < image_size_.height; ++row) {
-    for (int col = 0; col < image_size_.width; ++col) {
-      // For pixel at row and col (r, c), the derivative depends on the
-      // following pixels:
-      //   x_{r,c}    = this pixel itself
-      //   x_{r,c-1}  = pixel to the left
-      //   x_{r-1,c}  = pixel above
-      // All the partials are also later divided by the total_variation value
-      // at their respective pixel locations.
-
-      // Partial w.r.t. x_{r,c} (this pixel) is:
-      //   ((x_{r,c+1} - x_{r,c}) + (x_{r+1,c} - x{r,c})) / tv_{r,c}
-      // We do the tv_{r,c} division later.
-      const double this_pixel_numerator =
-          GetXGradientAtPixel<double>(image_data, image_size_, row, col) +
-          GetYGradientAtPixel<double>(image_data, image_size_, row, col);
-
-      // Partial w.r.t. x_{r,c-1} (pixel to the left) is:
-      //   -(x_{r,c} - x{r,c-1}) / tv_{r,c-1}
-      const double left_pixel_numerator =
-          -GetXGradientAtPixel<double>(image_data, image_size_, row, col - 1);
-
-      // Partial w.r.t. x_{r-1,c} (pixel above) is:
-      //   -(x_{r,c} - x_{r-1,c}) / tv_{r-1,c}
-      const double above_pixel_numerator =
-          -GetYGradientAtPixel<double>(image_data, image_size_, row - 1, col);
-
-      // Divide the tv values and multiply by the given partial constants, and
-      // sum it all up to get the final derivative for the pixel at (row, col).
-
-      // Add partial w.r.t. x_{r,c} (this pixel):
-      const int this_pixel_index = row * image_size_.width + col;
-      const double this_pixel_partial =
-          this_pixel_numerator / total_variation_nz[this_pixel_index];
-      derivatives[this_pixel_index] =
-          gradient_constants[this_pixel_index] * this_pixel_partial;
-
-      // Partial w.r.t. x_{r,c-1} (pixel to the left):
-      if (col - 1 >= 0) {  // If left pixel is outside image, the partial is 0.
-        const int left_pixel_index = row * image_size_.width + (col - 1);
-        const double left_pixel_partial =
-            left_pixel_numerator / total_variation_nz[left_pixel_index];
-        derivatives[this_pixel_index] +=
-            gradient_constants[left_pixel_index] * left_pixel_partial;
-      }
-
-      // Partial w.r.t. x_{r-1,c} (pixel above):
-      if (row - 1 >= 0) {  // If above pixel is outside image, the partial is 0.
-        const int above_pixel_index = (row - 1) * image_size_.width + col;
-        const double above_pixel_partial =
-            above_pixel_numerator / total_variation_nz[above_pixel_index];
-        derivatives[this_pixel_index] +=
-            gradient_constants[above_pixel_index] * above_pixel_partial;
-      }
-    }
-  }
-  return derivatives;
+  return std::make_pair(residuals, gradient);
 }
 
 }  // namespace super_resolution
