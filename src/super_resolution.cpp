@@ -2,9 +2,11 @@
 // a given set of images or a video. It provides an interface for the user to
 // specify parameters of the algorithm without needing to code it directly.
 
+#include <iostream>
 #include <memory>
 #include <vector>
 
+#include "evaluation/peak_signal_to_noise_ratio.h"
 #include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
@@ -56,14 +58,24 @@ DEFINE_string(regularizer, "tv",
     "The regularizer to use ('tv', 'btv', '3dtv').");
 DEFINE_double(regularization_parameter, 0.01,
     "The regularization parameter (lambda). 0 to not use regularization.");
+
+// Evaluation and testing:
 DEFINE_bool(verbose, false,
     "Setting this will cause the solver to log progress.");
+DEFINE_string(evaluator, "",  // TODO: add support for more evaluators.
+    "Optionally print an evaluation metric value ('psnr').");
 
 // What to do with the results (optional):
 DEFINE_string(display_mode, "",
     "'result' to display; 'compare' to also display bilinear upsampling.");
 DEFINE_string(result_path, "",
     "Name of file (with path) where the result image will be saved.");
+
+// This struct is used to track input data.
+struct InputData {
+  ImageData high_res_image;  // Optional (if ground truth is passed in).
+  std::vector<ImageData> low_res_images;  // Necessary for super-resolution.
+};
 
 int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Super resolution.");
@@ -98,10 +110,10 @@ int main(int argc, char** argv) {
   image_model.AddDegradationOperator(downsampling_module);
 
   // Load in or generate the low-resolution images.
-  std::vector<ImageData> images;
+  InputData input_data;
   if (FLAGS_generate_lr_images) {
     LOG(INFO) << "Generating low-resolution images from ground truth.";
-    const ImageData high_res_image =
+    input_data.high_res_image =
         super_resolution::util::LoadImage(FLAGS_data_path);
     super_resolution::ImageModel image_model_with_noise = image_model;
     std::unique_ptr<super_resolution::AdditiveNoiseModule> noise_module;
@@ -112,21 +124,25 @@ int main(int argc, char** argv) {
     }
     for (int i = 0; i < FLAGS_number_of_frames; ++i) {
       const ImageData low_res_frame =
-          image_model_with_noise.ApplyToImage(high_res_image, i);
-      images.push_back(low_res_frame);
+          image_model_with_noise.ApplyToImage(input_data.high_res_image, i);
+      input_data.low_res_images.push_back(low_res_frame);
     }
   } else {
-    images = super_resolution::util::LoadImages(FLAGS_data_path);
+    input_data.low_res_images =
+        super_resolution::util::LoadImages(FLAGS_data_path);
   }
 
   // Set initial estimate.
-  ImageData initial_estimate = images[0];
+  CHECK_GT(input_data.low_res_images.size(), 0)
+      << "At least one low-resolution image is required for super-resolution.";
+  ImageData initial_estimate = input_data.low_res_images[0];
   initial_estimate.ResizeImage(FLAGS_upsampling_scale, cv::INTER_LINEAR);
 
   // Set up the solver.
   // TODO: let the user choose the solver (once more solvers are supported).
   super_resolution::MapSolverOptions solver_options;
-  super_resolution::IrlsMapSolver solver(solver_options, image_model, images);
+  super_resolution::IrlsMapSolver solver(
+      solver_options, image_model, input_data.low_res_images);
   if (!FLAGS_verbose) {
     solver.Stfu();
   }
@@ -146,8 +162,22 @@ int main(int argc, char** argv) {
               << FLAGS_regularization_parameter;
   }
 
-  LOG(INFO) << "Super-resolving...";
+  std::cout << "Super-resolving..." << std::endl;
   const ImageData result = solver.Solve(initial_estimate);
+  std::cout << "Done!" << std::endl;
+
+  // If an evaluation criteria is passed in and the high-resolution image is
+  // available, display the evaluation results.
+  if (FLAGS_generate_lr_images && !FLAGS_evaluator.empty()) {
+    if (FLAGS_evaluator == "psnr") {
+      super_resolution::PeakSignalToNoiseRatioEvaluator psnr_evaluator(
+          input_data.high_res_image);
+      const double upsampled_psnr = psnr_evaluator.Evaluate(initial_estimate);
+      const double result_psnr = psnr_evaluator.Evaluate(result);
+      std::cout << "PSNR score on upsampled: " << upsampled_psnr << std::endl;
+      std::cout << "PSNR score on result:    " << result_psnr << std::endl;
+    }
+  }
 
   if (FLAGS_display_mode == "result") {
     super_resolution::util::DisplayImage(result, "Result");
