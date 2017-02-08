@@ -100,7 +100,8 @@ void DisplayImagesSideBySide(
     height = std::max(height, image_size.height);
   }
 
-  cv::Mat stitched_images(height, width, CV_8UC3);
+  const int image_type = (images[0].GetNumChannels() < 3) ? CV_8UC1 : CV_8UC3;
+  cv::Mat stitched_images(height, width, image_type);
   int x_pos = 0;
   for (const ImageData& image : images) {
     const cv::Size image_size = image.GetImageSize();
