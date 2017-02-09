@@ -55,7 +55,7 @@ DEFINE_string(motion_sequence_path, "",
 // TODO: add support for these regularizers.
 // TODO: add support for multiple regularizers simultaneously.
 DEFINE_string(regularizer, "tv",
-    "The regularizer to use ('tv', 'btv', '3dtv').");
+    "The regularizer to use ('tv', '3dtv', 'btv').");
 DEFINE_double(regularization_parameter, 0.01,
     "The regularization parameter (lambda). 0 to not use regularization.");
 DEFINE_int32(solver_iterations, 50,
@@ -155,14 +155,20 @@ int main(int argc, char** argv) {
   }
 
   // Add the appropriate regularizer based on user input.
-  // TODO: support for different and multiple regularizers.
+  // TODO: support for multiple regularizers at once.
   std::unique_ptr<super_resolution::Regularizer> regularizer;
   if (FLAGS_regularization_parameter > 0.0) {
-    // TODO: if (FLAGS_regularizer == "tv") { ... }
-    regularizer = std::unique_ptr<super_resolution::Regularizer>(
-        new super_resolution::TotalVariationRegularizer(
-            initial_estimate.GetImageSize(),
-            initial_estimate.GetNumChannels()));
+    if (FLAGS_regularizer == "tv" || FLAGS_regularizer == "3dtv") {
+      regularizer =
+          std::unique_ptr<super_resolution::TotalVariationRegularizer>(
+              new super_resolution::TotalVariationRegularizer(
+                  initial_estimate.GetImageSize(),
+                  initial_estimate.GetNumChannels()));
+      if (FLAGS_regularizer == "3dtv") {
+        reinterpret_cast<super_resolution::TotalVariationRegularizer*>(
+            regularizer.get())->SetUse3dTotalVariation(true);
+      }
+    }
     solver.AddRegularizer(*regularizer, FLAGS_regularization_parameter);
     LOG(INFO) << "Added " << FLAGS_regularizer
               << " regularizer with regularization parameter "
