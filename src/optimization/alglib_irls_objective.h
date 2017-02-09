@@ -17,6 +17,14 @@ void AlglibObjectiveFunction(
     alglib::real_1d_array& gradient,  // NOLINT
     void* irls_map_solver_ptr);
 
+// The same objective function as above, but does not compute the gradients.
+// This is for numerical differentiation (test purposes only). This version of
+// the objective function is very slow.
+void AlglibObjectiveFunctionNumericalDiff(
+    const alglib::real_1d_array& estimated_data,
+    double& residual_sum,  // NOLINT
+    void* irls_map_solver_ptr);
+
 // The callback function for the ALGLIB solver. Called after every solver
 // iteration, which updates the IRLS weights.
 void AlglibSolverIterationCallback(

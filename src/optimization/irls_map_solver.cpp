@@ -55,15 +55,16 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
 
   alglib::mincgstate solver_state;
   alglib::mincgreport solver_report;
-  // TODO: enable numerical diff option?
-  // if (solver_options_.use_numerical_differentiation) {
-  // alglib::mincgcreatef(
-  //    solver_data,
-  //    solver_options_.numerical_differentiation_step,
-  //    solver_state);
-  // } else {
-  alglib::mincgcreate(solver_data, solver_state);
-  // }
+  if (solver_options_.use_numerical_differentiation) {
+    // Numerical differentiation setup.
+    alglib::mincgcreatef(
+        solver_data,
+        solver_options_.numerical_differentiation_step,
+        solver_state);
+  } else {
+    // Analytical differentiation setup.
+    alglib::mincgcreate(solver_data, solver_state);
+  }
   alglib::mincgsetcond(
       solver_state,
       solver_options_.gradient_norm_threshold,
@@ -72,21 +73,22 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
       solver_options_.max_num_solver_iterations);
   alglib::mincgsetxrep(solver_state, true);
 
-  // TODO: enable numerical diff option?
   // Solve and get results report.
-  // if (solver_options_.use_numerical_differentiation) {
-  //   alglib::mincgoptimize(
-  //       solver_state,
-  //       ObjectiveFunctionNumericalDifferentiation,
-  //       SolverIterationCallback,
-  //       const_cast<void*>(reinterpret_cast<const void*>(this)));
-  // } else {
-  alglib::mincgoptimize(
-      solver_state,
-      AlglibObjectiveFunction,
-      AlglibSolverIterationCallback,
-      const_cast<void*>(reinterpret_cast<const void*>(this)));
-  // }
+  if (solver_options_.use_numerical_differentiation) {
+    // Optimize with numerical differentiation.
+    alglib::mincgoptimize(
+        solver_state,
+        AlglibObjectiveFunctionNumericalDiff,
+        AlglibSolverIterationCallback,
+        const_cast<void*>(reinterpret_cast<const void*>(this)));
+  } else {
+    // Optimize with analytical differentiation.
+    alglib::mincgoptimize(
+        solver_state,
+        AlglibObjectiveFunction,
+        AlglibSolverIterationCallback,
+        const_cast<void*>(reinterpret_cast<const void*>(this)));
+  }
   alglib::mincgresults(solver_state, solver_data, solver_report);
 
   const ImageData estimated_image(

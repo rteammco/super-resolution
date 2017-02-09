@@ -6,19 +6,23 @@ import subprocess
 # TODO: this is temporary and should be filled in using a GUI or config file.
 configuration = {
   'scale': 2,
-  'blur_radius': 5,
-  'blur_sigma': 0.7,
-  'noise_sigma': 30.0,
+  'blur_radius': 3,
+  'blur_sigma': 0.5,
+  'noise_sigma': 5.0,
   'number_of_frames': 4,
-#  'hr_image_path': '../test_data/fb.png',
-  'hr_image_path': '../test_data/dallas_qtr.jpg',
+  'hr_image_path': '../test_data/fb.png',
+#  'hr_image_path': '../test_data/dallas_qtr.jpg',
   'lr_image_dir': '../test/OUT',
   'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
+  # Solver-only options:
   'regularizer': 'tv',
   'regularization_parameter': 0.01,
+  'solver_iterations': 50,
+  'use_numerical_differentiation': False,
   'display_mode': 'compare',
   'generate_lr_images': True,  # for SR binary testing
-  'verbose_solver': True  # for SR binary testing
+  'verbose_solver': True,  # for SR binary testing
+  'evaluator': 'psnr'
 }
 
 def run_generate_data(binary_path, config):
@@ -49,14 +53,18 @@ def run_super_resolution(binary_path, config):
   command += ' --regularization_parameter={}'.format(
       config['regularization_parameter'])
   command += ' --display_mode={}'.format(config['display_mode'])
+  command += ' --solver_iterations={}'.format(config['solver_iterations'])
   if config['generate_lr_images']:
     command += ' --generate_lr_images'
     command += ' --noise_sigma={}'.format(config['noise_sigma'])
     command += ' --data_path={}'.format(config['hr_image_path'])
+    command += ' --evaluator={}'.format(config['evaluator'])
   else:
     command += ' --data_path={}'.format(config['lr_image_dir'])
   if config['verbose_solver']:
      command += ' --verbose'
+  if config['use_numerical_differentiation']:
+    command += ' --use_numerical_differentiation'
   print 'Running SuperResolution command:'
   print command
   subprocess.call(command.split(' '))

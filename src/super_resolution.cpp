@@ -58,6 +58,10 @@ DEFINE_string(regularizer, "tv",
     "The regularizer to use ('tv', 'btv', '3dtv').");
 DEFINE_double(regularization_parameter, 0.01,
     "The regularization parameter (lambda). 0 to not use regularization.");
+DEFINE_int32(solver_iterations, 50,
+    "The maximum number of solver iterations.");
+DEFINE_bool(use_numerical_differentiation, false,
+    "Use numerical differentiation (very slow) for test purposes.");
 
 // Evaluation and testing:
 DEFINE_bool(verbose, false,
@@ -141,6 +145,9 @@ int main(int argc, char** argv) {
   // Set up the solver.
   // TODO: let the user choose the solver (once more solvers are supported).
   super_resolution::MapSolverOptions solver_options;
+  solver_options.max_num_solver_iterations = FLAGS_solver_iterations;
+  solver_options.use_numerical_differentiation =
+      FLAGS_use_numerical_differentiation;
   super_resolution::IrlsMapSolver solver(
       solver_options, image_model, input_data.low_res_images);
   if (!FLAGS_verbose) {
