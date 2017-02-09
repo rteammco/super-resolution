@@ -46,7 +46,7 @@ double GetXGradientAtPixel(
   return 0;
 }
 
-// Same as GetRightPixelDifference, but for the value below the given pixel
+// Same as GetXGradientAtPixel, but for the value below the given pixel
 // rather than to the right. That is, the Y-direction gradient at that pixel.
 double GetYGradientAtPixel(
     const double* image_data,
@@ -64,6 +64,9 @@ double GetYGradientAtPixel(
   return 0;
 }
 
+// Same as GetXGradientAtPixel, but uses the Z-direction for multispectral
+// images. This does not check for the validity of the index at the next image
+// channel, so only call if there is definately a channel + 1.
 double GetZGradientAtPixel(
     const double* image_data,
     const cv::Size& image_size,
@@ -73,7 +76,7 @@ double GetZGradientAtPixel(
 
   const int pixel_index = GetPixelIndex(image_size, row, col, channel);
   const int z_neighbor_index = GetPixelIndex(image_size, row, col, channel + 1);
-  return 0;
+  return image_data[z_neighbor_index] - image_data[pixel_index];
 }
 
 // Computes the full total variation 1-norm for a pixel at (row, col) of the
@@ -85,10 +88,10 @@ double GetTotalVariationAbs(
     const int col,
     const int channel) {
 
-  const double y_variation =
-      std::abs(GetYGradientAtPixel(image_data, image_size, row, col, channel));
-  const double x_variation =
-      std::abs(GetXGradientAtPixel(image_data, image_size, row, col, channel));
+  const double y_variation = std::abs(
+      GetYGradientAtPixel(image_data, image_size, row, col, channel));
+  const double x_variation = std::abs(
+      GetXGradientAtPixel(image_data, image_size, row, col, channel));
   return y_variation + x_variation;
 }
 
@@ -110,6 +113,27 @@ double GetTotalVariationSquared(
   return total_variation_squared;
 }
 
+// Computes the 3D total variation, which is defined just as the 2D total
+// variation plus the Z-direction (spectral) variation. Same as
+// GetTotalVariationAbs if (channel + 1) >= num_channels.
+double GetTotalVariation3d(
+    const double* image_data,
+    const cv::Size& image_size,
+    const int row,
+    const int col,
+    const int channel,
+    const int num_channels) {
+
+  double total_variation =
+      GetTotalVariationAbs(image_data, image_size, row, col, channel);
+  if ((channel + 1) < num_channels) {
+    const double z_variation = std::abs(
+        GetZGradientAtPixel(image_data, image_size, row, col, channel));
+    total_variation += z_variation;
+  }
+  return total_variation;
+}
+
 std::vector<double> TotalVariationRegularizer::ApplyToImage(
     const double* image_data) const {
 
@@ -121,9 +145,9 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = GetPixelIndex(image_size_, row, col, channel);
-        if (use_two_norm_) {
-          residuals[index] = sqrt(GetTotalVariationSquared(
-              image_data, image_size_, row, col, channel));
+        if (use_3d_total_variation_) {
+          residuals[index] = GetTotalVariation3d(
+              image_data, image_size_, row, col, channel, num_channels_);
         } else {
           residuals[index] = GetTotalVariationAbs(
               image_data, image_size_, row, col, channel);
@@ -150,10 +174,9 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = GetPixelIndex(image_size_, row, col, channel);
-        if (use_two_norm_) {
-          // TODO: put back?
-//          residuals[index] = sqrt(GetTotalVariationSquared(
-//              image_data, image_size_, row, col, channel));
+        if (use_3d_total_variation_) {
+          residuals[index] = GetTotalVariation3d(
+              image_data, image_size_, row, col, channel, num_channels_);
         } else {
           residuals[index] = GetTotalVariationAbs(
               image_data, image_size_, row, col, channel);

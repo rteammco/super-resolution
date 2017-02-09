@@ -42,6 +42,7 @@ const std::vector<double> test_image_expected_residuals_1_norm = {
   (1 + 3), (2 + 2), (0 + 3),
   (2 + 0), (1 + 0), (0 + 0)
 };
+// TODO: probably remove 2-norm tests.
 const std::vector<double> test_image_expected_residuals_2_norm = {
   sqrt(0 + 0), sqrt(1 + 1), sqrt(0 + 4),
   sqrt(1 + 9), sqrt(4 + 4), sqrt(0 + 9),
@@ -75,6 +76,78 @@ TEST(TotalVariationRegularizer, ApplyToImage) {
   std::vector<double> expected_residuals_1_norm = ReplicateVector(
       test_image_expected_residuals_1_norm, 3);
   EXPECT_THAT(returned_residuals, ContainerEq(expected_residuals_1_norm));
+}
+
+// Tests the 3D total variation mode of the TotalVariationRegularizer.
+TEST(TotalVariationRegularizer, ApplyToImage3d) {
+  double input_data[9 * 3] = {
+    // Channel 1:
+     0,  0,  1,
+     0,  1,  3,
+    -3, -1,  0,
+    // Channel 2:
+     0,  0,  0,
+     0,  0,  0,
+     0,  0,  0,
+    // Channel 3:
+     0, -1,  2,
+    -3,  4,  5,
+     6,  7, -8
+  };
+
+  const std::vector<double> expected_residuals = {
+  // Expected TV 3D for channel 1 (diff between ch. 1 and ch 2.):
+  // Same 2D total variation, but for the Z-axis:
+  //
+  //   Channel 1:            Channel 2:
+  // |  0 |  0 | 1 |       | 0 | 0 | 0 |
+  // |  0 |  1 | 3 |  vs.  | 0 | 0 | 0 |
+  // | -3 | -1 | 0 |       | 0 | 0 | 0 |
+  //
+  // Z diffs are:
+  //   0, 0, -1,
+  //   0, -1, -3,
+  //   3, 1, 0
+  //
+  // So for channel 1, the same X and Y gradients as for the 2D test image,
+  // plus the absolute values of the Z gradients above - (X + Y) + Z:
+    (0 + 0) + 0, (1 + 1) + 0, (0 + 2) + 1,
+    (1 + 3) + 0, (2 + 2) + 1, (0 + 3) + 3,
+    (2 + 0) + 3, (1 + 0) + 1, (0 + 0) + 0,
+  //
+  // And channel 2 to channel 3, similarly the differences are:
+  //   0, -1, 2,
+  //   -3, 4, 5,
+  //   6, 7, -8
+  // (and X and Y are all zero because the image is all zeros):
+    (0 + 0) + 0, (0 + 0) + 1, (0 + 0) + 2,
+    (0 + 0) + 3, (0 + 0) + 4, (0 + 0) + 5,
+    (0 + 0) + 6, (0 + 0) + 7, (0 + 0) + 8,
+  //
+  // No channel 4, so the 3D TV values of Channel 3 are just the 2D values:
+  //   0, -1,  2,        -1, 3, 0
+  //  -3,  4,  5,  X =>  7, 1, 0
+  //   6,  7, -8         1, -15, 0
+  //
+  //  Y =>
+  //
+  //  -3  5  3
+  //   9  3 -13
+  //   0  0  0
+  //
+  // So the TV values are:
+    (1 + 3) + 0, (3 + 5) + 0, (0 + 3) + 0,
+    (7 + 9) + 0, (1 + 3) + 0, (0 + 13) + 0,
+    (1 + 0) + 0, (15 + 0) + 0, (0 + 0) + 0
+  };
+
+  // Apply the TV Regularizer and verify the returned values.
+  super_resolution::TotalVariationRegularizer tv_regularizer(
+      test_image_size, 3);  // 3 x 3 x 3 image.
+  tv_regularizer.SetUse3dTotalVariation(true);
+  const std::vector<double> returned_residuals =
+      tv_regularizer.ApplyToImage(input_data);
+  EXPECT_THAT(returned_residuals, ContainerEq(expected_residuals));
 }
 
 // TODO: test 3D TV once it is implemented.
