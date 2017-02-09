@@ -18,12 +18,12 @@ constexpr double kMinDivisor = 0.000001;
 
 // Small test image and expected returned values for this data.
 const cv::Size test_image_size(3, 3);
-const double test_image_data[9] = {
+const std::vector<double> test_image_data = {
      0,  0, 1,
      0,  1, 3,
     -3, -1, 0
 };
-// The x-direction gradients (not squared) should be:
+// The x-direction gradients should be:
 //
 //  | 0 | 1 | 0 |                | 0 | 1 | 0 |
 //  | 1 | 2 | 0 |     squared=>  | 1 | 4 | 0 |
@@ -35,23 +35,49 @@ const double test_image_data[9] = {
 //  | -3 | -2 | -3 |  squared=>  | 9 | 4 | 9 |
 //  |  0 |  0 |  0 |             | 0 | 0 | 0 |
 //
-// So at each pixel, the square roots of the squared sums are expected to be
-// sqrt(y*y + x*x):
-const std::vector<double> test_image_expected_residuals = {
+// For the 1-norm, it's a sum of absolute value of the X and Y gradients. For
+// the 2-norm version, it's the square root of the squared sums.
+const std::vector<double> test_image_expected_residuals_1_norm = {
+  (0 + 0), (1 + 1), (0 + 2),
+  (1 + 3), (2 + 2), (0 + 3),
+  (2 + 0), (1 + 0), (0 + 0)
+};
+const std::vector<double> test_image_expected_residuals_2_norm = {
   sqrt(0 + 0), sqrt(1 + 1), sqrt(0 + 4),
   sqrt(1 + 9), sqrt(4 + 4), sqrt(0 + 9),
   sqrt(4 + 0), sqrt(1 + 0), sqrt(0 + 0)
 };
 
+// Replicates a vector the given number of times to extend it. The new elements
+// will be exact copies of the original element sequence.
+std::vector<double> ReplicateVector(
+    const std::vector<double>& data, const int count) {
+
+  const int num_elements = data.size();
+  std::vector<double> replicated = data;
+  replicated.resize(num_elements * count);
+  for (int i = 1; i < count; ++i) {
+    std::copy(data.begin(), data.end(), replicated.begin() + num_elements * i);
+  }
+  return replicated;
+}
+
 // Verifies that the TV regularizer correctly computes the expected residuals
 // for an image.
 TEST(TotalVariationRegularizer, ApplyToImage) {
   const super_resolution::TotalVariationRegularizer tv_regularizer(
-      test_image_size, 1);  // TODO: testing only 1 channel. Test multiple.
+      test_image_size, 3);
+  const std::vector<double> input_data = ReplicateVector(test_image_data, 3);
   const std::vector<double> returned_residuals =
-      tv_regularizer.ApplyToImage(test_image_data);
-  EXPECT_THAT(returned_residuals, ContainerEq(test_image_expected_residuals));
+      tv_regularizer.ApplyToImage(input_data.data());
+
+  // For testing, copy the expected residuals for each channel.
+  std::vector<double> expected_residuals_1_norm = ReplicateVector(
+      test_image_expected_residuals_1_norm, 3);
+  EXPECT_THAT(returned_residuals, ContainerEq(expected_residuals_1_norm));
 }
+
+// TODO: test 3D TV once it is implemented.
 
 // Verifies that the derivatives are also being computed correctly.
 TEST(TotalVariationRegularizer, ApplyToImageWithDifferentiation) {
@@ -88,7 +114,7 @@ TEST(TotalVariationRegularizer, ApplyToImageWithDifferentiation) {
   // but padding zero values with a small delta to avoid division by 0. Total
   // variation is always non-negative.
   std::vector<double> total_variation;
-  for (const double residual : test_image_expected_residuals) {
+  for (const double residual : test_image_expected_residuals_2_norm) {
     total_variation.push_back(std::max(residual, kMinDivisor));
   }
 
@@ -138,7 +164,7 @@ TEST(TotalVariationRegularizer, ApplyToImageWithDifferentiation) {
 
   const auto& returned_residuals_and_gradient_automatic =
       tv_regularizer.ApplyToImageWithDifferentiation(
-          test_image_data,
+          test_image_data.data(),
           gradient_constants,
           super_resolution::AUTOMATIC_DIFFERENTIATION);
   const std::vector<double> gradient_automatic =
@@ -147,7 +173,7 @@ TEST(TotalVariationRegularizer, ApplyToImageWithDifferentiation) {
   // Check correct behavior of returned residuals.
   EXPECT_THAT(
       returned_residuals_and_gradient_automatic.first,
-      ContainerEq(test_image_expected_residuals));
+      ContainerEq(test_image_expected_residuals_2_norm));
 
   EXPECT_THAT(gradient_automatic, SizeIs(9));
 
@@ -162,7 +188,7 @@ TEST(TotalVariationRegularizer, ApplyToImageWithDifferentiation) {
 
   const auto& returned_residuals_and_gradient_analytical =
       tv_regularizer.ApplyToImageWithDifferentiation(
-          test_image_data,
+          test_image_data.data(),
           gradient_constants,
           super_resolution::ANALYTICAL_DIFFERENTIATION);
   const std::vector<double> gradient_analytical =
@@ -171,7 +197,7 @@ TEST(TotalVariationRegularizer, ApplyToImageWithDifferentiation) {
   // Check correct behavior of returned residuals.
   EXPECT_THAT(
       returned_residuals_and_gradient_analytical.first,
-      ContainerEq(test_image_expected_residuals));
+      ContainerEq(test_image_expected_residuals_2_norm));
 
   EXPECT_THAT(gradient_analytical, SizeIs(9));
 
