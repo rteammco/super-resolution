@@ -87,8 +87,7 @@ std::vector<double> BilateralTotalVariationRegularizer::ApplyToImage(
 std::pair<std::vector<double>, std::vector<double>>
 BilateralTotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const double* image_data,
-    const std::vector<double>& gradient_constants,
-    const GradientComputationMethod& differentiation_method) const {
+    const std::vector<double>& gradient_constants) const {
 
   CHECK_NOTNULL(image_data);
 

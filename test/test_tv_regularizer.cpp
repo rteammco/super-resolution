@@ -235,49 +235,24 @@ TEST(TotalVariationRegularizer, ApplyToImageWithDifferentiation) {
   std::vector<double> gradient_constants(9);
   std::fill(gradient_constants.begin(), gradient_constants.end(), 1.0);
 
-  const auto& returned_residuals_and_gradient_automatic =
+  const auto& returned_residuals_and_gradient =
       tv_regularizer.ApplyToImageWithDifferentiation(
           test_image_data.data(),
-          gradient_constants,
-          super_resolution::AUTOMATIC_DIFFERENTIATION);
-  const std::vector<double> gradient_automatic =
-      returned_residuals_and_gradient_automatic.second;
+          gradient_constants);
+  const std::vector<double> gradient =
+      returned_residuals_and_gradient.second;
 
   // Check correct behavior of returned residuals.
   EXPECT_THAT(
-      returned_residuals_and_gradient_automatic.first,
+      returned_residuals_and_gradient.first,
       ContainerEq(test_image_expected_residuals_2_norm));
 
-  EXPECT_THAT(gradient_automatic, SizeIs(9));
+  EXPECT_THAT(gradient, SizeIs(9));
 
-  EXPECT_EQ(gradient_automatic[0], expected_d0);
-  EXPECT_EQ(gradient_automatic[1], expected_d1);
-  EXPECT_EQ(gradient_automatic[2], expected_d2);
-  EXPECT_EQ(gradient_automatic[3], expected_d3);
-  EXPECT_EQ(gradient_automatic[4], expected_d4);
-  EXPECT_EQ(gradient_automatic[8], expected_d8);
-
-  /* Also verify that the gradient is correct with analytical diff. */
-
-  const auto& returned_residuals_and_gradient_analytical =
-      tv_regularizer.ApplyToImageWithDifferentiation(
-          test_image_data.data(),
-          gradient_constants,
-          super_resolution::ANALYTICAL_DIFFERENTIATION);
-  const std::vector<double> gradient_analytical =
-      returned_residuals_and_gradient_analytical.second;
-
-  // Check correct behavior of returned residuals.
-  EXPECT_THAT(
-      returned_residuals_and_gradient_analytical.first,
-      ContainerEq(test_image_expected_residuals_2_norm));
-
-  EXPECT_THAT(gradient_analytical, SizeIs(9));
-
-  EXPECT_EQ(gradient_analytical[0], expected_d0);
-  EXPECT_EQ(gradient_analytical[1], expected_d1);
-  EXPECT_EQ(gradient_analytical[2], expected_d2);
-  EXPECT_EQ(gradient_analytical[3], expected_d3);
-  EXPECT_EQ(gradient_analytical[4], expected_d4);
-  EXPECT_EQ(gradient_analytical[8], expected_d8);
+  EXPECT_EQ(gradient[0], expected_d0);
+  EXPECT_EQ(gradient[1], expected_d1);
+  EXPECT_EQ(gradient[2], expected_d2);
+  EXPECT_EQ(gradient[3], expected_d3);
+  EXPECT_EQ(gradient[4], expected_d4);
+  EXPECT_EQ(gradient[8], expected_d8);
 }

@@ -10,12 +10,6 @@
 
 namespace super_resolution {
 
-// The type of differentiation method used in ApplyToImageWithDifferentiation.
-enum GradientComputationMethod {
-  AUTOMATIC_DIFFERENTIATION,  // Uses automatic differentiation library.
-  ANALYTICAL_DIFFERENTIATION  // Direct analytical derivatives if implemented.
-};
-
 class Regularizer {
  public:
   // Initialize the regularization term object with the image size, which is
@@ -36,9 +30,6 @@ class Regularizer {
   // Same as ApplyToImage, but the second vector returned in the pair contains
   // the gradient (assuming a single residual value) in the objective
   // function). That is, this is the gradient with respect to each pixel.
-  // Derivatives computed using either automatic differentiation or direct
-  // analytical differentiation (if implemented) based on the given method
-  // flag.
   //
   // The given gradient_constants vector should contain for each pixel any
   // constant terms that will be multiplied with the gradient. This should
@@ -51,9 +42,7 @@ class Regularizer {
   virtual std::pair<std::vector<double>, std::vector<double>>
   ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double>& gradient_constants,
-      const GradientComputationMethod& differentiation_method =
-          AUTOMATIC_DIFFERENTIATION) const = 0;
+      const std::vector<double>& gradient_constants) const = 0;
 
  protected:
   // The size of the image to be regularized.

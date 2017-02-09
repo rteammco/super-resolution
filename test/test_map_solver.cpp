@@ -60,12 +60,11 @@ class MockRegularizer : public super_resolution::Regularizer {
   MOCK_CONST_METHOD1(
       ApplyToImage, std::vector<double>(const double* image_data));
 
-  MOCK_CONST_METHOD3(
+  MOCK_CONST_METHOD2(
       ApplyToImageWithDifferentiation,
       std::pair<std::vector<double>, std::vector<double>>(
           const double* image_data,
-          const std::vector<double>& gradient_constants,
-          const super_resolution::GradientComputationMethod& method));
+          const std::vector<double>& gradient_constants));
 };
 
 // Tests the solver on small, "perfect" data to make sure it works as expected.
@@ -593,8 +592,7 @@ TEST(MapSolver, IrlsComputeRegularization) {
   // First expected call before reweighting.
   EXPECT_CALL(mock_regularizer, ApplyToImageWithDifferentiation(
       image_data,
-      gradient_constants_1,
-      super_resolution::AUTOMATIC_DIFFERENTIATION))
+      gradient_constants_1))
       .WillOnce(Return(residuals_and_gradient));
 
   /* Test 2 will just return the residuals used to update the weights. */
@@ -637,8 +635,7 @@ TEST(MapSolver, IrlsComputeRegularization) {
   // Second call after reweighting.
   EXPECT_CALL(mock_regularizer, ApplyToImageWithDifferentiation(
       image_data,
-      gradient_constants_2,
-      super_resolution::AUTOMATIC_DIFFERENTIATION))
+      gradient_constants_2))
       .WillOnce(Return(residuals_and_gradient));
 
   /* Set up the IrlsMapSolver. */

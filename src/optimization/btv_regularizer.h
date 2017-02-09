@@ -27,9 +27,7 @@ class BilateralTotalVariationRegularizer : public Regularizer {
   virtual std::pair<std::vector<double>, std::vector<double>>
   ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double>& gradient_constants,
-      const GradientComputationMethod& differentiation_method =
-          AUTOMATIC_DIFFERENTIATION) const;
+      const std::vector<double>& gradient_constants) const;
 
  private:
   // The scale range controls the size of the patch that is checked for pixel

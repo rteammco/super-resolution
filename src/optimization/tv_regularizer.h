@@ -29,9 +29,7 @@ class TotalVariationRegularizer : public Regularizer {
   virtual std::pair<std::vector<double>, std::vector<double>>
   ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double>& gradient_constants,
-      const GradientComputationMethod& differentiation_method =
-          AUTOMATIC_DIFFERENTIATION) const;
+      const std::vector<double>& gradient_constants) const;
 
   // Turn using 3D total variation on or off. 3D TV may be preferable for
   // hyperspectral data and can be used experimentally for color images.
