@@ -20,6 +20,14 @@ void ApplyConvolutionToImage(
     const cv::Mat& kernel,
     const int border_mode = cv::BORDER_CONSTANT);
 
+// Thresholds a matrix such that any value larger than the max value is reduced
+// to the max value and any value smaller than the min value is increased to
+// the min value. For example, with min_value = 0.0 and max_value = 1.0, all
+// values will be surpressed between 0 and 1. If the image contains multiple
+// channels, the threshold will be applied to all channels identically.
+void ThresholdImage(
+    cv::Mat image, const double min_value, const double max_value);
+
 }  // namespace util
 }  // namespace super_resolution
 

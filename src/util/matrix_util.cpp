@@ -28,5 +28,14 @@ void ApplyConvolutionToImage(
   }
 }
 
+void ThresholdImage(
+    cv::Mat image, const double min_value, const double max_value) {
+
+  // Set all values larger than max_value to max_value.
+  cv::threshold(image, image, max_value, max_value, cv::THRESH_TRUNC);
+  // Set all values smaller than min_value to min_value.
+  cv::threshold(image, image, min_value, max_value, cv::THRESH_TOZERO);
+}
+
 }  // namespace util
 }  // namespace super_resolution

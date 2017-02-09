@@ -232,6 +232,7 @@ cv::Mat ImageData::GetVisualizationImage() const {
     // For a monochrome image (or if it has two channels for some reason), just
     // return the first (and likely only) channel.
     visualization_image = channels_[0].clone();
+    util::ThresholdImage(visualization_image, 0.0, 1.0);
     visualization_image.convertTo(visualization_image, CV_8UC1, 255);
   } else {
     // For 3 or more channels, return an RGB image of the first, middle, and
@@ -240,6 +241,7 @@ cv::Mat ImageData::GetVisualizationImage() const {
       channels_[0], channels_[num_channels / 2], channels_[num_channels - 1]
     };
     cv::merge(bgr_channels, visualization_image);
+    util::ThresholdImage(visualization_image, 0.0, 1.0);
     visualization_image.convertTo(visualization_image, CV_8UC3, 255);
   }
 
