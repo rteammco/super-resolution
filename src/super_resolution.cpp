@@ -191,6 +191,7 @@ int main(int argc, char** argv) {
       std::cout << "PSNR score on result:    " << result_psnr << std::endl;
     }
   }
+  result.GetImageDataReport().Print();  // TODO
 
   if (FLAGS_display_mode == "result") {
     super_resolution::util::DisplayImage(result, "Result");

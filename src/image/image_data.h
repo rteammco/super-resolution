@@ -14,6 +14,30 @@
 
 namespace super_resolution {
 
+// Contains information and statistics about an image. This can be useful for
+// evaluation, testing of new optimization methods, and debugging.
+struct ImageDataReport {
+  // Standardl image stats.
+  cv::Size image_size;
+  int num_channels = 0;
+
+  // Number of invalid pixels.
+  int num_negative_pixels = 0;  // Negative pixels are not valid values.
+  int num_over_one_pixels = 0;  // Pixels that exceed maximum valid value (1.0).
+
+  // Negative and over-one pixels per channel.
+  int channel_with_most_negative_pixels = 0;
+  int max_num_negative_pixels_in_one_channel = 0;
+  int channel_with_most_over_one_pixels = 0;
+  int max_num_over_one_pixels_in_one_channel = 0;
+
+  double smallest_pixel_value = 0.0;
+  double largest_pixel_value = 0.0;
+
+  // Prints the report to standard output.
+  void Print() const;
+};
+
 class ImageData {
  public:
   // Default constructor to make an empty image.
@@ -146,6 +170,11 @@ class ImageData {
   // The visualization image will be re-scaled to standard pixel values of 0 to
   // 255.
   cv::Mat GetVisualizationImage() const;
+
+  // Returns a ImageDataReport which contains information about the image that,
+  // may be relevant to optimization. The data includes things like invalid
+  // values (negative or larger than 1.0).
+  ImageDataReport GetImageDataReport() const;
 
  private:
   // Returns a 2D pixel coordinate given the pixel index. This is used for

@@ -343,3 +343,20 @@ TEST(ImageData, GetVisualizationImage) {
   // TODO: implement.
   // cv::Mat GetVisualizationImage
 }
+
+// Tests that the report for analyzing images is correctly generated.
+TEST(ImageData, GetImageDataReport) {
+  const double pixel_values[(5 * 3) * 2] = {
+      // Channel 1:
+      -0.1,  0.2,  0.3,  0.4,  -0.5,
+      0.15, 0.25, -1.35, 0.45, 0.55,
+       0.6,  1.65, 0.7,  0.75, 1.8,
+      // Channel 2:
+       0.6,  1.5,  0.33,  0.1,  0.2,
+      1.82, 0.15, 0.35, 3.54,  0.5,
+       1.6,  0.62, 1.0,  9.23, -9.9
+  };
+  ImageData image(pixel_values, cv::Size(5, 3), 2);
+  super_resolution::ImageDataReport report = image.GetImageDataReport();
+  report.Print();
+}

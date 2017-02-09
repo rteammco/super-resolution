@@ -10,8 +10,8 @@ configuration = {
   'blur_sigma': 0.5,
   'noise_sigma': 5.0,
   'number_of_frames': 4,
-  'hr_image_path': '../test_data/fb.png',
-#  'hr_image_path': '../test_data/dallas_qtr.jpg',
+#  'hr_image_path': '../test_data/fb.png',
+  'hr_image_path': '../test_data/dallas_half.jpg',
   'lr_image_dir': '../test/OUT',
   'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
   # Solver-only options:

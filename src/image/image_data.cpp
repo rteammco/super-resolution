@@ -1,6 +1,7 @@
 #include "image/image_data.h"
 
 #include <algorithm>
+#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -42,6 +43,31 @@ void InitializeFromImage(
   }
 }
 
+// ImageDataReport Print() method.
+void ImageDataReport::Print() const {
+  const int num_pixels = image_size.width * image_size.height * num_channels;
+  const double percent_negative =
+      (static_cast<double>(num_negative_pixels) /
+      static_cast<double>(num_pixels)) * 100.0;
+  const double percent_over_one =
+      (static_cast<double>(num_over_one_pixels) /
+      static_cast<double>(num_pixels)) * 100.0;
+  std::cout << "Num negative pixels: " << num_negative_pixels
+            << " (" << percent_negative << "%)" << std::endl;
+  std::cout << "Num over one pixels: " << num_over_one_pixels
+            << " (" << percent_over_one << "%)" << std::endl;
+  std::cout << "Channel with most negative pixels: "
+            << channel_with_most_negative_pixels
+            << " (" << max_num_negative_pixels_in_one_channel << ")"
+            << std::endl;
+  std::cout << "Channel with most over one pixels: "
+            << channel_with_most_over_one_pixels
+            << " (" << max_num_over_one_pixels_in_one_channel << ")"
+            << std::endl;
+  std::cout << "Minimum pixel value: " << smallest_pixel_value << std::endl;
+  std::cout << "Maximum pixel value: " << largest_pixel_value << std::endl;
+}
+
 // Default constructor.
 ImageData::ImageData() {
   image_size_ = cv::Size(0, 0);
@@ -60,9 +86,13 @@ ImageData::ImageData(const cv::Mat& image) {
   double min_pixel_value, max_pixel_value;
   cv::minMaxLoc(image, &min_pixel_value, &max_pixel_value);
   CHECK_GE(min_pixel_value, 0)
-      << "Invalid pixel range in given image: values cannot be negative.";
+      << "Invalid pixel range in given image: values cannot be negative. "
+      << "Use ImageData(cv::Mat&, false) to avoid normalization, where any "
+      << "image values are okay.";
   CHECK_LE(max_pixel_value, 255)
-      << "Invalid pixel range in given image: values cannot exceed 255.";
+      << "Invalid pixel range in given image: values cannot exceed 255."
+      << "Use ImageData(cv::Mat&, false) to avoid normalization, where any "
+      << "image values are okay.";
 
   const bool normalize = max_pixel_value > 1.0;
   InitializeFromImage(image, normalize, &image_size_, &channels_);
@@ -248,6 +278,41 @@ cv::Mat ImageData::GetVisualizationImage() const {
   return visualization_image;
 }
 
+ImageDataReport ImageData::GetImageDataReport() const {
+  ImageDataReport report;
+  report.image_size = image_size_;
+  report.num_channels = GetNumChannels();
+
+  // Initialize these to the opposite extreme values so they can be adjusted.
+  report.smallest_pixel_value = 1.0;
+  report.largest_pixel_value = 0.0;
+
+  for (int channel = 0; channel < channels_.size(); ++channel) {
+    const cv::Mat& channel_image = channels_[channel];
+    const int num_negative_pixels = cv::countNonZero(channel_image < 0.0);
+    const int num_over_one_pixels = cv::countNonZero(channel_image > 1.0);
+    if (num_negative_pixels > report.max_num_negative_pixels_in_one_channel) {
+      report.channel_with_most_negative_pixels = channel;
+      report.max_num_negative_pixels_in_one_channel = num_negative_pixels;
+    }
+    if (num_over_one_pixels > report.max_num_over_one_pixels_in_one_channel) {
+      report.channel_with_most_over_one_pixels = channel;
+      report.max_num_over_one_pixels_in_one_channel = num_over_one_pixels;
+    }
+    report.num_negative_pixels += num_negative_pixels;
+    report.num_over_one_pixels += num_over_one_pixels;
+
+    double min_channel_value, max_channel_value;
+    cv::minMaxLoc(channel_image, &min_channel_value, &max_channel_value);
+    report.smallest_pixel_value =
+        std::min(min_channel_value, report.smallest_pixel_value);
+    report.largest_pixel_value =
+        std::max(max_channel_value, report.largest_pixel_value);
+  }
+  return report;
+}
+
+// private
 cv::Point ImageData::GetPixelCoordinatesFromIndex(const int index) const {
   CHECK_GE(index, 0) << "Pixel index must be at least 0.";
   CHECK_LT(index, GetNumPixels()) << "Pixel index was out of bounds.";
