@@ -43,13 +43,6 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   std::fill(irls_weights_.begin(), irls_weights_.end(), 1.0);
 
   // Set up the optimization code with ALGLIB.
-  // TODO: set these numbers correctly.
-  const double epsg = 0.0000000001;
-  const double epsf = 0.0;
-  const double epsx = 0.0;
-  const double numerical_diff_step_size = 1.0e-6;
-  const alglib::ae_int_t max_num_iterations = 50;  // 0 = infinite.
-
   // Copy the initial estimate data to the solver's array.
   alglib::real_1d_array solver_data;
   const int num_data_points = GetNumDataPoints();
@@ -64,11 +57,19 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   alglib::mincgreport solver_report;
   // TODO: enable numerical diff option?
   // if (solver_options_.use_numerical_differentiation) {
-  // alglib::mincgcreatef(solver_data, numerical_diff_step_size, solver_state);
+  // alglib::mincgcreatef(
+  //    solver_data,
+  //    solver_options_.numerical_differentiation_step,
+  //    solver_state);
   // } else {
   alglib::mincgcreate(solver_data, solver_state);
   // }
-  alglib::mincgsetcond(solver_state, epsg, epsf, epsx, max_num_iterations);
+  alglib::mincgsetcond(
+      solver_state,
+      solver_options_.gradient_norm_threshold,
+      solver_options_.cost_decrease_threshold,
+      solver_options_.parameter_variation_threshold,
+      solver_options_.max_num_solver_iterations);
   alglib::mincgsetxrep(solver_state, true);
 
   // TODO: enable numerical diff option?

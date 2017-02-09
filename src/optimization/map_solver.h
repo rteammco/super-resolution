@@ -17,19 +17,27 @@
 
 namespace super_resolution {
 
-// TODO: remove this.
-enum RegularizationMethod {
-  TOTAL_VARIATION
-};
-
+// Options for the solver. Set these as needed.
 struct MapSolverOptions {
   MapSolverOptions() {}
 
-  // TODO: fill in the options as needed.
-  // Using temporary (old) options to avoid compile errors.
-  double regularization_parameter = 0.0;
-  RegularizationMethod regularization_method = TOTAL_VARIATION;
+  // Maximum number of solver iterations. 0 for infinite.
+  int max_num_solver_iterations = 50;
+
+  // Thresholds for stopping the solver if:
+  //   The norm of the gradient is smaller than this.
+  double gradient_norm_threshold = 0.0000000001;
+  //   The change (decrease) in the cost is smaller than this.
+  double cost_decrease_threshold = 0.0;
+  //   The change in the norm of the parameter vector is smaller than this.
+  double parameter_variation_threshold = 0.0;
+
+  // Optional parameters for numerical differentiation. Use for testing
+  // analytical differentiation only. Numerical differentiation is very slow
+  // but gives near-perfect estimates of the gradient. It is not feasible for
+  // larger data sets.
   bool use_numerical_differentiation = false;
+  double numerical_differentiation_step = 1.0e-6;
 };
 
 class MapSolver : public Solver {
