@@ -11,9 +11,6 @@
 
 namespace super_resolution {
 
-// Minimum total variation so we don't divide by zero.
-constexpr double kMinTotalVariation = 0.000001;
-
 // Returns the index into the image pixel array given the image size and the
 // row, column, and channel of the pixel.
 int GetPixelIndex(
@@ -95,24 +92,6 @@ double GetTotalVariationAbs(
   return y_variation + x_variation;
 }
 
-// Computes the full squared (for a 2-norm) total variation for a pixel at
-// (row, col).
-double GetTotalVariationSquared(
-    const double* image_data,
-    const cv::Size& image_size,
-    const int row,
-    const int col,
-    const int channel) {
-
-  const double y_variation =
-      GetYGradientAtPixel(image_data, image_size, row, col, channel);
-  const double x_variation =
-      GetXGradientAtPixel(image_data, image_size, row, col, channel);
-  const double total_variation_squared =
-      (y_variation * y_variation) + (x_variation * x_variation);
-  return total_variation_squared;
-}
-
 // Computes the 3D total variation, which is defined just as the 2D total
 // variation plus the Z-direction (spectral) variation. Same as
 // GetTotalVariationAbs if (channel + 1) >= num_channels.
@@ -187,8 +166,6 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
 
   // Compute the gradient.
   // TODO: add some descriptive comments about computing the gradient.
-  // TODO: if we're going to keep the 2-norm gradient version, those need a
-  //       different gradient computation implementation.
   std::vector<double> gradient(num_parameters);
   for (int channel = 0; channel < num_channels_; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {

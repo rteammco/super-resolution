@@ -21,7 +21,6 @@ class TotalVariationRegularizer : public Regularizer {
   // gradient at each pixel). Using the 1-norm version is recommended.
   TotalVariationRegularizer(const cv::Size& image_size, const int num_channels)
       : Regularizer(image_size, num_channels),
-        use_two_norm_(false),
         use_3d_total_variation_(false) {}
 
   // Implementation of total variation regularization.
@@ -34,11 +33,6 @@ class TotalVariationRegularizer : public Regularizer {
       const GradientComputationMethod& differentiation_method =
           AUTOMATIC_DIFFERENTIATION) const;
 
-  // Turn using two-norm on or off. 2-norm is not recommended.
-  void SetUseTwoNorm(const bool use_two_norm) {
-    use_two_norm_ = use_two_norm;
-  }
-
   // Turn using 3D total variation on or off. 3D TV may be preferable for
   // hyperspectral data and can be used experimentally for color images.
   void SetUse3dTotalVariation(const bool use_3d_total_variation) {
@@ -46,11 +40,6 @@ class TotalVariationRegularizer : public Regularizer {
   }
 
  private:
-  // If this is set to true, the total variation computation will take a 2-norm
-  // of the gradient instead of the absolute value to compute the residuals.
-  // The 1-norm is more stable.
-  bool use_two_norm_;
-
   // If this is set to true, the regularizer will use 3D total variation (also
   // looking at the spectral direction instead of just the X, Y spatial
   // directions). This is a trivial extension of 2D total variation.
