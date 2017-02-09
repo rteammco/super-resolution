@@ -14,6 +14,18 @@ namespace super_resolution {
 // Minimum total variation so we don't divide by zero.
 constexpr double kMinTotalVariation = 0.000001;
 
+// Returns the index into the image pixel array given the image size and the
+// row, column, and channel of the pixel.
+int GetPixelIndex(
+    const cv::Size& image_size,
+    const int row,
+    const int col,
+    const int channel) {
+
+  const int channel_index = channel * (image_size.width * image_size.height);
+  return channel_index + (row * image_size.width + col);
+}
+
 // For a given image row and col, returns the value of (x_{r,c+1} - x_{r,c}) if
 // c+1 is a valid column position, or 0 otherwise. That is, the X-direction
 // gradient between the pixel at position index in the data and the pixel
@@ -22,11 +34,13 @@ double GetXGradientAtPixel(
     const double* image_data,
     const cv::Size& image_size,
     const int row,
-    const int col) {
+    const int col,
+    const int channel) {
 
   if (col >= 0 && col + 1 < image_size.width) {
-    const int pixel_index = row * image_size.width + col;
-    const int x_neighbor_index = row * image_size.width + (col + 1);
+    const int pixel_index = GetPixelIndex(image_size, row, col, channel);
+    const int x_neighbor_index =
+        GetPixelIndex(image_size, row, col + 1, channel);
     return image_data[x_neighbor_index] - image_data[pixel_index];
   }
   return 0;
@@ -38,13 +52,27 @@ double GetYGradientAtPixel(
     const double* image_data,
     const cv::Size& image_size,
     const int row,
-    const int col) {
+    const int col,
+    const int channel) {
 
   if (row >= 0 && row + 1 < image_size.height) {
-    const int pixel_index = row * image_size.width + col;
-    const int y_neighbor_index = (row + 1) * image_size.width + col;
+    const int pixel_index = GetPixelIndex(image_size, row, col, channel);
+    const int y_neighbor_index =
+        GetPixelIndex(image_size, row + 1, col, channel);
     return image_data[y_neighbor_index] - image_data[pixel_index];
   }
+  return 0;
+}
+
+double GetZGradientAtPixel(
+    const double* image_data,
+    const cv::Size& image_size,
+    const int row,
+    const int col,
+    const int channel) {
+
+  const int pixel_index = GetPixelIndex(image_size, row, col, channel);
+  const int z_neighbor_index = GetPixelIndex(image_size, row, col, channel + 1);
   return 0;
 }
 
@@ -54,12 +82,13 @@ double GetTotalVariationAbs(
     const double* image_data,
     const cv::Size& image_size,
     const int row,
-    const int col) {
+    const int col,
+    const int channel) {
 
   const double y_variation =
-      std::abs(GetYGradientAtPixel(image_data, image_size, row, col));
+      std::abs(GetYGradientAtPixel(image_data, image_size, row, col, channel));
   const double x_variation =
-      std::abs(GetXGradientAtPixel(image_data, image_size, row, col));
+      std::abs(GetXGradientAtPixel(image_data, image_size, row, col, channel));
   return y_variation + x_variation;
 }
 
@@ -69,12 +98,13 @@ double GetTotalVariationSquared(
     const double* image_data,
     const cv::Size& image_size,
     const int row,
-    const int col) {
+    const int col,
+    const int channel) {
 
   const double y_variation =
-      GetYGradientAtPixel(image_data, image_size, row, col);
+      GetYGradientAtPixel(image_data, image_size, row, col, channel);
   const double x_variation =
-      GetXGradientAtPixel(image_data, image_size, row, col);
+      GetXGradientAtPixel(image_data, image_size, row, col, channel);
   const double total_variation_squared =
       (y_variation * y_variation) + (x_variation * x_variation);
   return total_variation_squared;
@@ -85,20 +115,18 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
 
   CHECK_NOTNULL(image_data);
 
-  const int num_pixels = image_size_.width * image_size_.height;
+  const int num_pixels = image_size_.area();
   std::vector<double> residuals(num_pixels * num_channels_);
   for (int channel = 0; channel < num_channels_; ++channel) {
-    const int channel_index = channel * num_pixels;
-    const double* data_ptr = image_data + channel_index;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const int index = channel_index + (row * image_size_.width + col);
+        const int index = GetPixelIndex(image_size_, row, col, channel);
         if (use_two_norm_) {
           residuals[index] = sqrt(GetTotalVariationSquared(
-              data_ptr, image_size_, row, col));
+              image_data, image_size_, row, col, channel));
         } else {
           residuals[index] = GetTotalVariationAbs(
-              data_ptr, image_size_, row, col);
+              image_data, image_size_, row, col, channel);
         }
       }
     }
@@ -115,22 +143,20 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   CHECK_NOTNULL(image_data);
 
   // Initialize the derivatives of each parameter with respect to itself.
-  const int num_pixels = image_size_.width * image_size_.height;
+  const int num_pixels = image_size_.area();
   const int num_parameters = num_pixels * num_channels_;
   std::vector<double> residuals(num_parameters);
   for (int channel = 0; channel < num_channels_; ++channel) {
-    const int channel_index = channel * num_pixels;
-    const double* data_ptr = image_data + channel_index;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const int index = channel_index + (row * image_size_.width + col);
+        const int index = GetPixelIndex(image_size_, row, col, channel);
         if (use_two_norm_) {
           // TODO: put back?
 //          residuals[index] = sqrt(GetTotalVariationSquared(
-//              data_ptr, image_size_, row, col));
+//              image_data, image_size_, row, col, channel));
         } else {
           residuals[index] = GetTotalVariationAbs(
-              data_ptr, image_size_, row, col);
+              image_data, image_size_, row, col, channel);
         }
       }
     }
@@ -142,22 +168,20 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   //       different gradient computation implementation.
   std::vector<double> gradient(num_parameters);
   for (int channel = 0; channel < num_channels_; ++channel) {
-    const int channel_index = channel * num_pixels;
-    const double* data_ptr = image_data + channel_index;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const int index = channel_index + (row * image_size_.width + col);
+        const int index = GetPixelIndex(image_size_, row, col, channel);
         // Derivative w.r.t. the pixel itself.
         double didi = 0.0;
         const double x_gradient =
-            GetXGradientAtPixel(data_ptr, image_size_, row, col);
+            GetXGradientAtPixel(image_data, image_size_, row, col, channel);
         if (x_gradient < 0) {
           didi += 1.0;
         } else if (x_gradient > 0) {
           didi -= 1.0;
         }
         const double y_gradient =
-            GetYGradientAtPixel(data_ptr, image_size_, row, col);
+            GetYGradientAtPixel(image_data, image_size_, row, col, channel);
         if (y_gradient < 0) {
           didi += 1.0;
         } else if (y_gradient > 0) {
@@ -168,9 +192,9 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
         // Derivative w.r.t. the pixel to the left.
         if (col - 1 >= 0) {
           const int left_index =
-              channel_index + (row * image_size_.width + (col - 1));
-          const double left_gradient =
-              GetXGradientAtPixel(data_ptr, image_size_, row, col - 1);
+              GetPixelIndex(image_size_, row, col - 1, channel);
+          const double left_gradient = GetXGradientAtPixel(
+              image_data, image_size_, row, col - 1, channel);
           double didl = 1.0;
           if (left_gradient < 0) {
             didl = -1.0;
@@ -181,9 +205,9 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
         // Derivative w.r.t. the pixel above.
         if (row - 1 >= 0) {
           const int above_index =
-              channel_index + ((row - 1) * image_size_.width + col);
-          const double above_gradient =
-              GetYGradientAtPixel(data_ptr, image_size_, row - 1, col);
+              GetPixelIndex(image_size_, row - 1, col, channel);
+          const double above_gradient = GetYGradientAtPixel(
+              image_data, image_size_, row - 1, col, channel);
           double dida = 1.0;
           if (above_gradient < 0) {
             dida = -1.0;
