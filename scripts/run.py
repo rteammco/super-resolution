@@ -9,15 +9,15 @@ configuration = {
   'blur_radius': 3,
   'blur_sigma': 0.5,
   'noise_sigma': 5.0,
-  'number_of_frames': 4,
 #  'hr_image_path': '../test_data/fb.png',
-  'hr_image_path': '../test_data/dallas_half.jpg',
+  'hr_image_path': '../test_data/dallas_qtr.jpg',
   'lr_image_dir': '../test/OUT',
-  'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
+  'number_of_frames': 4,
+  'motion_sequence_path': '../test_data/test_motion_sequence_9.txt',
   # Solver-only options:
   'regularizer': 'tv',
   'regularization_parameter': 0.01,
-  'solver_iterations': 50,
+  'solver_iterations': 0,  # = 0 infinite
   'use_numerical_differentiation': False,
   'display_mode': 'compare',
   'generate_lr_images': True,  # for SR binary testing
@@ -56,6 +56,7 @@ def run_super_resolution(binary_path, config):
   command += ' --solver_iterations={}'.format(config['solver_iterations'])
   if config['generate_lr_images']:
     command += ' --generate_lr_images'
+    command += ' --number_of_frames={}'.format(config['number_of_frames'])
     command += ' --noise_sigma={}'.format(config['noise_sigma'])
     command += ' --data_path={}'.format(config['hr_image_path'])
     command += ' --evaluator={}'.format(config['evaluator'])

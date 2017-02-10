@@ -175,7 +175,8 @@ int main(int argc, char** argv) {
               << FLAGS_regularization_parameter;
   }
 
-  std::cout << "Super-resolving..." << std::endl;
+  std::cout << "Super-resolving from "
+            << input_data.low_res_images.size() << " images..." << std::endl;
   const ImageData result = solver.Solve(initial_estimate);
   std::cout << "Done!" << std::endl;
 

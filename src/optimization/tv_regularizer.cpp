@@ -194,12 +194,12 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
               GetPixelIndex(image_size_, row, col - 1, channel);
           const double left_gradient = GetXGradientAtPixel(
               image_data, image_size_, row, col - 1, channel);
-          double didl = 1.0;
+          double dldi = 1.0;
           if (left_gradient < 0.0) {
-            didl = -1.0;
+            dldi = -1.0;
           }
           gradient[index] +=
-              2 * gradient_constants[left_index] * residuals[left_index] * didl;
+              2 * gradient_constants[left_index] * residuals[left_index] * dldi;
         }
         // Derivative w.r.t. the pixel above.
         if (row - 1 >= 0) {
@@ -207,15 +207,15 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
               GetPixelIndex(image_size_, row - 1, col, channel);
           const double above_gradient = GetYGradientAtPixel(
               image_data, image_size_, row - 1, col, channel);
-          double dida = 1.0;
+          double dadi = 1.0;
           if (above_gradient < 0.0) {
-            dida = -1.0;
+            dadi = -1.0;
           }
           gradient[index] +=
               2 *
               gradient_constants[above_index] *
               residuals[above_index] *
-              dida;
+              dadi;
         }
         // Derivative w.r.t. the pixel in the channel before (if 3D TV).
         if (use_3d_total_variation_ && channel > 0) {
@@ -223,15 +223,15 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
               GetPixelIndex(image_size_, row, col, channel - 1);
           const double before_gradient = GetZGradientAtPixel(
               image_data, image_size_, row, col, channel - 1);
-          double didb = 1.0;
+          double dbdi = 1.0;
           if (before_gradient < 0.0) {
-            didb = -1.0;
+            dbdi = -1.0;
           }
           gradient[index] +=
               2 *
               gradient_constants[before_index] *
               residuals[before_index] *
-              didb;
+              dbdi;
         }
       }
     }
