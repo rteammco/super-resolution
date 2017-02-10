@@ -358,5 +358,14 @@ TEST(ImageData, GetImageDataReport) {
   };
   ImageData image(pixel_values, cv::Size(5, 3), 2);
   super_resolution::ImageDataReport report = image.GetImageDataReport();
-  report.Print();
+  EXPECT_EQ(report.image_size, cv::Size(5, 3));
+  EXPECT_EQ(report.num_channels, 2);
+  EXPECT_EQ(report.num_negative_pixels, 4);
+  EXPECT_EQ(report.num_over_one_pixels, 7);
+  EXPECT_EQ(report.channel_with_most_negative_pixels, 0);
+  EXPECT_EQ(report.max_num_negative_pixels_in_one_channel, 3);
+  EXPECT_EQ(report.channel_with_most_over_one_pixels, 1);
+  EXPECT_EQ(report.max_num_over_one_pixels_in_one_channel, 5);
+  EXPECT_EQ(report.smallest_pixel_value, -9.9);
+  EXPECT_EQ(report.largest_pixel_value, 9.23);
 }

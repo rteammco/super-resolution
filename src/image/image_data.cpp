@@ -52,20 +52,23 @@ void ImageDataReport::Print() const {
   const double percent_over_one =
       (static_cast<double>(num_over_one_pixels) /
       static_cast<double>(num_pixels)) * 100.0;
-  std::cout << "Num negative pixels: " << num_negative_pixels
+  std::cout << "Image Statistics: " << image_size.width
+            << " x " << image_size.height << " x " << num_channels
+            << " (" << num_pixels << " pixels)" << std::endl;
+  std::cout << "  Num negative pixels: " << num_negative_pixels
             << " (" << percent_negative << "%)" << std::endl;
-  std::cout << "Num over one pixels: " << num_over_one_pixels
+  std::cout << "  Num over one pixels: " << num_over_one_pixels
             << " (" << percent_over_one << "%)" << std::endl;
-  std::cout << "Channel with most negative pixels: "
+  std::cout << "  Channel with most negative pixels: "
             << channel_with_most_negative_pixels
             << " (" << max_num_negative_pixels_in_one_channel << ")"
             << std::endl;
-  std::cout << "Channel with most over one pixels: "
+  std::cout << "  Channel with most over one pixels: "
             << channel_with_most_over_one_pixels
             << " (" << max_num_over_one_pixels_in_one_channel << ")"
             << std::endl;
-  std::cout << "Minimum pixel value: " << smallest_pixel_value << std::endl;
-  std::cout << "Maximum pixel value: " << largest_pixel_value << std::endl;
+  std::cout << "  Minimum pixel value: " << smallest_pixel_value << std::endl;
+  std::cout << "  Maximum pixel value: " << largest_pixel_value << std::endl;
 }
 
 // Default constructor.
