@@ -116,11 +116,14 @@ std::pair<double, std::vector<double>> IrlsMapSolver::ComputeDataTerm(
   std::vector<double> residuals(num_data_points);
   const int num_pixels = GetNumPixels();
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    const double* degraded_hr_channel_data =
+        degraded_hr_image.GetMutableDataPointer(channel_index);
+    const double* observation_channel_data =
+        observations_.at(image_index).GetMutableDataPointer(channel_index);
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       const double residual =
-          degraded_hr_image.GetPixelValue(channel_index, pixel_index) -
-          observations_.at(image_index).GetPixelValue(
-              channel_index, pixel_index);
+          degraded_hr_channel_data[pixel_index] -
+          observation_channel_data[pixel_index];
       const int data_index = channel_index * num_pixels + pixel_index;
       residuals[data_index] = residual;
       residual_sum += (residual * residual);
@@ -139,9 +142,10 @@ std::pair<double, std::vector<double>> IrlsMapSolver::ComputeDataTerm(
   // Build the gradient vector.
   std::vector<double> gradient(num_data_points);
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    const double* residuals_channel_data =
+        residual_image.GetMutableDataPointer(channel_index);
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-      const double gradient_at_pixel =
-          2 * residual_image.GetPixelValue(channel_index, pixel_index);
+      const double gradient_at_pixel = 2 * residuals_channel_data[pixel_index];
       const int data_index = channel_index * num_pixels + pixel_index;
       gradient[data_index] = gradient_at_pixel;
     }
