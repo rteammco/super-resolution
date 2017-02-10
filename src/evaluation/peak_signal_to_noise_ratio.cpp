@@ -20,9 +20,8 @@ double PeakSignalToNoiseRatioEvaluator::Evaluate(const ImageData& image) const {
   double sum_of_squared_differences = 0.0;
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     const double* ground_truth_channel_data =
-        ground_truth_.GetMutableDataPointer(channel_index);
-    const double* image_channel_data =
-        image.GetMutableDataPointer(channel_index);
+        ground_truth_.GetChannelData(channel_index);
+    const double* image_channel_data = image.GetChannelData(channel_index);
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       const double difference =
           ground_truth_channel_data[pixel_index] -

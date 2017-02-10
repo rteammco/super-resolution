@@ -28,7 +28,7 @@ TEST(Evaluation, PSNR) {
 
   const super_resolution::ImageData test_image_2(ground_truth_matrix);
   // Modify a few of the image pixels:
-  double* image_data = test_image_2.GetMutableDataPointer(0);
+  double* image_data = test_image_2.GetMutableChannelData(0);
   image_data[6] = 0.25;  // Change from 0.5 to 0.25.
   image_data[15] = 0.5;  // Change from 1.0 to 0.5.
   // Expected MSE is:

@@ -49,7 +49,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   solver_data.setlength(num_data_points);
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     double* data_ptr = solver_data.getcontent() + (num_pixels * channel_index);
-    double* channel_ptr = initial_estimate.GetMutableDataPointer(channel_index);
+    const double* channel_ptr = initial_estimate.GetChannelData(channel_index);
     std::copy(channel_ptr, channel_ptr + num_pixels, data_ptr);
   }
 
@@ -117,9 +117,9 @@ std::pair<double, std::vector<double>> IrlsMapSolver::ComputeDataTerm(
   const int num_pixels = GetNumPixels();
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     const double* degraded_hr_channel_data =
-        degraded_hr_image.GetMutableDataPointer(channel_index);
+        degraded_hr_image.GetChannelData(channel_index);
     const double* observation_channel_data =
-        observations_.at(image_index).GetMutableDataPointer(channel_index);
+        observations_.at(image_index).GetChannelData(channel_index);
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       const double residual =
           degraded_hr_channel_data[pixel_index] -
@@ -142,10 +142,10 @@ std::pair<double, std::vector<double>> IrlsMapSolver::ComputeDataTerm(
   // Build the gradient vector.
   std::vector<double> gradient(num_data_points);
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
-    const double* residuals_channel_data =
-        residual_image.GetMutableDataPointer(channel_index);
+    const double* residual_channel_data =
+        residual_image.GetChannelData(channel_index);
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-      const double gradient_at_pixel = 2 * residuals_channel_data[pixel_index];
+      const double gradient_at_pixel = 2 * residual_channel_data[pixel_index];
       const int data_index = channel_index * num_pixels + pixel_index;
       gradient[data_index] = gradient_at_pixel;
     }

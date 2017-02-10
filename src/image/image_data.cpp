@@ -241,7 +241,11 @@ double ImageData::GetPixelValue(
   return channels_[channel_index].at<double>(row, col);
 }
 
-double* ImageData::GetMutableDataPointer(const int channel_index) const {
+const double* ImageData::GetChannelData(const int channel_index) const {
+  return GetMutableChannelData(channel_index);
+}
+
+double* ImageData::GetMutableChannelData(const int channel_index) const {
   CHECK_GE(channel_index, 0) << "Channel index must be at least 0.";
   CHECK_LT(channel_index, channels_.size()) << "Channel index out of bounds.";
 

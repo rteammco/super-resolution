@@ -153,10 +153,14 @@ class ImageData {
   double GetPixelValue(
       const int channel_index, const int row, const int col) const;
 
-  // Returns a mutable data pointer (for the solver to adjust) at the given
-  // channel index. The size of the array will be the number of pixels in this
-  // image (use GetNumPixels()).
-  double* GetMutableDataPointer(const int channel_index) const;
+  // Returns a data pointer for the pixel values at the given channel index.
+  // The size of the array will be the number of pixels in this image (use
+  // GetNumPixels()).
+  const double* GetChannelData(const int channel_index) const;
+
+  // Same as GetChannelData(), but allows the image to be modified by changing
+  // the values of the returned array.
+  double* GetMutableChannelData(const int channel_index) const;
 
   // Returns an OpenCV Mat image which is a naively-constructed monochrome or
   // RGB image combined from the channels in this image for visualization

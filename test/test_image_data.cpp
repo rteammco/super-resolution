@@ -70,7 +70,7 @@ TEST(ImageData, AddAndAccessImageData) {
   }
 
   // Check data pointer access.
-  double* pixel_ptr = image_data.GetMutableDataPointer(0);
+  double* pixel_ptr = image_data.GetMutableChannelData(0);
   EXPECT_NEAR(pixel_ptr[0], 0.1, kPixelErrorTolerance);
   EXPECT_NEAR(pixel_ptr[3], 0.4, kPixelErrorTolerance);
   EXPECT_NEAR(pixel_ptr[4], 0.5, kPixelErrorTolerance);
@@ -157,7 +157,7 @@ TEST(ImageData, PixelArrayConstructor) {
   }
 
   // Make sure that changing the image doesn't change the original data.
-  double* image_data_ptr = image_data.GetMutableDataPointer(0);
+  double* image_data_ptr = image_data.GetMutableChannelData(0);
   image_data_ptr[0] = 0.0;
   image_data_ptr[3] = 1.0;
   image_data_ptr[8] = -500;
@@ -203,19 +203,19 @@ TEST(ImageData, PixelArrayConstructor) {
   }
 
   // Make sure that changing the image doesn't change the original data.
-  image_data_ptr = image_data.GetMutableDataPointer(0);
+  image_data_ptr = image_data.GetMutableChannelData(0);
   image_data_ptr[3] = 1.0;
   EXPECT_EQ(pixel_values_multichannel[3], 100);
 
-  image_data_ptr = image_data_multichannel.GetMutableDataPointer(1);
+  image_data_ptr = image_data_multichannel.GetMutableChannelData(1);
   image_data_ptr[5] = -500;
   EXPECT_EQ(pixel_values_multichannel[9 + 5], 60);
 
-  image_data_ptr = image_data_multichannel.GetMutableDataPointer(2);
+  image_data_ptr = image_data_multichannel.GetMutableChannelData(2);
   image_data_ptr[8] = 25.3;
   EXPECT_EQ(pixel_values_multichannel[18 + 8], 9);
 
-  image_data_ptr = image_data_multichannel.GetMutableDataPointer(3);
+  image_data_ptr = image_data_multichannel.GetMutableChannelData(3);
   image_data_ptr[0] = -10;
   EXPECT_EQ(pixel_values_multichannel[27 + 0], 0.1);
 }
