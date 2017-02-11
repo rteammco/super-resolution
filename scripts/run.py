@@ -11,7 +11,7 @@ configuration = {
   'noise_sigma': 5.0,
 #  'hr_image_path': '../test_data/fb.png',
   'hr_image_path': '../test_data/dallas_qtr.jpg',
-  'lr_image_dir': '../test/OUT',
+  'lr_image_dir': '../test_data/OUT',
   'number_of_frames': 4,
   'motion_sequence_path': '../test_data/test_motion_sequence_9.txt',
   # Solver-only options:
@@ -80,5 +80,5 @@ if __name__ == '__main__':
   binary_path = 'bin'
   if args.binary == 'SuperResolution':
     run_super_resolution(binary_path, configuration)
-  elif args.bianry == 'GenerateData':
+  elif args.binary == 'GenerateData':
     run_generate_data(binary_path, configuration)
