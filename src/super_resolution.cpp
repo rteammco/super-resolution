@@ -102,13 +102,10 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Generating low-resolution images from ground truth.";
     input_data.high_res_image =
         super_resolution::util::LoadImage(FLAGS_data_path);
-    super_resolution::ImageModel image_model_with_noise = image_model;
-    std::shared_ptr<super_resolution::AdditiveNoiseModule> noise_module;
-    if (FLAGS_noise_sigma > 0.0) {
-      noise_module = std::shared_ptr<super_resolution::AdditiveNoiseModule>(
-          new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma));
-      image_model_with_noise.AddDegradationOperator(noise_module);
-    }
+    // Create another image model with the noise module to generate LR images.
+    model_parameters.noise_sigma = FLAGS_noise_sigma;
+    super_resolution::ImageModel image_model_with_noise =
+        super_resolution::ImageModel::CreateImageModel(model_parameters);
     for (int i = 0; i < FLAGS_number_of_frames; ++i) {
       const ImageData low_res_frame =
           image_model_with_noise.ApplyToImage(input_data.high_res_image, i);

@@ -20,20 +20,27 @@ ImageModel ImageModel::CreateImageModel(
   ImageModel image_model(parameters.scale);
 
   // Add motion if a motion sequence or file is provided.
-  std::shared_ptr<MotionModule> motion_module;
-  if (!parameters.motion_sequence_path.empty()) {
-    // TODO: || parameters.motion_shift.GetNumMotionShifts() > 0
-    MotionShiftSequence motion_shift_sequence;
-    motion_shift_sequence.LoadSequenceFromFile(parameters.motion_sequence_path);
-    motion_module = std::shared_ptr<MotionModule>(
-        new MotionModule(motion_shift_sequence));
+  if (!parameters.motion_sequence_path.empty() ||
+       parameters.motion_sequence.GetNumMotionShifts() > 0) {
+    std::shared_ptr<MotionModule> motion_module;
+    if (parameters.motion_sequence.GetNumMotionShifts() > 0) {
+      // If motion sequence was provided:
+      motion_module = std::shared_ptr<MotionModule>(
+          new MotionModule(parameters.motion_sequence));
+    } else {
+      // If file name was provided:
+      MotionShiftSequence motion_shift_sequence;
+      motion_shift_sequence.LoadSequenceFromFile(
+          parameters.motion_sequence_path);
+      motion_module = std::shared_ptr<MotionModule>(
+          new MotionModule(motion_shift_sequence));
+    }
     image_model.AddDegradationOperator(motion_module);
   }
 
   // Add blur if the blur parameters are non-zero.
-  std::shared_ptr<BlurModule> blur_module;
   if (parameters.blur_radius > 0 && parameters.blur_sigma > 0.0) {
-    blur_module = std::shared_ptr<BlurModule>(
+    std::shared_ptr<BlurModule> blur_module(
         new BlurModule(parameters.blur_radius, parameters.blur_sigma));
     image_model.AddDegradationOperator(blur_module);
   }
@@ -44,6 +51,11 @@ ImageModel ImageModel::CreateImageModel(
   image_model.AddDegradationOperator(downsampling_module);
 
   // Add noise if the noise sigma is positive.
+  if (parameters.noise_sigma > 0.0) {
+    std::shared_ptr<AdditiveNoiseModule> noise_module(
+        new AdditiveNoiseModule(parameters.noise_sigma));
+    image_model.AddDegradationOperator(noise_module);
+  }
 
   return image_model;
 }
