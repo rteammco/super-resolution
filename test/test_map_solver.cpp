@@ -92,24 +92,17 @@ TEST(MapSolver, SmallDataTest) {
   }
 
   // Create the image model.
-  const int downsampling_scale = 2;
-  super_resolution::ImageModel image_model(downsampling_scale);
-
-  // Add motion:
   super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
     super_resolution::MotionShift(-1, 0),
     super_resolution::MotionShift(0, -1),
     super_resolution::MotionShift(-1, -1)
   });
-  std::shared_ptr<MotionModule> motion_module(
-      new MotionModule(motion_shift_sequence));
-  image_model.AddDegradationOperator(motion_module);
-
-  // Add downsampling:
-  std::shared_ptr<DownsamplingModule> downsampling_module(
-      new DownsamplingModule(downsampling_scale));
-  image_model.AddDegradationOperator(downsampling_module);
+  super_resolution::ImageModelParameters model_parameters;
+  model_parameters.scale = 2;
+  model_parameters.motion_sequence = motion_shift_sequence;
+  const super_resolution::ImageModel image_model =
+      super_resolution::ImageModel::CreateImageModel(model_parameters);
 
   /* Verify solver gets a near-perfect solution for this trivial case. */
 
@@ -187,7 +180,8 @@ TEST(MapSolver, RealIconDataTest) {
   const ImageData ground_truth(image);
   const cv::Size image_size = ground_truth.GetImageSize();
 
-  // Build the image model. 2x downsampling.
+  // Build the image model. 2x downsampling. Create it manually here because we
+  // need to get the degradation operator matrices.
   const int downsampling_scale = 2;
   super_resolution::ImageModel image_model(downsampling_scale);
 
@@ -305,23 +299,17 @@ TEST(MapSolver, RealBigImageTest) {
   ground_truth.ResizeImage(cv::Size(840, 840));
 
   // Build the image model. 2x downsampling.
-  const int downsampling_scale = 2;
-  super_resolution::ImageModel image_model(downsampling_scale);
-
-  // Motion.
   super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
     super_resolution::MotionShift(1, 0),
     super_resolution::MotionShift(0, 1),
     super_resolution::MotionShift(1, 1)
   });
-  std::shared_ptr<MotionModule> motion_module(
-      new MotionModule(motion_shift_sequence));
-  image_model.AddDegradationOperator(motion_module);
-
-  std::shared_ptr<DownsamplingModule> downsampling_module(
-      new DownsamplingModule(downsampling_scale));
-  image_model.AddDegradationOperator(downsampling_module);
+  super_resolution::ImageModelParameters model_parameters;
+  model_parameters.scale = 2;
+  model_parameters.motion_sequence = motion_shift_sequence;
+  const super_resolution::ImageModel image_model =
+      super_resolution::ImageModel::CreateImageModel(model_parameters);
 
   // Generate the low-res images using the image model.
   const std::vector<ImageData> low_res_images {
@@ -380,9 +368,6 @@ TEST(MapSolver, RegularizationTest) {
 
   // Build the image model. 3x downsampling.
   const int downsampling_scale = 3;
-  super_resolution::ImageModel image_model(downsampling_scale);
-
-  // Motion.
   const super_resolution::MotionShiftSequence motion_shift_sequence({
     super_resolution::MotionShift(0, 0),
     // super_resolution::MotionShift(0, 1),
@@ -394,24 +379,18 @@ TEST(MapSolver, RegularizationTest) {
     // super_resolution::MotionShift(2, 1),
     // super_resolution::MotionShift(2, 2)
   });
-  std::shared_ptr<MotionModule> motion_module(
-      new MotionModule(motion_shift_sequence));
-  image_model.AddDegradationOperator(motion_module);
-
-  // Blur.
-  std::shared_ptr<BlurModule> blur_module(new BlurModule(3, 3));
-  image_model.AddDegradationOperator(blur_module);
-
-  // Downsampling.
-  std::shared_ptr<DownsamplingModule> downsampling_module(
-      new DownsamplingModule(downsampling_scale));
-  image_model.AddDegradationOperator(downsampling_module);
+  super_resolution::ImageModelParameters model_parameters;
+  model_parameters.scale = downsampling_scale;
+  model_parameters.motion_sequence = motion_shift_sequence;
+  model_parameters.blur_radius = 3;
+  model_parameters.blur_sigma = 3.0;
+  const super_resolution::ImageModel image_model =
+      super_resolution::ImageModel::CreateImageModel(model_parameters);
 
   // Additive noise (degradation image model only).
-  super_resolution::ImageModel image_model_with_noise = image_model;
-  std::shared_ptr<super_resolution::AdditiveNoiseModule> noise_module(
-      new super_resolution::AdditiveNoiseModule(10));
-  image_model_with_noise.AddDegradationOperator(noise_module);
+  model_parameters.noise_sigma = 10.0;
+  const super_resolution::ImageModel image_model_with_noise =
+      super_resolution::ImageModel::CreateImageModel(model_parameters);
 
   // Generate the low-res images using the image model.
   const int num_images = motion_shift_sequence.GetNumMotionShifts();

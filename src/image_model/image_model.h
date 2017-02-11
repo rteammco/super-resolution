@@ -27,9 +27,9 @@ struct ImageModelParameters {
   // Downsampling (D).
   int scale = 2;
 
-  // Blur (B). Set either values to 0 to not include blur.
-  int blur_radius = 3;
-  double blur_sigma = 1.0;
+  // Blur (B). Keep either values at 0 to not include blur.
+  int blur_radius = 0;
+  double blur_sigma = 0.0;
 
   // Motion (M). Set the file path of a motion sequence path to load it from a
   // file, or set the motion shift sequence. Either can be used to make a

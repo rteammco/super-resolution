@@ -13,8 +13,8 @@ namespace super_resolution {
 // and the first image in the frame sequence.
 struct MotionShift {
   MotionShift(const double dx, const double dy) : dx(dx), dy(dy) {}
-  const double dx;
-  const double dy;
+  double dx;
+  double dy;
 };
 
 // Defines an ordered sequence of MotionShift objects. These can be set and
