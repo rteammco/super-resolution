@@ -65,34 +65,34 @@ int main(int argc, char** argv) {
 
   // Add motion module if user specified motion shift sequence. We use a
   // pointer to avoid scoping issues of creating the module in the if block.
-  std::unique_ptr<super_resolution::MotionModule> motion_module;
+  std::shared_ptr<super_resolution::MotionModule> motion_module;
   if (!FLAGS_motion_sequence_path.empty()) {
     super_resolution::MotionShiftSequence motion_shift_sequence;
     motion_shift_sequence.LoadSequenceFromFile(FLAGS_motion_sequence_path);
-    motion_module = std::unique_ptr<super_resolution::MotionModule>(
+    motion_module = std::shared_ptr<super_resolution::MotionModule>(
         new super_resolution::MotionModule(motion_shift_sequence));
-    image_model.AddDegradationOperator(*motion_module);
+    image_model.AddDegradationOperator(motion_module);
   }
 
   // Add blur if the parameters are specified.
-  std::unique_ptr<super_resolution::BlurModule> blur_module;
+  std::shared_ptr<super_resolution::BlurModule> blur_module;
   if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
-    blur_module = std::unique_ptr<super_resolution::BlurModule>(
+    blur_module = std::shared_ptr<super_resolution::BlurModule>(
         new super_resolution::BlurModule(FLAGS_blur_radius, FLAGS_blur_sigma));
-    image_model.AddDegradationOperator(*blur_module);
+    image_model.AddDegradationOperator(blur_module);
   }
 
   // Add downsampling.
-  const super_resolution::DownsamplingModule downsampling_module(
-      FLAGS_downsampling_scale);
+  std::shared_ptr<super_resolution::DownsamplingModule> downsampling_module(
+      new super_resolution::DownsamplingModule(FLAGS_downsampling_scale));
   image_model.AddDegradationOperator(downsampling_module);
 
   // Add additive noise if the parameter was specified.
-  std::unique_ptr<super_resolution::AdditiveNoiseModule> noise_module;
+  std::shared_ptr<super_resolution::AdditiveNoiseModule> noise_module;
   if (FLAGS_noise_sigma > 0) {
-    noise_module = std::unique_ptr<super_resolution::AdditiveNoiseModule>(
+    noise_module = std::shared_ptr<super_resolution::AdditiveNoiseModule>(
         new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma));
-    image_model.AddDegradationOperator(*noise_module);
+    image_model.AddDegradationOperator(noise_module);
   }
 
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {

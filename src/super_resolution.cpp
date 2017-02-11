@@ -87,31 +87,14 @@ int main(int argc, char** argv) {
   REQUIRE_ARG(FLAGS_data_path);
 
   // Create the forward image model.
-  super_resolution::ImageModel image_model(FLAGS_upsampling_scale);
+  super_resolution::ImageModelParameters model_parameters;
+  model_parameters.scale = FLAGS_upsampling_scale;
+  model_parameters.blur_radius = FLAGS_blur_radius;
+  model_parameters.blur_sigma = FLAGS_blur_sigma;
+  model_parameters.motion_sequence_path = FLAGS_motion_sequence_path;
 
-  // Add motion module if user specified motion shift sequence. We use a
-  // pointer to avoid scoping issues of creating the module in the if block.
-  std::unique_ptr<super_resolution::MotionModule> motion_module;
-  if (!FLAGS_motion_sequence_path.empty()) {
-    super_resolution::MotionShiftSequence motion_shift_sequence;
-    motion_shift_sequence.LoadSequenceFromFile(FLAGS_motion_sequence_path);
-    motion_module = std::unique_ptr<super_resolution::MotionModule>(
-        new super_resolution::MotionModule(motion_shift_sequence));
-    image_model.AddDegradationOperator(*motion_module);
-  }
-
-  // Add a blur module if user-specified blurring values are positive.
-  std::unique_ptr<super_resolution::BlurModule> blur_module;
-  if (FLAGS_blur_radius > 0 && FLAGS_blur_sigma > 0) {
-    blur_module = std::unique_ptr<super_resolution::BlurModule>(
-        new super_resolution::BlurModule(FLAGS_blur_radius, FLAGS_blur_sigma));
-    image_model.AddDegradationOperator(*blur_module);
-  }
-
-  // Add downsampling.
-  const super_resolution::DownsamplingModule downsampling_module(
-      FLAGS_upsampling_scale);
-  image_model.AddDegradationOperator(downsampling_module);
+  const super_resolution::ImageModel image_model =
+      super_resolution::ImageModel::CreateImageModel(model_parameters);
 
   // Load in or generate the low-resolution images.
   InputData input_data;
@@ -120,11 +103,11 @@ int main(int argc, char** argv) {
     input_data.high_res_image =
         super_resolution::util::LoadImage(FLAGS_data_path);
     super_resolution::ImageModel image_model_with_noise = image_model;
-    std::unique_ptr<super_resolution::AdditiveNoiseModule> noise_module;
+    std::shared_ptr<super_resolution::AdditiveNoiseModule> noise_module;
     if (FLAGS_noise_sigma > 0.0) {
-      noise_module = std::unique_ptr<super_resolution::AdditiveNoiseModule>(
+      noise_module = std::shared_ptr<super_resolution::AdditiveNoiseModule>(
           new super_resolution::AdditiveNoiseModule(FLAGS_noise_sigma));
-      image_model_with_noise.AddDegradationOperator(*noise_module);
+      image_model_with_noise.AddDegradationOperator(noise_module);
     }
     for (int i = 0; i < FLAGS_number_of_frames; ++i) {
       const ImageData low_res_frame =

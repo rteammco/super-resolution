@@ -4,11 +4,49 @@
 #include <utility>
 
 #include "image/image_data.h"
+#include "image_model/additive_noise_module.h"
+#include "image_model/blur_module.h"
 #include "image_model/degradation_operator.h"
+#include "image_model/downsampling_module.h"
+#include "image_model/motion_module.h"
 
 #include "glog/logging.h"
 
 namespace super_resolution {
+
+ImageModel ImageModel::CreateImageModel(
+    const ImageModelParameters& parameters) {
+
+  ImageModel image_model(parameters.scale);
+
+  // Add motion if a motion sequence or file is provided.
+  std::shared_ptr<MotionModule> motion_module;
+  if (!parameters.motion_sequence_path.empty()) {
+    // TODO: || parameters.motion_shift.GetNumMotionShifts() > 0
+    MotionShiftSequence motion_shift_sequence;
+    motion_shift_sequence.LoadSequenceFromFile(parameters.motion_sequence_path);
+    motion_module = std::shared_ptr<MotionModule>(
+        new MotionModule(motion_shift_sequence));
+    image_model.AddDegradationOperator(motion_module);
+  }
+
+  // Add blur if the blur parameters are non-zero.
+  std::shared_ptr<BlurModule> blur_module;
+  if (parameters.blur_radius > 0 && parameters.blur_sigma > 0.0) {
+    blur_module = std::shared_ptr<BlurModule>(
+        new BlurModule(parameters.blur_radius, parameters.blur_sigma));
+    image_model.AddDegradationOperator(blur_module);
+  }
+
+  // Add the downsampling operator.
+  std::shared_ptr<DownsamplingModule> downsampling_module(
+      new DownsamplingModule(parameters.scale));
+  image_model.AddDegradationOperator(downsampling_module);
+
+  // Add noise if the noise sigma is positive.
+
+  return image_model;
+}
 
 ImageModel::ImageModel(const int downsampling_scale)
     : downsampling_scale_(downsampling_scale) {
@@ -18,9 +56,9 @@ ImageModel::ImageModel(const int downsampling_scale)
 }
 
 void ImageModel::AddDegradationOperator(
-    const DegradationOperator& degradation_operator) {
+    std::shared_ptr<DegradationOperator> degradation_operator) {
 
-  degradation_operators_.push_back(&degradation_operator);
+  degradation_operators_.push_back(degradation_operator);
 }
 
 ImageData ImageModel::ApplyToImage(
