@@ -46,27 +46,6 @@ bool DoesSetContain(
   return set.find(key) != set.end();
 }
 
-// Returns a single image loaded from the given file path. The file can be any
-// supported type that contains image data.
-ImageData LoadImage(const std::string& file_path) {
-  std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
-  std::transform(
-      extension.begin(), extension.end(), extension.begin(), tolower);
-  if (DoesSetContain(kSupportedImageExtensions, extension)) {
-    const cv::Mat image = cv::imread(file_path, cv::IMREAD_UNCHANGED);
-    return ImageData(image);
-  } else if (DoesSetContain(kSupportedHyperspectralExtensions, extension)) {
-    hyperspectral::HyperspectralDataLoader hs_data_loader(file_path);
-    hs_data_loader.LoadData();
-    return hs_data_loader.GetImage();
-  }
-
-  // Unsupported/unknown extension, so return empty image.
-  LOG(WARNING) << "Could not load image " << file_path
-               << ": extension is not recognized.";
-  return ImageData();
-}
-
 bool IsDirectory(const std::string& path) {
   struct stat path_stat;
   CHECK(stat(path.c_str(), &path_stat) == 0)
@@ -93,6 +72,25 @@ std::vector<ImageData> LoadImages(const std::string& data_path) {
     images.push_back(LoadImage(data_path));
   }
   return images;
+}
+
+ImageData LoadImage(const std::string& file_path) {
+  std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
+  std::transform(
+      extension.begin(), extension.end(), extension.begin(), tolower);
+  if (DoesSetContain(kSupportedImageExtensions, extension)) {
+    const cv::Mat image = cv::imread(file_path, cv::IMREAD_UNCHANGED);
+    return ImageData(image);
+  } else if (DoesSetContain(kSupportedHyperspectralExtensions, extension)) {
+    hyperspectral::HyperspectralDataLoader hs_data_loader(file_path);
+    hs_data_loader.LoadData();
+    return hs_data_loader.GetImage();
+  }
+
+  // Unsupported/unknown extension, so return empty image.
+  LOG(WARNING) << "Could not load image " << file_path
+               << ": extension is not recognized.";
+  return ImageData();
 }
 
 void SaveImage(const ImageData& image, const std::string& data_path) {
