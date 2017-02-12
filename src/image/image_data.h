@@ -151,8 +151,14 @@ class ImageData {
   // Converts a 3-channel image into whichever OpenCV color space is specified.
   // This method can only be used on 3-channel color images. If the image does
   // not have exactly three channels, this will cause an error (check fail).
+  //
+  // Set luminance_dominant = true to make this image only use the luminance
+  // channel for super-resolution. This is only applicable to color spaces such
+  // as YCrCb which have a luminance channel.
+  // TODO: this is not implemented yet.
   void ChangeColorSpace(
-      const ImageColorMode& new_color_mode, const bool luminance_dominant);
+      const ImageColorMode& new_color_mode,
+      const bool luminance_dominant = false);
 
   // Returns the channel image (OpenCV Mat) at the given index. Error if index
   // is out of bounds. Use GetNumChannels() to get a valid range. Note that the

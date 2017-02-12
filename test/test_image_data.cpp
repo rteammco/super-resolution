@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "image/image_data.h"
 #include "util/test_util.h"
 
@@ -337,11 +339,67 @@ TEST(ImageData, ResizeImage) {
   }
 }
 
-// This test verifies that the correct visualization image is returned for
-// different numbers of channels.
-TEST(ImageData, GetVisualizationImage) {
-  // TODO: implement.
-  // cv::Mat GetVisualizationImage
+// Tests the ChangeColorSpace method to see that the image is in fact being
+// converted correctly.
+TEST(ImageData, ChangeColorSpace) {
+  // Build the input BGR image.
+  const cv::Mat channel_b = (cv::Mat_<double>(4, 4)
+      << 0.1,  0.2,  0.3,  0.4,
+         0.15, 0.25, 0.35, 0.45,
+         0.55, 0.75, 0.85, 0.95,
+         0.6,  0.65, 0.7,  0.75);
+  const cv::Mat channel_g = (cv::Mat_<double>(4, 4)
+      << 0.2,  0.3,  0.4, 0.45,
+         0.1,  0.2,  0.3, 0.4,
+         0.75, 0.65, 1.0, 1.0,
+         0.3,  0.35, 0.4, 0.45);
+  const cv::Mat channel_r = (cv::Mat_<double>(4, 4)
+      << 0.0,  0.05, 0.1,  0.1,
+         0.0,  0.0,  0.05, 0.1,
+         0.25, 0.1,  0.2,  0.2,
+         0.0,  0.05, 0.1,  0.15);
+  const std::vector<cv::Mat> input_image_channels =
+      {channel_b, channel_g, channel_r};
+  cv::Mat input_image;
+  cv::merge(input_image_channels, input_image);
+
+  ImageData image(input_image, false);  // Do not normalize. Copies cv::Mat.
+  EXPECT_EQ(image.GetNumChannels(), 3);
+
+  // Get the expected conversion to the YCrCb color space.
+  cv::Mat converted_image;
+  input_image.convertTo(converted_image, CV_32F);
+  cv::cvtColor(converted_image, converted_image, CV_BGR2YCrCb);
+  converted_image.convertTo(converted_image, input_image.type());
+  std::vector<cv::Mat> converted_channels;
+  cv::split(converted_image, converted_channels);
+
+  // Check that the image was converted correctly.
+  image.ChangeColorSpace(super_resolution::COLOR_MODE_YCRCB);
+  EXPECT_EQ(image.GetNumChannels(), 3);
+  for (int channel_index = 0; channel_index < 3; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        image.GetChannelImage(channel_index),
+        converted_channels[channel_index],
+        kPixelErrorTolerance));
+  }
+
+  // Now verify that the conversion back also works.
+  image.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
+  EXPECT_EQ(image.GetNumChannels(), 3);
+  for (int channel_index = 0; channel_index < 3; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        image.GetChannelImage(channel_index),
+        input_image_channels[channel_index],
+        kPixelErrorTolerance));
+  }
+
+  // TODO: check that operations (e.g. resize) on image work correctly.
+
+  // TODO: Check that the image can be converted with luminance only.
+  // ChangeColorSpace(... true);
+  // EXPECT_EQ(image.GetNumChannels(), 1);
+  // Check operations on image work correctly.
 }
 
 // Tests that the report for analyzing images is correctly generated.
@@ -368,4 +426,11 @@ TEST(ImageData, GetImageDataReport) {
   EXPECT_EQ(report.max_num_over_one_pixels_in_one_channel, 5);
   EXPECT_EQ(report.smallest_pixel_value, -9.9);
   EXPECT_EQ(report.largest_pixel_value, 9.23);
+}
+
+// This test verifies that the correct visualization image is returned for
+// different numbers of channels.
+TEST(ImageData, GetVisualizationImage) {
+  // TODO: implement.
+  // cv::Mat GetVisualizationImage
 }

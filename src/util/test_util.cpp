@@ -27,6 +27,12 @@ bool AreMatricesEqual(
               << mat1.size() << " vs. " << mat2.size() << std::endl;
     return false;
   }
+  if (mat1.type() != mat2.type()) {
+    std::cout << "Matrices are not of the same data type "
+              << "(e.g. double vs. float). They cannot be compared."
+              << std::endl;
+    return false;
+  }
 
   // If diff_tolerance is 0 or less, the matrices must match exactly.
   // Otherwise, do a near match with the diff_tolerance value.

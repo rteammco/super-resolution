@@ -231,11 +231,56 @@ int ImageData::GetNumPixels() const {
 void ImageData::ChangeColorSpace(
     const ImageColorMode& new_color_mode, const bool luminance_dominant) {
 
-  // TODO:
-  //  (done) 1. Track what image type it currently is.
+  CHECK_NE(color_mode_, COLOR_MODE_NONE)
+      << "Cannot convert COLOR_MODE_NONE (monochrome or hyperspectral) "
+      << "images to a different color space.";
+
+  // If it's already the same color mode, there's nothing to do.
+  if (new_color_mode == color_mode_) {
+    LOG(WARNING)
+        << "This image is already set to the given color mode. "
+        << "Image was not modified.";
+    return;
+  }
+
+  // Set the OpenCV conversion mode value.
+  int opencv_color_conversion_mode = 0;
+  if (color_mode_ == COLOR_MODE_BGR && new_color_mode == COLOR_MODE_YCRCB) {
+    opencv_color_conversion_mode = CV_BGR2YCrCb;
+  } else if (color_mode_ == COLOR_MODE_YCRCB &&
+             new_color_mode == COLOR_MODE_BGR) {
+    opencv_color_conversion_mode = CV_YCrCb2BGR;
+  } else {
+    LOG(WARNING)
+        << "Unsupported color mode: " << new_color_mode << ". "
+        << "Image was not modified.";
+    return;
+  }
+
+  // Perform the conversion. Conversion is only supported in CV_32F mode, so we
+  // need to convert to CV_32F and then back again.
+  // Merge the 3 channels into a single cv::Mat image.
+  cv::Mat converted_image;
+  cv::merge(channels_, converted_image);
+  // Convert to CV_32F format.
+  const int original_type = converted_image.type();
+  converted_image.convertTo(converted_image, CV_32F);
+  // Convert to new color space.
+  cv::cvtColor(converted_image, converted_image, opencv_color_conversion_mode);
+  // Convert back to original format (double precision).
+  converted_image.convertTo(converted_image, original_type);
+  // Split the image back into individual ImageData channels.
+  channels_.clear();
+  cv::split(converted_image, channels_);
+
+  color_mode_ = new_color_mode;
+
+  // DONE:
+  //  1. Track what image type it currently is.
   //  2. Convert from the current type to the new type.
+  // TODO:
   //  3. GetVisualizationImage should always return the RGB version.
-  //  4. Allow image to be represented as a single channel (e.g. just the 
+  //  4. Allow image to be represented as a single channel (e.g. just the
   //     luminance channel or the grayscale version) for faster SR. It should
   //     still maintain data for the other channels, but hidden from the solver.
   //     In this mode, the HR image would be single-channel.
