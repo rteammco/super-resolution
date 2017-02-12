@@ -384,6 +384,20 @@ TEST(ImageData, ChangeColorSpace) {
         kPixelErrorTolerance));
   }
 
+  // Verify that the visualization image is still BGR.
+  cv::Mat visualization_image = image.GetVisualizationImage();
+  visualization_image.convertTo(
+      visualization_image, input_image.type(), 1.0 / 255.0);
+  std::vector<cv::Mat> visualization_channels;
+  cv::split(visualization_image, visualization_channels);
+  EXPECT_EQ(visualization_channels.size(), 3);
+  for (int channel_index = 0; channel_index < 3; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        visualization_channels[channel_index],
+        input_image_channels[channel_index],
+        kPixelErrorTolerance));
+  }
+
   // Now verify that the conversion back also works.
   image.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
   EXPECT_EQ(image.GetNumChannels(), 3);

@@ -278,8 +278,8 @@ void ImageData::ChangeColorSpace(
   // DONE:
   //  1. Track what image type it currently is.
   //  2. Convert from the current type to the new type.
-  // TODO:
   //  3. GetVisualizationImage should always return the RGB version.
+  // TODO:
   //  4. Allow image to be represented as a single channel (e.g. just the
   //     luminance channel or the grayscale version) for faster SR. It should
   //     still maintain data for the other channels, but hidden from the solver.
@@ -337,7 +337,6 @@ double* ImageData::GetMutableChannelData(const int channel_index) const {
 }
 
 cv::Mat ImageData::GetVisualizationImage() const {
-  // TODO: handle color conversions if not COLOR_MODE_RGB or COLOR_MODE_NONE.
   cv::Mat visualization_image;
   if (channels_.empty()) {
     LOG(WARNING) << "This image is empty. Returning empty visualization image.";
@@ -358,6 +357,15 @@ cv::Mat ImageData::GetVisualizationImage() const {
       channels_[0], channels_[num_channels / 2], channels_[num_channels - 1]
     };
     cv::merge(bgr_channels, visualization_image);
+    // If the image is a 3-channel image and the color mode was not BGR,
+    // convert the visualization to BGR first.
+    if (!(color_mode_ == COLOR_MODE_NONE || color_mode_ == COLOR_MODE_BGR)) {
+      // TODO: this may be a bit hacky, but it works.
+      ImageData converted_bgr_image(visualization_image, false);
+      converted_bgr_image.color_mode_ = color_mode_;
+      converted_bgr_image.ChangeColorSpace(COLOR_MODE_BGR);
+      return converted_bgr_image.GetVisualizationImage();
+    }
     util::ThresholdImage(visualization_image, 0.0, 1.0);
     visualization_image.convertTo(visualization_image, CV_8UC3, 255);
   }
