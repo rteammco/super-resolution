@@ -410,10 +410,13 @@ TEST(ImageData, ChangeColorSpace) {
 
   // TODO: check that operations (e.g. resize) on image work correctly.
 
-  // TODO: Check that the image can be converted with luminance only.
-  // ChangeColorSpace(... true);
-  // EXPECT_EQ(image.GetNumChannels(), 1);
-  // Check operations on image work correctly.
+  // Check that the image can be converted with luminance only. Create a new
+  // test image to avoid snowballing numerical errors.
+  ImageData image_2(input_image, false);
+  image_2.ChangeColorSpace(super_resolution::COLOR_MODE_YCRCB, true);
+  EXPECT_EQ(image_2.GetNumChannels(), 1);
+
+  // TODO: check operations on image work correctly.
 }
 
 // Tests that the report for analyzing images is correctly generated.

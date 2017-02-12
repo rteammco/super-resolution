@@ -20,8 +20,7 @@ namespace super_resolution {
 enum ImageColorMode {
   COLOR_MODE_NONE,
   COLOR_MODE_BGR,  // OpenCV uses BGR instead of RGB by default.
-  COLOR_MODE_YCRCB,
-  COLOR_MODE_YCRCB_LUMINANCE_ONLY  // Only consider the Yc channel for SR.
+  COLOR_MODE_YCRCB
 };
 
 // Contains information and statistics about an image. This can be useful for
@@ -134,9 +133,12 @@ class ImageData {
 
   // Returns the total number of channels (bands) in this image. Note that this
   // value may be 0.
-  int GetNumChannels() const {
-    return channels_.size();
-  }
+  //
+  // If the color mode of this ImageData is set to a luminance-dominant color
+  // space such as YCrCb and luminance_channel_only_ is enabled, the number of
+  // channels will be reported as 1 instead of 3. The other two channels will
+  // be hidden until the image is converted back to the BGR color space.
+  int GetNumChannels() const;
 
   // Returns the size of the image (width and height). If there are no channels
   // in this image (i.e. it is empty), the returned size will be (0, 0).
@@ -152,13 +154,13 @@ class ImageData {
   // This method can only be used on 3-channel color images. If the image does
   // not have exactly three channels, this will cause an error (check fail).
   //
-  // Set luminance_dominant = true to make this image only use the luminance
+  // Set luminance_only = true to make this image only use the luminance
   // channel for super-resolution. This is only applicable to color spaces such
-  // as YCrCb which have a luminance channel.
-  // TODO: this is not implemented yet.
+  // as YCrCb which have a luminance channel. If this is set, the image will be
+  // treated as a single-channel image for the purposes of the solver.
   void ChangeColorSpace(
       const ImageColorMode& new_color_mode,
-      const bool luminance_dominant = false);
+      const bool luminance_only = false);
 
   // Returns the channel image (OpenCV Mat) at the given index. Error if index
   // is out of bounds. Use GetNumChannels() to get a valid range. Note that the
@@ -219,6 +221,23 @@ class ImageData {
   // Color mode is automatically updated in the constructors and AddChannel()
   // method based on the number of channels.
   ImageColorMode color_mode_;
+
+  // If the color mode is set to a color space that has a dominant luminance
+  // channel, such as the YCrCb color space, then this flag indicates how the
+  // image should be treated in super-resolution.
+  //
+  // If true, this ImageData will only expose the luminance channel to outside
+  // methods (e.g. GetNumChannels() will return 1). If the image is then
+  // converted back to the BGR color space, the color components (e.g. Cr and
+  // Cb in the YCrCb color space) will be interpolated to the same size as the
+  // luminance channel and the 3-channel BGR image will be reconstructed. This
+  // is intended to save time and avoid color discontinuities when applying a
+  // super-resolution algorithm.
+  //
+  // To enable this option, set the second argument in ChangeColorSpace() to
+  // true (e.g. "ChangeColorSpace(COLOR_MODE_YCRCB, true)"). This will only
+  // work if the supported color mode has a dominant luminance channel.
+  bool luminance_channel_only_;
 
   // The size of the image (width and height) is set when the first channel is
   // added. The size is guaranteed to be consistent between all channels in the

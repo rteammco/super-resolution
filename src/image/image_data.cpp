@@ -79,7 +79,9 @@ ImageData::ImageData() {
 
 // Copy constructor.
 ImageData::ImageData(const ImageData& other)
-    : color_mode_(other.color_mode_), image_size_(other.image_size_) {
+    : color_mode_(other.color_mode_),
+      luminance_channel_only_(other.luminance_channel_only_),
+      image_size_(other.image_size_) {
 
   for (const cv::Mat& channel_image : other.channels_) {
     channels_.push_back(channel_image.clone());
@@ -176,7 +178,7 @@ void ImageData::ResizeImage(
   CHECK_GT(new_size.width, 0) << "Images must have a positive width.";
   CHECK_GT(new_size.height, 0) << "Images must have a positive height.";
 
-  const int num_image_channels = channels_.size();
+  const int num_image_channels = GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
     cv::Mat scaled_image;
     cv::resize(
@@ -206,7 +208,7 @@ void ImageData::ResizeImage(
 void ImageData::UpsampleImage(const int scale_factor) {
   const cv::Size new_size = cv::Size(
       image_size_.width * scale_factor, image_size_.height * scale_factor);
-  const int num_image_channels = channels_.size();
+  const int num_image_channels = GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
     const cv::Mat channel_image = channels_[i];
     // TODO: do the more efficient implementation here.
@@ -224,12 +226,19 @@ void ImageData::UpsampleImage(const int scale_factor) {
   image_size_ = new_size;
 }
 
+int ImageData::GetNumChannels() const {
+  if (color_mode_ == COLOR_MODE_YCRCB && luminance_channel_only_) {
+    return 1;
+  }
+  return channels_.size();
+}
+
 int ImageData::GetNumPixels() const {
   return image_size_.width * image_size_.height;  // (0, 0) if image is empty.
 }
 
 void ImageData::ChangeColorSpace(
-    const ImageColorMode& new_color_mode, const bool luminance_dominant) {
+    const ImageColorMode& new_color_mode, const bool luminance_only) {
 
   CHECK_NE(color_mode_, COLOR_MODE_NONE)
       << "Cannot convert COLOR_MODE_NONE (monochrome or hyperspectral) "
@@ -246,9 +255,12 @@ void ImageData::ChangeColorSpace(
   // Set the OpenCV conversion mode value.
   int opencv_color_conversion_mode = 0;
   if (color_mode_ == COLOR_MODE_BGR && new_color_mode == COLOR_MODE_YCRCB) {
+    // BGR => YCrCb.
     opencv_color_conversion_mode = CV_BGR2YCrCb;
+    luminance_channel_only_ = luminance_only;
   } else if (color_mode_ == COLOR_MODE_YCRCB &&
              new_color_mode == COLOR_MODE_BGR) {
+    // YCrCb => BGR.
     opencv_color_conversion_mode = CV_YCrCb2BGR;
   } else {
     LOG(WARNING)
@@ -256,6 +268,10 @@ void ImageData::ChangeColorSpace(
         << "Image was not modified.";
     return;
   }
+
+  // TODO: if YCrCb => BGR and luminance_channels_only_ is enabled, interpolate
+  // color first to the appropriate size.
+  // TODO: verify that this is actually the correct way of doing this.
 
   // Perform the conversion. Conversion is only supported in CV_32F mode, so we
   // need to convert to CV_32F and then back again.
@@ -300,7 +316,7 @@ void ImageData::ChangeColorSpace(
 
 cv::Mat ImageData::GetChannelImage(const int index) const {
   CHECK_GE(index, 0) << "Channel index must be at least 0.";
-  CHECK_LT(index, channels_.size()) << "Channel index out of bounds.";
+  CHECK_LT(index, GetNumChannels()) << "Channel index out of bounds.";
   return channels_[index];
 }
 
@@ -315,7 +331,7 @@ double ImageData::GetPixelValue(
 double ImageData::GetPixelValue(
     const int channel_index, const int row, const int col) const {
 
-  CHECK(0 <= channel_index && channel_index < channels_.size())
+  CHECK(0 <= channel_index && channel_index < GetNumChannels())
       << "Channel index is out of bounds.";
   CHECK(0 <= row && row < image_size_.height) << "Row index is out of bounds.";
   CHECK(0 <= col && col < image_size_.width) << "Col index is out of bounds.";
@@ -329,7 +345,7 @@ const double* ImageData::GetChannelData(const int channel_index) const {
 
 double* ImageData::GetMutableChannelData(const int channel_index) const {
   CHECK_GE(channel_index, 0) << "Channel index must be at least 0.";
-  CHECK_LT(channel_index, channels_.size()) << "Channel index out of bounds.";
+  CHECK_LT(channel_index, GetNumChannels()) << "Channel index out of bounds.";
 
   // TODO: verify that this is the correct approach of getting the data array.
   // static_cast doesn't work here because the data is apparently uchar*.
@@ -343,7 +359,7 @@ cv::Mat ImageData::GetVisualizationImage() const {
     return visualization_image;
   }
 
-  const int num_channels = channels_.size();
+  const int num_channels = channels_.size();  // Consider all channels.
   if (num_channels < 3) {
     // For a monochrome image (or if it has two channels for some reason), just
     // return the first (and likely only) channel.
@@ -351,21 +367,20 @@ cv::Mat ImageData::GetVisualizationImage() const {
     util::ThresholdImage(visualization_image, 0.0, 1.0);
     visualization_image.convertTo(visualization_image, CV_8UC1, 255);
   } else {
+    // If the image is a 3-channel image and the color mode was not BGR,
+    // convert the visualization to BGR first.
+    if (!(color_mode_ == COLOR_MODE_NONE || color_mode_ == COLOR_MODE_BGR)) {
+      // TODO: this may be a bit hacky, but it works.
+      ImageData converted_bgr_image = *this;  // Copy self.
+      converted_bgr_image.ChangeColorSpace(COLOR_MODE_BGR);
+      return converted_bgr_image.GetVisualizationImage();
+    }
     // For 3 or more channels, return an RGB image of the first, middle, and
     // last channel. The middle channel is just the average index.
     std::vector<cv::Mat> bgr_channels = {
       channels_[0], channels_[num_channels / 2], channels_[num_channels - 1]
     };
     cv::merge(bgr_channels, visualization_image);
-    // If the image is a 3-channel image and the color mode was not BGR,
-    // convert the visualization to BGR first.
-    if (!(color_mode_ == COLOR_MODE_NONE || color_mode_ == COLOR_MODE_BGR)) {
-      // TODO: this may be a bit hacky, but it works.
-      ImageData converted_bgr_image(visualization_image, false);
-      converted_bgr_image.color_mode_ = color_mode_;
-      converted_bgr_image.ChangeColorSpace(COLOR_MODE_BGR);
-      return converted_bgr_image.GetVisualizationImage();
-    }
     util::ThresholdImage(visualization_image, 0.0, 1.0);
     visualization_image.convertTo(visualization_image, CV_8UC3, 255);
   }
@@ -376,7 +391,7 @@ cv::Mat ImageData::GetVisualizationImage() const {
 ImageDataReport ImageData::GetImageDataReport() const {
   ImageDataReport report;
   report.image_size = image_size_;
-  report.num_channels = GetNumChannels();
+  report.num_channels = channels_.size();
 
   // Initialize these to the opposite extreme values so they can be adjusted.
   report.smallest_pixel_value = 1.0;
