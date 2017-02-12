@@ -74,10 +74,13 @@ void ImageDataReport::Print() const {
 // Default constructor.
 ImageData::ImageData() {
   image_size_ = cv::Size(0, 0);
+  color_mode_ = COLOR_MODE_NONE;
 }
 
 // Copy constructor.
-ImageData::ImageData(const ImageData& other) : image_size_(other.image_size_) {
+ImageData::ImageData(const ImageData& other)
+    : color_mode_(other.color_mode_), image_size_(other.image_size_) {
+
   for (const cv::Mat& channel_image : other.channels_) {
     channels_.push_back(channel_image.clone());
   }
@@ -99,10 +102,12 @@ ImageData::ImageData(const cv::Mat& image) {
 
   const bool normalize = max_pixel_value > 1.0;
   InitializeFromImage(image, normalize, &image_size_, &channels_);
+  color_mode_ = channels_.size() == 3 ? COLOR_MODE_BGR : COLOR_MODE_NONE;
 }
 
 ImageData::ImageData(const cv::Mat& image, const bool normalize) {
   InitializeFromImage(image, normalize, &image_size_, &channels_);
+  color_mode_ = channels_.size() == 3 ? COLOR_MODE_BGR : COLOR_MODE_NONE;
 }
 
 ImageData::ImageData(
@@ -125,6 +130,7 @@ ImageData::ImageData(
         const_cast<void*>(reinterpret_cast<const void*>(channel_pixels)));
     channels_.push_back(channel_image.clone());  // copy data
   }
+  color_mode_ = channels_.size() == 3 ? COLOR_MODE_BGR : COLOR_MODE_NONE;
 }
 
 void ImageData::AddChannel(const cv::Mat& channel_image) {
@@ -157,6 +163,9 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
     converted_image.convertTo(converted_image, util::kOpenCvMatrixType);
   }
   channels_.push_back(converted_image);
+
+  // Update color mode based on the number of channels now.
+  color_mode_ = channels_.size() == 3 ? COLOR_MODE_BGR : COLOR_MODE_NONE;
 }
 
 void ImageData::ResizeImage(
@@ -219,6 +228,31 @@ int ImageData::GetNumPixels() const {
   return image_size_.width * image_size_.height;  // (0, 0) if image is empty.
 }
 
+void ImageData::ChangeColorSpace(
+    const ImageColorMode& new_color_mode, const bool luminance_dominant) {
+
+  // TODO:
+  //  (done) 1. Track what image type it currently is.
+  //  2. Convert from the current type to the new type.
+  //  3. GetVisualizationImage should always return the RGB version.
+  //  4. Allow image to be represented as a single channel (e.g. just the 
+  //     luminance channel or the grayscale version) for faster SR. It should
+  //     still maintain data for the other channels, but hidden from the solver.
+  //     In this mode, the HR image would be single-channel.
+  //  5. Add color interpolations into an HR image if under a single-channel
+  //     representation as above.
+  //
+  // Ultimately the code should look something like this:
+  //   lr_image_0 = util::LoadImage(...);
+  //   lr_image_0.ChangeColorSpace(YCrCb, true);  // true = represent as 1 band
+  //   /* repeat for all other lr images */
+  //   hr_estimate = lr_image_0;
+  //   hr_estimate.ResizeImage(2, cv::INTER_LINEAR);
+  //   hr_result = solver.Solve(hr_estimate);  // solver thinks only 1 channel
+  //   hr_result.ChangeColorSpace(RGB, true);  // true = interpolate color back
+  //   util::SaveImage(hr_result, ...);
+}
+
 cv::Mat ImageData::GetChannelImage(const int index) const {
   CHECK_GE(index, 0) << "Channel index must be at least 0.";
   CHECK_LT(index, channels_.size()) << "Channel index out of bounds.";
@@ -258,6 +292,7 @@ double* ImageData::GetMutableChannelData(const int channel_index) const {
 }
 
 cv::Mat ImageData::GetVisualizationImage() const {
+  // TODO: handle color conversions if not COLOR_MODE_RGB or COLOR_MODE_NONE.
   cv::Mat visualization_image;
   if (channels_.empty()) {
     LOG(WARNING) << "This image is empty. Returning empty visualization image.";

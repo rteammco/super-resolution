@@ -14,6 +14,16 @@
 
 namespace super_resolution {
 
+// The image color scheme. Only applicable to 3-channel color images. Single
+// channel or hyperspectral images cannot be color-converted and should be
+// identified as COLOR_MODE_NONE.
+enum ImageColorMode {
+  COLOR_MODE_NONE,
+  COLOR_MODE_BGR,  // OpenCV uses BGR instead of RGB by default.
+  COLOR_MODE_YCRCB,
+  COLOR_MODE_YCRCB_LUMINANCE_ONLY  // Only consider the Yc channel for SR.
+};
+
 // Contains information and statistics about an image. This can be useful for
 // evaluation, testing of new optimization methods, and debugging.
 struct ImageDataReport {
@@ -138,6 +148,12 @@ class ImageData {
   // has the same number of pixels. If the image is empty, 0 will be returned.
   int GetNumPixels() const;
 
+  // Converts a 3-channel image into whichever OpenCV color space is specified.
+  // This method can only be used on 3-channel color images. If the image does
+  // not have exactly three channels, this will cause an error (check fail).
+  void ChangeColorSpace(
+      const ImageColorMode& new_color_mode, const bool luminance_dominant);
+
   // Returns the channel image (OpenCV Mat) at the given index. Error if index
   // is out of bounds. Use GetNumChannels() to get a valid range. Note that the
   // number of channels may be 0 for an empty image.
@@ -189,6 +205,14 @@ class ImageData {
   // followed by all pixels in the second row, etc. The returned coordinates
   // are (x [col], y [row]).
   cv::Point GetPixelCoordinatesFromIndex(const int index) const;
+
+  // The color scheme of this image. If the image does not have exactly 3
+  // channels, it will be specified COLOR_MODE_NONE. By default, it is assumed
+  // that all images are represented in the BGR color space.
+  //
+  // Color mode is automatically updated in the constructors and AddChannel()
+  // method based on the number of channels.
+  ImageColorMode color_mode_;
 
   // The size of the image (width and height) is set when the first channel is
   // added. The size is guaranteed to be consistent between all channels in the
