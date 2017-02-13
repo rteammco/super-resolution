@@ -26,7 +26,7 @@ enum ImageColorMode {
 // Contains information and statistics about an image. This can be useful for
 // evaluation, testing of new optimization methods, and debugging.
 struct ImageDataReport {
-  // Standardl image stats.
+  // Standard image stats.
   cv::Size image_size;
   int num_channels = 0;
 
