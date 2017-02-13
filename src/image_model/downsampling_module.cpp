@@ -23,7 +23,7 @@ void DownsamplingModule::ApplyToImage(
 
   const double scale_factor = 1.0 / static_cast<double>(scale_);
   // Area interpolation method aliases images by dropping pixels.
-  image_data->ResizeImage(scale_factor, cv::INTER_NEAREST);
+  image_data->ResizeImage(scale_factor, INTERPOLATE_NEAREST);
 }
 
 void DownsamplingModule::ApplyTransposeToImage(

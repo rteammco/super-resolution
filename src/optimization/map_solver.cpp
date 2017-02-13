@@ -43,7 +43,7 @@ MapSolver::MapSolver(
   observations_.reserve(num_observations);
   for (const ImageData& low_res_image : low_res_images) {
     ImageData observation = low_res_image;  // copy
-    observation.ResizeImage(image_size_, cv::INTER_NEAREST);
+    observation.ResizeImage(image_size_, INTERPOLATE_NEAREST);
     observations_.push_back(observation);
   }
 }

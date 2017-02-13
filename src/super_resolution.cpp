@@ -135,7 +135,8 @@ int main(int argc, char** argv) {
 
   // Set initial estimate.
   ImageData initial_estimate = input_data.low_res_images[0];
-  initial_estimate.ResizeImage(FLAGS_upsampling_scale, cv::INTER_LINEAR);
+  initial_estimate.ResizeImage(
+      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
 
   // Set up the solver.
   // TODO: let the user choose the solver (once more solvers are supported).

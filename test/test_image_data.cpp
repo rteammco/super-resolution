@@ -316,10 +316,11 @@ TEST(ImageData, ResizeImage) {
          0.9, 0.0);
   // Try with cv::Size(2, 2).
   ImageData smaller_image_1 = image;  // copy
-  smaller_image_1.ResizeImage(cv::Size(2, 2), cv::INTER_NEAREST);
+  smaller_image_1.ResizeImage(
+      cv::Size(2, 2), super_resolution::INTERPOLATE_NEAREST);
   // Try with scale factor of 0.5.
   ImageData smaller_image_2 = image;
-  smaller_image_2.ResizeImage(0.5, cv::INTER_NEAREST);
+  smaller_image_2.ResizeImage(0.5, super_resolution::INTERPOLATE_NEAREST);
   // Check results.
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     EXPECT_TRUE(AreMatricesEqual(
@@ -343,10 +344,11 @@ TEST(ImageData, ResizeImage) {
          0.4, 0.4, 0.6, 0.6, 0.8, 0.8, 1.0, 1.0);
   // Try with cv::Size(8, 8).
   ImageData bigger_image_1 = image;
-  bigger_image_1.ResizeImage(cv::Size(8, 8), cv::INTER_NEAREST);
+  bigger_image_1.ResizeImage(
+      cv::Size(8, 8), super_resolution::INTERPOLATE_NEAREST);
   // Try with scale factor of 2.0.
   ImageData bigger_image_2 = image;
-  bigger_image_2.ResizeImage(2.0, cv::INTER_NEAREST);
+  bigger_image_2.ResizeImage(2.0, super_resolution::INTERPOLATE_NEAREST);
   // Check results.
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     EXPECT_TRUE(AreMatricesEqual(
@@ -356,6 +358,35 @@ TEST(ImageData, ResizeImage) {
         bigger_image_2.GetChannelImage(channel_index),
         expected_bigger_image));
   }
+
+  /* Verify that the additive interpolation implementation works. */
+
+  // Upsampling with additive interpolation should pad the image with zeros.
+  const cv::Mat expected_additive_upsampled = (cv::Mat_<double>(8, 8)
+      << 0.1, 0.0, 0.2, 0.0, 0.3, 0.0, 0.4, 0.0,
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.5, 0.0, 0.6, 0.0, 0.7, 0.0, 0.8, 0.0,
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.9, 0.0, 1.0, 0.0, 0.0, 0.0, 0.2, 0.0,
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.4, 0.0, 0.6, 0.0, 0.8, 0.0, 1.0, 0.0,
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  ImageData image_2(image_pixels, false);
+  image_2.ResizeImage(2, super_resolution::INTERPOLATE_ADDITIVE);
+  EXPECT_TRUE(AreMatricesEqual(
+      image_2.GetChannelImage(0),
+      expected_additive_upsampled));
+
+  // Downsampling with additive interpolation should add the values of the HR
+  // patch in the downsampled pixels.
+  const cv::Mat expected_additive_downsampled = (cv::Mat_<double>(2, 2)
+      << (0.1 + 0.2 + 0.5 + 0.6), (0.3 + 0.4 + 0.7 + 0.8),
+         (0.9 + 1.0 + 0.4 + 0.6), (0.0 + 0.2 + 0.8 + 1.0));
+  ImageData image_3(image_pixels, false);
+  image_3.ResizeImage(0.5, super_resolution::INTERPOLATE_ADDITIVE);
+  EXPECT_TRUE(AreMatricesEqual(
+      image_3.GetChannelImage(0),
+      expected_additive_downsampled));
 }
 
 // Tests the ChangeColorSpace method to see that the image is in fact being
@@ -402,7 +433,7 @@ TEST(ImageData, ChangeColorSpace) {
 
   // Verify that image operations also work on the converted image.
   ImageData image_resized = image;  // Copy to avoid corrupting the original.
-  image_resized.ResizeImage(2, cv::INTER_NEAREST);
+  image_resized.ResizeImage(2, super_resolution::INTERPOLATE_NEAREST);
   EXPECT_EQ(image_resized.GetImageSize(), cv::Size(8, 8));
   cv::Mat converted_image_resized;
   cv::resize(
@@ -460,7 +491,7 @@ TEST(ImageData, ChangeColorSpace) {
       image_2.GetChannelImage(0), converted_channels[0], kPixelErrorTolerance));
 
   // Verify that resizing the image will work as before for the one channel.
-  image_2.ResizeImage(2, cv::INTER_NEAREST);
+  image_2.ResizeImage(2, super_resolution::INTERPOLATE_NEAREST);
   EXPECT_EQ(image_2.GetImageSize(), cv::Size(8, 8));
   EXPECT_TRUE(AreMatricesEqual(
       image_2.GetChannelImage(0),
@@ -527,7 +558,7 @@ TEST(ImageData, InterpolateColorFrom) {
 
   // Resize the luminance image and converted "ground truth" image and make sure
   // that the first (luminance) channel matches.
-  luminance_image_2.ResizeImage(2, cv::INTER_LINEAR);
+  luminance_image_2.ResizeImage(2, super_resolution::INTERPOLATE_LINEAR);
   cv::Mat converted_image_resized;
   cv::resize(
       converted_image,

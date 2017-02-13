@@ -14,6 +14,50 @@
 
 namespace super_resolution {
 
+enum ResizeInterpolationMethod {
+  // Standard interpolation modes:
+  INTERPOLATE_LINEAR,  // Bilinear interpolation. Uses cv::INTER_LINEAR.
+  INTERPOLATE_CUBIC,   // Bicubic interpolation. Uses cv::INTER_CUBIC.
+
+  // Nearest neighbor (i.e. no interpolation). Uses cv::INTER_NEAREST.
+  //
+  // Upsampling: naively samples from the nearest neighbor in the LR image.
+  //
+  // | a | b |  2x =>  | a | a | b | b |
+  // | c | d |         | a | a | b | b |
+  //                   | c | c | d | d |
+  //                   | c | c | d | d |
+  //
+  // Downsampling: chooses the top-left pixel in each patch of the HR image to
+  // map to the LR grid. This method causes aliasing.
+  //
+  // | a | b | c | d |  2x =>  | a | c |
+  // | e | f | g | h |         | i | k |
+  // | i | j | k | l |
+  // | m | n | o | p |
+  INTERPOLATE_NEAREST,
+
+  // When downsampling, additive interpolation sums all the pixels that overlap
+  // the lower-resolution pixel. For upsampling, pads with zeros.
+  //
+  // Downsampling: each pixel in the LR image will be the sum of pixels in the
+  // HR image patch that maps to it.
+  //
+  // | a | b | c | d |  2x =>  | a + b + e + f | c + d + g + h |
+  // | e | f | g | h |         | i + j + m + n | k + l + o + p |
+  // | i | j | k | l |
+  // | m | n | o | p |
+  //
+  // Upsampling: just pads zeros around each element. The downsampling of an
+  // upsampled image recovers the LR image exactly.
+  //
+  // | a | b |  2x =>  | a | 0 | b | 0 |
+  // | c | d |         | 0 | 0 | 0 | 0 |
+  //                   | c | 0 | d | 0 |
+  //                   | 0 | 0 | 0 | 0 |
+  INTERPOLATE_ADDITIVE
+};
+
 // The image color scheme. Only applicable to 3-channel color images. Single
 // channel or hyperspectral images cannot be color-converted and should be
 // identified as COLOR_MODE_NONE.
@@ -103,14 +147,16 @@ class ImageData {
   // for super-resolution downsampling to create the aliasing effect.
   void ResizeImage(
       const cv::Size& new_size,
-      const int interpolation_method = cv::INTER_NEAREST);
+      const ResizeInterpolationMethod interpolation_method
+          = INTERPOLATE_NEAREST);
 
   // Resizes this image by the given scale factor, in the same manner as
   // ResizeImage(size). The new dimensions will be (width * scale_factor,
   // height * scale_factor). The given scale factor must be larger than 0.
   void ResizeImage(
       const double scale_factor,
-      const int interpolation_method = cv::INTER_NEAREST);
+      const ResizeInterpolationMethod interpolation_method
+          = INTERPOLATE_NEAREST);
 
   // Resizes the image, does not do any interpolation. Instead, the pixels are
   // simply mapped to the high-res image, and the remaining pixels are padded

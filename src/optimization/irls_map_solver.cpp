@@ -108,7 +108,7 @@ double IrlsMapSolver::ComputeDataTerm(
   const cv::Size image_size = GetImageSize();
   ImageData degraded_hr_image(estimated_image_data, image_size, num_channels);
   image_model_.ApplyToImage(&degraded_hr_image, image_index);
-  degraded_hr_image.ResizeImage(image_size, cv::INTER_NEAREST);
+  degraded_hr_image.ResizeImage(image_size, INTERPOLATE_NEAREST);
 
   // Compute the individual residuals by comparing pixel values. Sum them up
   // for the final residual sum.
@@ -138,7 +138,7 @@ double IrlsMapSolver::ComputeDataTerm(
     const int scale = image_model_.GetDownsamplingScale();
     residual_image.ResizeImage(
         cv::Size(image_size.width / scale, image_size.height / scale),
-        cv::INTER_NEAREST);
+        INTERPOLATE_NEAREST);
     image_model_.ApplyTransposeToImage(&residual_image, image_index);
 
     // Add to the gradient.

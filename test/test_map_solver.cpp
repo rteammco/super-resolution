@@ -217,7 +217,7 @@ TEST(MapSolver, RealIconDataTest) {
   // Set the initial estimate as the upsampling of the referece image, in this
   // case lr_image_1, since it has no motion shift.
   ImageData initial_estimate = low_res_images[0];
-  initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
+  initial_estimate.ResizeImage(2, super_resolution::INTERPOLATE_LINEAR);
 
   // Create the solver and attempt to solve.
   super_resolution::IrlsMapSolver solver(
@@ -322,7 +322,7 @@ TEST(MapSolver, RealBigImageTest) {
   // Set the initial estimate as the upsampling of the referece image, in this
   // case lr_image_1, since it has no motion shift.
   ImageData initial_estimate = low_res_images[0];
-  initial_estimate.ResizeImage(2, cv::INTER_LINEAR);  // bilinear 2x upsampling
+  initial_estimate.ResizeImage(2, super_resolution::INTERPOLATE_LINEAR);
 
   // Create the solver and attempt to solve.
   super_resolution::IrlsMapSolver solver(
@@ -404,7 +404,8 @@ TEST(MapSolver, RegularizationTest) {
   // Set the initial estimate as the upsampling of the referece image, in this
   // case low_res_images[0], since it has no motion shift.
   ImageData initial_estimate = low_res_images[0];
-  initial_estimate.ResizeImage(downsampling_scale, cv::INTER_LINEAR);
+  initial_estimate.ResizeImage(
+      downsampling_scale, super_resolution::INTERPOLATE_LINEAR);
 
   // Create the solver and attempt to solve with TV regularization.
   super_resolution::IrlsMapSolver solver_with_tv_regularization(

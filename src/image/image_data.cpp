@@ -43,6 +43,66 @@ void InitializeFromImage(
   }
 }
 
+// Resize each of the given image channels using additive interpolation (see
+// the description of INTERPOLATE_ADDITIVE in image_data.h). If upsample is
+// true, the scale will be used as an upsampling scale, otherwise it will be
+// the downsampling scale. The new image size will be returned.
+cv::Size ResizeAdditiveInterpolation(
+    const cv::Size& new_size, std::vector<cv::Mat>* channels) {
+
+  const int num_image_channels = channels->size();
+  CHECK_GT(num_image_channels, 0)
+      << "Cannot upsample an image with no channels.";
+
+  const cv::Size original_size = channels->at(0).size();
+  const bool upsample =
+      original_size.width <= new_size.width &&
+      original_size.height <= new_size.height;
+  const bool downsample =
+      original_size.width >= new_size.width &&
+      original_size.height >= new_size.height;
+  CHECK(upsample || downsample)
+      << "Axis-independent up/downsampling is not supported.";
+
+  // TODO: do the more efficient implementation? Also clean up, it's messy
+  // repetitive code.
+  if (upsample) {
+    const int y_scale = new_size.height / original_size.height;
+    const int x_scale = new_size.width / original_size.width;
+    for (int i = 0; i < num_image_channels; ++i) {
+      const cv::Mat channel_image = channels->at(i);
+      cv::Mat resized_image = cv::Mat::zeros(new_size, channel_image.type());
+      for (int row = 0; row < original_size.height; ++row) {
+        for (int col = 0; col < original_size.width; ++col) {
+          const int new_row = row * y_scale;
+          const int new_col = col * x_scale;
+          resized_image.at<double>(new_row, new_col) =
+              channel_image.at<double>(row, col);
+        }
+      }
+      (*channels)[i] = resized_image;
+    }
+    return new_size;
+  } else {
+    const int y_scale = original_size.height / new_size.height;
+    const int x_scale = original_size.width / new_size.width;
+    for (int i = 0; i < num_image_channels; ++i) {
+      const cv::Mat channel_image = channels->at(i);
+      cv::Mat resized_image = cv::Mat::zeros(new_size, channel_image.type());
+      for (int row = 0; row < original_size.height; ++row) {
+        for (int col = 0; col < original_size.width; ++col) {
+          const int new_row = row / y_scale;
+          const int new_col = col / x_scale;
+          resized_image.at<double>(new_row, new_col) +=
+              channel_image.at<double>(row, col);
+        }
+      }
+      (*channels)[i] = resized_image;
+    }
+    return new_size;
+  }
+}
+
 // Given two vectors, each with exactly 3 cv::Mat channels, interpolates the
 // color components (channel 2 and 3) of the input into the output channels.
 // The size of the channels will be made to match the size of the first (and
@@ -205,12 +265,32 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
 }
 
 void ImageData::ResizeImage(
-    const cv::Size& new_size, const int interpolation_method) {
+    const cv::Size& new_size,
+    const ResizeInterpolationMethod interpolation_method) {
 
   // Undefined behavior if image is empty.
   CHECK(!channels_.empty()) << "Cannot resize an empty image.";
   CHECK_GT(new_size.width, 0) << "Images must have a positive width.";
   CHECK_GT(new_size.height, 0) << "Images must have a positive height.";
+
+  int opencv_interpolation_method = 0;
+  switch (interpolation_method) {
+    case INTERPOLATE_ADDITIVE:
+      // Custom implementation (not in OpenCV).
+      image_size_ = ResizeAdditiveInterpolation(new_size, &channels_);
+      return;
+      break;
+    case INTERPOLATE_LINEAR:
+      opencv_interpolation_method = cv::INTER_LINEAR;
+      break;
+    case INTERPOLATE_CUBIC:
+      opencv_interpolation_method = cv::INTER_CUBIC;
+      break;
+    case INTERPOLATE_NEAREST:
+    default:
+      opencv_interpolation_method = cv::INTER_NEAREST;
+      break;
+  }
 
   const int num_image_channels = GetNumChannels();
   for (int i = 0; i < num_image_channels; ++i) {
@@ -221,14 +301,15 @@ void ImageData::ResizeImage(
         new_size,       // Desired image size.
         0,              // Set x, y scale to 0 to use the given Size instead.
         0,
-        interpolation_method);
+        opencv_interpolation_method);
     channels_[i] = scaled_image;
   }
   image_size_ = new_size;
 }
 
 void ImageData::ResizeImage(
-    const double scale_factor, const int interpolation_method) {
+    const double scale_factor,
+    const ResizeInterpolationMethod interpolation_method) {
 
   // Undefined behavior if image is empty.
   CHECK(!channels_.empty()) << "Cannot resize an empty image.";
@@ -240,24 +321,9 @@ void ImageData::ResizeImage(
 }
 
 void ImageData::UpsampleImage(const int scale_factor) {
-  const cv::Size new_size = cv::Size(
+  const cv::Size new_size(
       image_size_.width * scale_factor, image_size_.height * scale_factor);
-  const int num_image_channels = GetNumChannels();
-  for (int i = 0; i < num_image_channels; ++i) {
-    const cv::Mat channel_image = channels_[i];
-    // TODO: do the more efficient implementation here.
-    cv::Mat resized_image = cv::Mat::zeros(new_size, channel_image.type());
-    for (int row = 0; row < image_size_.height; ++row) {
-      for (int col = 0; col < image_size_.width; ++col) {
-        const int new_row = row * scale_factor;
-        const int new_col = col * scale_factor;
-        resized_image.at<double>(new_row, new_col) =
-            channel_image.at<double>(row, col);
-      }
-    }
-    channels_[i] = resized_image;
-  }
-  image_size_ = new_size;
+  image_size_ = ResizeAdditiveInterpolation(new_size, &channels_);
 }
 
 int ImageData::GetNumChannels() const {
