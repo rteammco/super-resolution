@@ -23,8 +23,8 @@ TEST(HyperspectralDataLoader, DataLoaderTest) {
   EXPECT_EQ(hs_image.GetNumPixels(), num_pixels);
   EXPECT_EQ(hs_image.GetNumChannels(), 5);
 
-  for (int b = 0; b < 5; ++b) {
-    cv::imshow("Test Window", hs_image.GetChannelImage(b));
-    cv::waitKey(0);
-  }
+//  for (int b = 0; b < 5; ++b) {
+//    cv::imshow("Test Window", hs_image.GetChannelImage(b));
+//    cv::waitKey(0);
+//  }
 }
