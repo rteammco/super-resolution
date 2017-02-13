@@ -10,14 +10,15 @@ configuration = {
   'blur_sigma': 0.5,
   'noise_sigma': 5.0,
 #  'hr_image_path': '../test_data/fb.png',
-  'hr_image_path': '../test_data/dallas_qtr.jpg',
+  'hr_image_path': '../test_data/dallas_half.jpg',
   'lr_image_dir': '../test_data/OUT',
   'number_of_frames': 4,
   'motion_sequence_path': '../test_data/test_motion_sequence_9.txt',
   # Solver-only options:
+  'interpolate_color': True,
   'regularizer': 'tv',
-  'regularization_parameter': 0.01,
-  'solver_iterations': 0,  # = 0 infinite
+  'regularization_parameter': 0.001,
+  'solver_iterations': 50,  # = 0 infinite
   'use_numerical_differentiation': False,
   'display_mode': 'compare',
   'generate_lr_images': True,  # for SR binary testing
@@ -62,6 +63,8 @@ def run_super_resolution(binary_path, config):
     command += ' --evaluator={}'.format(config['evaluator'])
   else:
     command += ' --data_path={}'.format(config['lr_image_dir'])
+  if config['interpolate_color']:
+    command += ' --interpolate_color'
   if config['verbose_solver']:
      command += ' --verbose'
   if config['use_numerical_differentiation']:

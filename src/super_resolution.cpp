@@ -54,6 +54,8 @@ DEFINE_string(motion_sequence_path, "",
 // Solver parameters:
 // TODO: add support for these regularizers.
 // TODO: add support for multiple regularizers simultaneously.
+DEFINE_bool(interpolate_color, false,
+    "Run SR only on the luminance channel and interpolate colors later.");
 DEFINE_string(regularizer, "tv",
     "The regularizer to use ('tv', '3dtv', 'btv').");
 DEFINE_double(regularization_parameter, 0.01,
@@ -115,10 +117,23 @@ int main(int argc, char** argv) {
     input_data.low_res_images =
         super_resolution::util::LoadImages(FLAGS_data_path);
   }
-
-  // Set initial estimate.
   CHECK_GT(input_data.low_res_images.size(), 0)
       << "At least one low-resolution image is required for super-resolution.";
+
+  // If the interpolate_color flag is set, only run super-resolution on the
+  // luminance channel and interpolate color information after. This will only
+  // work on color images and will not work for grayscale or hyperspectral
+  // inputs.
+  if (FLAGS_interpolate_color) {
+    LOG(INFO) << "Super-resolving only the luminance channel.";
+    for (int i = 0; i < input_data.low_res_images.size(); ++i) {
+      // TODO: support for more color spaces.
+      input_data.low_res_images[i].ChangeColorSpace(
+          super_resolution::COLOR_MODE_YCRCB, true);
+    }
+  }
+
+  // Set initial estimate.
   ImageData initial_estimate = input_data.low_res_images[0];
   initial_estimate.ResizeImage(FLAGS_upsampling_scale, cv::INTER_LINEAR);
 
@@ -169,8 +184,16 @@ int main(int argc, char** argv) {
 
   std::cout << "Super-resolving from "
             << input_data.low_res_images.size() << " images..." << std::endl;
-  const ImageData result = solver.Solve(initial_estimate);
+  ImageData result = solver.Solve(initial_estimate);
   std::cout << "Done!" << std::endl;
+
+  // If SR was only done on the luminance channel, interpolate the colors now
+  // and change the color space back to BGR.
+  if (FLAGS_interpolate_color) {
+    result.InterpolateColorFrom(initial_estimate);
+    result.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
+    initial_estimate.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
+  }
 
   // If an evaluation criteria is passed in and the high-resolution image is
   // available, display the evaluation results.
