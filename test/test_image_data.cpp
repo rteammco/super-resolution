@@ -398,6 +398,27 @@ TEST(ImageData, ChangeColorSpace) {
         kPixelErrorTolerance));
   }
 
+  // Verify that image operations also work on the converted image.
+  ImageData image_resized = image;  // Copy to avoid corrupting the original.
+  image_resized.ResizeImage(2, cv::INTER_NEAREST);
+  EXPECT_EQ(image_resized.GetImageSize(), cv::Size(8, 8));
+  cv::Mat converted_image_resized;
+  cv::resize(
+      converted_image,
+      converted_image_resized,
+      cv::Size(8, 8),
+      0,  // (0, 0) for X, Y scale so it uses the given size instead.
+      0,
+      cv::INTER_NEAREST);
+  std::vector<cv::Mat> converted_channels_resized;
+  cv::split(converted_image_resized, converted_channels_resized);
+  for (int channel_index = 0; channel_index < 3; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        image_resized.GetChannelImage(channel_index),
+        converted_channels_resized[channel_index],
+        kPixelErrorTolerance));
+  }
+
   // Now verify that the conversion back also works.
   image.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
   EXPECT_EQ(image.GetNumChannels(), 3);
@@ -408,15 +429,60 @@ TEST(ImageData, ChangeColorSpace) {
         kPixelErrorTolerance));
   }
 
-  // TODO: check that operations (e.g. resize) on image work correctly.
+  // Also verify that the resized image is converted back to resized BGR.
+  image_resized.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
+  cv::Mat input_image_resized;
+  cv::resize(
+      input_image,
+      input_image_resized,
+      cv::Size(8, 8),
+      0,  // (0, 0) for X, Y scale so it uses the given size instead.
+      0,
+      cv::INTER_NEAREST);
+  std::vector<cv::Mat> input_image_channels_resized;
+  cv::split(input_image_resized, input_image_channels_resized);
+  for (int channel_index = 0; channel_index < 3; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        image_resized.GetChannelImage(channel_index),
+        input_image_channels_resized[channel_index],
+        kPixelErrorTolerance));
+  }
 
-  // Check that the image can be converted with luminance only. Create a new
-  // test image to avoid snowballing numerical errors.
+  /* Now verify that the image works correctly in lumiance-only mode. */
+
+  // Create a new test image to avoid snowballing numerical errors.
   ImageData image_2(input_image, false);
   image_2.ChangeColorSpace(super_resolution::COLOR_MODE_YCRCB, true);
   EXPECT_EQ(image_2.GetNumChannels(), 1);
+  EXPECT_TRUE(AreMatricesEqual(
+      image_2.GetChannelImage(0), converted_channels[0], kPixelErrorTolerance));
 
-  // TODO: check operations on image work correctly.
+  // Verify that resizing the image will work as before for the one channel.
+  image_2.ResizeImage(2, cv::INTER_NEAREST);
+  EXPECT_EQ(image_2.GetImageSize(), cv::Size(8, 8));
+  EXPECT_TRUE(AreMatricesEqual(
+      image_2.GetChannelImage(0),
+      converted_channels_resized[0],
+      kPixelErrorTolerance));
+
+  // Verify that the visualization image is still 3-channel BGR. Since we
+  // resized the image, it should automatically interpolate the color channels
+  // with linear interpolation upsampling.
+  cv::Mat visualization_image_2 = image_2.GetVisualizationImage();
+  visualization_image_2.convertTo(
+      visualization_image_2, input_image.type(), 1.0 / 255.0);
+  std::vector<cv::Mat> visualization_channels_2;
+  cv::split(visualization_image_2, visualization_channels_2);
+  EXPECT_EQ(visualization_channels_2.size(), 3);
+  for (int channel_index = 0; channel_index < 3; ++channel_index) {
+    // Allow a much more forgiving error tolerance since the image was heavily
+    // manipulated (converted => resized => converted back), and the colors
+    // where interpolated with linear interpolation.
+    EXPECT_TRUE(AreMatricesEqual(
+        visualization_channels_2[channel_index],
+        input_image_channels_resized[channel_index],
+        0.15));
+  }
 }
 
 // Tests that the report for analyzing images is correctly generated.

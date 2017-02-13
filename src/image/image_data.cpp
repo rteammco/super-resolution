@@ -43,6 +43,40 @@ void InitializeFromImage(
   }
 }
 
+// Given two vectors, each with exactly 3 cv::Mat channels, interpolates the
+// color components (channel 2 and 3) of the input into the output channels.
+// The size of the channels will be made to match the size of the first (and
+// unchanged) output channel (which is typically the luminance channel).
+//
+// This is used to interpolate the color components of the input into the
+// generally higher-resolution structure-dominant output, such as when using a
+// luminance-dominant color space such as YCrCb.
+void InterpolateColor(
+    const std::vector<cv::Mat>& input_channels,
+    std::vector<cv::Mat>* output_channels) {
+
+  CHECK_EQ(input_channels.size(), 3) << "Invalid number of input channels.";
+  CHECK_EQ(output_channels->size(), 3) << "Invalid number of output channels.";
+
+  const cv::Size target_size = output_channels->at(0).size();
+  for (int i = 1; i < 3; ++i) {
+    cv::Mat color_channel;
+    // Only resize if the sizes are different.
+    if (input_channels[i].size() != target_size) {
+      cv::resize(
+          input_channels[i],  // Source image.
+          color_channel,      // Dest image.
+          target_size,        // Desired image size.
+          0,  // Set x, y scale to 0 to use the given Size instead.
+          0,
+          cv::INTER_LINEAR);
+    } else {
+      color_channel = input_channels[i].clone();
+    }
+    (*output_channels)[i] = color_channel;
+  }
+}
+
 // ImageDataReport Print() method.
 void ImageDataReport::Print() const {
   const int num_pixels = image_size.width * image_size.height * num_channels;
@@ -269,9 +303,11 @@ void ImageData::ChangeColorSpace(
     return;
   }
 
-  // TODO: if YCrCb => BGR and luminance_channels_only_ is enabled, interpolate
-  // color first to the appropriate size.
-  // TODO: verify that this is actually the correct way of doing this.
+  // If going to BGR and luminance_channels_only_ is enabled, interpolate color
+  // channels first to the appropriate size.
+  if (new_color_mode == COLOR_MODE_BGR && luminance_channel_only_) {
+    InterpolateColor(channels_, &channels_);
+  }
 
   // Perform the conversion. Conversion is only supported in CV_32F mode, so we
   // need to convert to CV_32F and then back again.
@@ -295,13 +331,13 @@ void ImageData::ChangeColorSpace(
   //  1. Track what image type it currently is.
   //  2. Convert from the current type to the new type.
   //  3. GetVisualizationImage should always return the RGB version.
-  // TODO:
   //  4. Allow image to be represented as a single channel (e.g. just the
   //     luminance channel or the grayscale version) for faster SR. It should
   //     still maintain data for the other channels, but hidden from the solver.
   //     In this mode, the HR image would be single-channel.
   //  5. Add color interpolations into an HR image if under a single-channel
   //     representation as above.
+  // TODO:
   //
   // Ultimately the code should look something like this:
   //   lr_image_0 = util::LoadImage(...);
@@ -310,8 +346,20 @@ void ImageData::ChangeColorSpace(
   //   hr_estimate = lr_image_0;
   //   hr_estimate.ResizeImage(2, cv::INTER_LINEAR);
   //   hr_result = solver.Solve(hr_estimate);  // solver thinks only 1 channel
+  //   hr_result.InterpolateColor(hr_estimate);  // hr_result is 1 channel.
   //   hr_result.ChangeColorSpace(RGB, true);  // true = interpolate color back
   //   util::SaveImage(hr_result, ...);
+}
+
+void ImageData::InterpolateColorFrom(const ImageData& color_image) {
+  CHECK_EQ(GetNumChannels(), 1)  // If other 2 channels are hidden, ignore them.
+      << "Color can only be interpolated for single-channel images.";
+  CHECK_EQ(color_image.channels_.size(), 3)  // Consider hidden channels.
+      << "The given image must have color information for interpolation.";
+
+  channels_.resize(3);
+  InterpolateColor(color_image.channels_, &channels_);
+  color_mode_ = color_image.color_mode_;
 }
 
 cv::Mat ImageData::GetChannelImage(const int index) const {

@@ -162,6 +162,21 @@ class ImageData {
       const ImageColorMode& new_color_mode,
       const bool luminance_only = false);
 
+  // This method will interpolate the color information from the given image
+  // into this monochrome image. Typically, this image would be higher
+  // resolution than the other given image so that structure is preserved and
+  // color is interpolated from the lower-resolution image. Only applicable to
+  // single-channel images, otherwise this will cause an error.
+  //
+  // This will inherit the color space from the given color image. For
+  // luminance dominant color spaces, such as YCrCb, the single channel in this
+  // ImageData will be treated as the luminance channel, and the other two
+  // channels from the color_image will be interpolated. The user should ensure
+  // the color spaces match.
+  //
+  // TODO: currently only works for YCrCb images.
+  void InterpolateColorFrom(const ImageData& color_image);
+
   // Returns the channel image (OpenCV Mat) at the given index. Error if index
   // is out of bounds. Use GetNumChannels() to get a valid range. Note that the
   // number of channels may be 0 for an empty image.
