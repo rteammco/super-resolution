@@ -642,10 +642,9 @@ TEST(MapSolver, IrlsComputeRegularization) {
 
   /* Run TEST 1 */
 
-  const auto& returned_residual_sum_and_gradient_1 =
+  const double returned_residual_sum_1 =
       irls_map_solver.ComputeRegularization(image_data);
-  EXPECT_EQ(
-      returned_residual_sum_and_gradient_1.first, expected_residual_sum_1);
+  EXPECT_EQ(returned_residual_sum_1, expected_residual_sum_1);
   // TODO: also check the gradient.
 
   /* Run TEST 2 */
@@ -655,9 +654,8 @@ TEST(MapSolver, IrlsComputeRegularization) {
 
   /* Run TEST 3 */
 
-  const auto& returned_residual_sum_and_gradient_2 =
+  const auto& returned_residual_sum_2 =
       irls_map_solver.ComputeRegularization(image_data);
-  EXPECT_EQ(
-      returned_residual_sum_and_gradient_2.first, expected_residual_sum_2);
+  EXPECT_EQ(returned_residual_sum_2, expected_residual_sum_2);
   // TODO: also check the gradient.
 }

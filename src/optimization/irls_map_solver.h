@@ -24,15 +24,18 @@ class IrlsMapSolver : public MapSolver {
   virtual ImageData Solve(const ImageData& initial_estimate);
 
   // Computes the data fidelity term using analytical (manually computed)
-  // differentiation. Returns a pair consisting of the sum of squared errors
-  // (i.e. the residual) and the gradient vector values.
-  std::pair<double, std::vector<double>> ComputeDataTerm(
+  // differentiation. Returns the sum of squared errors (i.e. the residual).
+  // The gradient is added to the given gradient array. If the gradient is
+  // null, it will not be computed.
+  double ComputeDataTerm(
       const int image_index,
-      const double* estimated_image_data) const;
+      const double* estimated_image_data,
+      double* gradient = nullptr) const;
 
-  // Computes the regularization term using automatic differentiation.
-  std::pair<double, std::vector<double>> ComputeRegularization(
-    const double* estimated_image_data) const;
+  // Computes the regularization term and its gradient. If the gradient is
+  // null, it will not be computed.
+  double ComputeRegularization(
+    const double* estimated_image_data, double* gradient = nullptr) const;
 
   // Updates the IRLS weights given the current data estimate.
   void UpdateIrlsWeights(const double* estimated_image_data);
