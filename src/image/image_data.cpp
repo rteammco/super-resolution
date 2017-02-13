@@ -320,12 +320,6 @@ void ImageData::ResizeImage(
   ResizeImage(new_size, interpolation_method);
 }
 
-void ImageData::UpsampleImage(const int scale_factor) {
-  const cv::Size new_size(
-      image_size_.width * scale_factor, image_size_.height * scale_factor);
-  image_size_ = ResizeAdditiveInterpolation(new_size, &channels_);
-}
-
 int ImageData::GetNumChannels() const {
   if (color_mode_ == COLOR_MODE_YCRCB && luminance_channel_only_) {
     return 1;

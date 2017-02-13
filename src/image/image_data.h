@@ -158,25 +158,6 @@ class ImageData {
       const ResizeInterpolationMethod interpolation_method
           = INTERPOLATE_NEAREST);
 
-  // Resizes the image, does not do any interpolation. Instead, the pixels are
-  // simply mapped to the high-res image, and the remaining pixels are padded
-  // with zero. This is used to mimic the behavior of a transposed downsampling
-  // matrix. For example, a 2x upsampling of the following image:
-  //
-  //   | 1 | 2 | 3 |
-  //   | 4 | 5 | 6 |
-  //
-  // will look like this:
-  //
-  //   | 1 | 0 | 2 | 0 | 3 | 0 |
-  //   | 0 | 0 | 0 | 0 | 0 | 0 |
-  //   | 4 | 0 | 5 | 0 | 6 | 0 |
-  //   | 0 | 0 | 0 | 0 | 0 | 0 |
-  //
-  // TODO: scale_factor may eventually be non-integer, but that is more
-  // complicated.
-  void UpsampleImage(const int scale_factor);
-
   // Returns the total number of channels (bands) in this image. Note that this
   // value may be 0.
   //

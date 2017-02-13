@@ -34,8 +34,8 @@ void DownsamplingModule::ApplyTransposeToImage(
   // The transpose of downsampling is trivial upsampling to size * scale_. We
   // will use non-interpolating upsampling, so the pixels will be mapped to the
   // higher resolution with zeros padded between them. This is defined in
-  // ImageData::UpsampleImage().
-  image_data->UpsampleImage(scale_);
+  // ImageData::ResizeImage() using additive interpolation.
+  image_data->ResizeImage(scale_, INTERPOLATE_ADDITIVE);
 }
 
 cv::Mat DownsamplingModule::GetOperatorMatrix(
