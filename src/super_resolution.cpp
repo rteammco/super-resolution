@@ -155,6 +155,18 @@ int main(int argc, char** argv) {
               << FLAGS_regularization_parameter;
   }
 
+  // TODO: add optional flag to do luminance-dominant SR with color
+  // interpolation.  That should look something like this:
+  //   lr_image_0 = util::LoadImage(...);
+  //   lr_image_0.ChangeColorSpace(YCrCb, true);  // true = represent as 1 band
+  //   /* repeat for all other lr images */
+  //   hr_estimate = lr_image_0;
+  //   hr_estimate.ResizeImage(2, cv::INTER_LINEAR);
+  //   hr_result = solver.Solve(hr_estimate);  // solver thinks only 1 channel
+  //   hr_result.InterpolateColorFrom(hr_estimate);  // hr_result is 1 channel.
+  //   hr_result.ChangeColorSpace(RGB, true);  // true = interpolate color back
+  //   util::SaveImage(hr_result, ...);
+
   std::cout << "Super-resolving from "
             << input_data.low_res_images.size() << " images..." << std::endl;
   const ImageData result = solver.Solve(initial_estimate);

@@ -326,29 +326,6 @@ void ImageData::ChangeColorSpace(
   cv::split(converted_image, channels_);
 
   color_mode_ = new_color_mode;
-
-  // DONE:
-  //  1. Track what image type it currently is.
-  //  2. Convert from the current type to the new type.
-  //  3. GetVisualizationImage should always return the RGB version.
-  //  4. Allow image to be represented as a single channel (e.g. just the
-  //     luminance channel or the grayscale version) for faster SR. It should
-  //     still maintain data for the other channels, but hidden from the solver.
-  //     In this mode, the HR image would be single-channel.
-  //  5. Add color interpolations into an HR image if under a single-channel
-  //     representation as above.
-  // TODO:
-  //
-  // Ultimately the code should look something like this:
-  //   lr_image_0 = util::LoadImage(...);
-  //   lr_image_0.ChangeColorSpace(YCrCb, true);  // true = represent as 1 band
-  //   /* repeat for all other lr images */
-  //   hr_estimate = lr_image_0;
-  //   hr_estimate.ResizeImage(2, cv::INTER_LINEAR);
-  //   hr_result = solver.Solve(hr_estimate);  // solver thinks only 1 channel
-  //   hr_result.InterpolateColor(hr_estimate);  // hr_result is 1 channel.
-  //   hr_result.ChangeColorSpace(RGB, true);  // true = interpolate color back
-  //   util::SaveImage(hr_result, ...);
 }
 
 void ImageData::InterpolateColorFrom(const ImageData& color_image) {

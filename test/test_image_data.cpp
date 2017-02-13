@@ -13,6 +13,25 @@ using super_resolution::test::AreMatricesEqual;
 
 constexpr double kPixelErrorTolerance = 1.0 / 255.0;
 
+// Test color channels.
+static const cv::Mat kTestChannelB = (cv::Mat_<double>(4, 4)
+    << 0.1,  0.2,  0.3,  0.4,
+       0.15, 0.25, 0.35, 0.45,
+       0.55, 0.75, 0.85, 0.95,
+       0.6,  0.65, 0.7,  0.75);
+static const cv::Mat kTestChannelG = (cv::Mat_<double>(4, 4)
+    << 0.2,  0.3,  0.4, 0.45,
+       0.1,  0.2,  0.3, 0.4,
+       0.75, 0.65, 1.0, 1.0,
+       0.3,  0.35, 0.4, 0.45);
+static const cv::Mat kTestChannelR = (cv::Mat_<double>(4, 4)
+    << 0.0,  0.05, 0.1,  0.1,
+       0.0,  0.0,  0.05, 0.1,
+       0.25, 0.1,  0.2,  0.2,
+       0.0,  0.05, 0.1,  0.15);
+static const std::vector<cv::Mat> kTestColorChannels =
+    {kTestChannelB, kTestChannelG, kTestChannelR};
+
 // This test verifies that channels are added correctly to ImageData and pixels
 // and channels in the image can be accessed and manipulated correctly.
 TEST(ImageData, AddAndAccessImageData) {
@@ -342,26 +361,9 @@ TEST(ImageData, ResizeImage) {
 // Tests the ChangeColorSpace method to see that the image is in fact being
 // converted correctly.
 TEST(ImageData, ChangeColorSpace) {
-  // Build the input BGR image.
-  const cv::Mat channel_b = (cv::Mat_<double>(4, 4)
-      << 0.1,  0.2,  0.3,  0.4,
-         0.15, 0.25, 0.35, 0.45,
-         0.55, 0.75, 0.85, 0.95,
-         0.6,  0.65, 0.7,  0.75);
-  const cv::Mat channel_g = (cv::Mat_<double>(4, 4)
-      << 0.2,  0.3,  0.4, 0.45,
-         0.1,  0.2,  0.3, 0.4,
-         0.75, 0.65, 1.0, 1.0,
-         0.3,  0.35, 0.4, 0.45);
-  const cv::Mat channel_r = (cv::Mat_<double>(4, 4)
-      << 0.0,  0.05, 0.1,  0.1,
-         0.0,  0.0,  0.05, 0.1,
-         0.25, 0.1,  0.2,  0.2,
-         0.0,  0.05, 0.1,  0.15);
-  const std::vector<cv::Mat> input_image_channels =
-      {channel_b, channel_g, channel_r};
+  // Build the input BGR image (4 x 4 x 3).
   cv::Mat input_image;
-  cv::merge(input_image_channels, input_image);
+  cv::merge(kTestColorChannels, input_image);
 
   ImageData image(input_image, false);  // Do not normalize. Copies cv::Mat.
   EXPECT_EQ(image.GetNumChannels(), 3);
@@ -394,7 +396,7 @@ TEST(ImageData, ChangeColorSpace) {
   for (int channel_index = 0; channel_index < 3; ++channel_index) {
     EXPECT_TRUE(AreMatricesEqual(
         visualization_channels[channel_index],
-        input_image_channels[channel_index],
+        kTestColorChannels[channel_index],
         kPixelErrorTolerance));
   }
 
@@ -425,7 +427,7 @@ TEST(ImageData, ChangeColorSpace) {
   for (int channel_index = 0; channel_index < 3; ++channel_index) {
     EXPECT_TRUE(AreMatricesEqual(
         image.GetChannelImage(channel_index),
-        input_image_channels[channel_index],
+        kTestColorChannels[channel_index],
         kPixelErrorTolerance));
   }
 
@@ -482,6 +484,77 @@ TEST(ImageData, ChangeColorSpace) {
         visualization_channels_2[channel_index],
         input_image_channels_resized[channel_index],
         0.15));
+  }
+}
+
+TEST(ImageData, InterpolateColorFrom) {
+  // Build the input BGR image (4 x 4 x 3).
+  cv::Mat input_image;
+  cv::merge(kTestColorChannels, input_image);
+
+  // Get the expected conversion to the YCrCb color space.
+  cv::Mat converted_image;
+  input_image.convertTo(converted_image, CV_32F);
+  cv::cvtColor(converted_image, converted_image, CV_BGR2YCrCb);
+  converted_image.convertTo(converted_image, input_image.type());
+  std::vector<cv::Mat> converted_channels;
+  cv::split(converted_image, converted_channels);
+
+  // Create the luminance-only monochrome image. Do not normalize. Copies
+  // cv::Mat.
+  ImageData luminance_image(converted_channels[0], false);
+  EXPECT_EQ(luminance_image.GetNumChannels(), 1);
+
+  // Create the reference YCrCB image (converted from BGR image).
+  ImageData reference_color_image(input_image, false);
+  reference_color_image.ChangeColorSpace(super_resolution::COLOR_MODE_YCRCB);
+  EXPECT_EQ(reference_color_image.GetNumChannels(), 3);
+
+  // Make a copy of the luminance image before changing it.
+  ImageData luminance_image_2 = luminance_image;
+
+  // Interpolate the colors and expect equal results.
+  luminance_image.InterpolateColorFrom(reference_color_image);
+  EXPECT_EQ(luminance_image.GetNumChannels(), 3);
+  for (int channel_index = 0; channel_index < 3; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        luminance_image.GetChannelImage(channel_index),
+        converted_channels[channel_index],
+        kPixelErrorTolerance));
+  }
+
+  /* Resize the image and verify that color interpolation still works. */
+
+  // Resize the luminance image and converted "ground truth" image and make sure
+  // that the first (luminance) channel matches.
+  luminance_image_2.ResizeImage(2, cv::INTER_LINEAR);
+  cv::Mat converted_image_resized;
+  cv::resize(
+      converted_image,
+      converted_image_resized,
+      cv::Size(8, 8),
+      0,  // (0, 0) for X, Y scale so it uses the given size instead.
+      0,
+      cv::INTER_LINEAR);
+  std::vector<cv::Mat> converted_channels_resized;
+  cv::split(converted_image_resized, converted_channels_resized);
+  EXPECT_TRUE(AreMatricesEqual(
+      luminance_image_2.GetChannelImage(0),
+      converted_channels_resized[0],
+      kPixelErrorTolerance));
+
+  // Now interplate the low-resolution color data into the luminance image and
+  // make sure we still get color interpolation which will use linear
+  // interpolation to scale up the reference color channels.
+  EXPECT_NE(
+      luminance_image_2.GetImageSize(), reference_color_image.GetImageSize());
+  luminance_image_2.InterpolateColorFrom(reference_color_image);
+  EXPECT_EQ(luminance_image_2.GetNumChannels(), 3);
+  for (int channel_index = 0; channel_index < 3; ++channel_index) {
+    EXPECT_TRUE(AreMatricesEqual(
+        luminance_image_2.GetChannelImage(channel_index),
+        converted_channels_resized[channel_index],
+        kPixelErrorTolerance));
   }
 }
 
