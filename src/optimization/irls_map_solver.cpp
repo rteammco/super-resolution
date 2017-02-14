@@ -1,6 +1,7 @@
 #include "optimization/irls_map_solver.h"
 
 #include <algorithm>
+#include <limits>
 #include <utility>
 #include <vector>
 
@@ -29,7 +30,7 @@ IrlsMapSolver::IrlsMapSolver(
       solver_options, image_model, low_res_images, print_solver_output) {
 
   // Initialize IRLS weights to 1.
-  irls_weights_.resize(GetNumPixels() * GetNumChannels());
+  irls_weights_.resize(GetNumDataPoints());
   std::fill(irls_weights_.begin(), irls_weights_.end(), 1.0);
 }
 
@@ -39,13 +40,13 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   CHECK_EQ(initial_estimate.GetNumPixels(), GetNumPixels());
   CHECK_EQ(initial_estimate.GetNumChannels(), GetNumChannels());
 
-  // Reset all weights to 1.0.
+  // Initialize the IRLS weights to 1.0.
   std::fill(irls_weights_.begin(), irls_weights_.end(), 1.0);
 
   // Set up the optimization code with ALGLIB.
   // Copy the initial estimate data to the solver's array.
-  alglib::real_1d_array solver_data;
   const int num_data_points = GetNumDataPoints();
+  alglib::real_1d_array solver_data;
   solver_data.setlength(num_data_points);
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     double* data_ptr = solver_data.getcontent() + (num_pixels * channel_index);
@@ -73,23 +74,55 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
       solver_options_.max_num_solver_iterations);
   alglib::mincgsetxrep(solver_state, true);
 
-  // Solve and get results report.
-  if (solver_options_.use_numerical_differentiation) {
-    // Optimize with numerical differentiation.
-    alglib::mincgoptimize(
-        solver_state,
-        AlglibObjectiveFunctionNumericalDiff,
-        AlglibSolverIterationCallback,
-        const_cast<void*>(reinterpret_cast<const void*>(this)));
-  } else {
-    // Optimize with analytical differentiation.
-    alglib::mincgoptimize(
-        solver_state,
-        AlglibObjectiveFunction,
-        AlglibSolverIterationCallback,
-        const_cast<void*>(reinterpret_cast<const void*>(this)));
+  // Do the IRLS loop. After every iteration, update the IRLS weights and solve
+  // again until the change in residual sum is sufficiently low.
+  double previous_cost = std::numeric_limits<double>::infinity();
+  double cost_difference = solver_options_.cost_decrease_threshold + 1.0;
+  while (std::abs(cost_difference) >= solver_options_.cost_decrease_threshold) {
+    // Solve this iteration with ALGLIB CG.
+    if (solver_options_.use_numerical_differentiation) {
+      // Optimize with numerical differentiation.
+      alglib::mincgoptimize(
+          solver_state,
+          AlglibObjectiveFunctionNumericalDiff,
+          AlglibSolverIterationCallback,
+          const_cast<void*>(reinterpret_cast<const void*>(this)));
+    } else {
+      // Optimize with analytical differentiation.
+      alglib::mincgoptimize(
+          solver_state,
+          AlglibObjectiveFunction,
+          AlglibSolverIterationCallback,
+          const_cast<void*>(reinterpret_cast<const void*>(this)));
+    }
+    alglib::mincgresults(solver_state, solver_data, solver_report);
+
+    // Update the IRLS weights.
+    // TODO: the regularizer is assumed to be L1 norm. Scale appropriately to
+    // L* norm based on the regularizer's properties.
+    // TODO: also, this assumes a single regularization term. Scale it up to
+    // more (which means we need separate weights for each one).
+    const int num_data_points = GetNumDataPoints();
+    for (const auto& regularizer_and_parameter : regularizers_) {
+      const double* estimated_image_data = solver_data.getcontent();
+      const std::vector<double>& regularization_residuals =
+          regularizer_and_parameter.first->ApplyToImage(estimated_image_data);
+      CHECK_EQ(regularization_residuals.size(), num_data_points)
+          << "Number of residuals does not match number of weights.";
+      for (int i = 0; i < num_data_points; ++i) {
+        // TODO: this assumes L1 loss!
+        // w = |r|^(p-2)
+        irls_weights_[i] =
+            1.0 / std::max(kMinResidualValue, regularization_residuals[i]);
+      }
+    }
+
+    cost_difference = previous_cost - last_iteration_residual_sum_;
+    previous_cost = last_iteration_residual_sum_;
+    LOG(INFO) << "IRLS Iteration complete. "
+              << "New loss is " << last_iteration_residual_sum_
+              << " with a difference of " << cost_difference << ".";
   }
-  alglib::mincgresults(solver_state, solver_data, solver_report);
 
   const ImageData estimated_image(
       solver_data.getcontent(), GetImageSize(), num_channels);
@@ -204,26 +237,10 @@ double IrlsMapSolver::ComputeRegularization(
   return residual_sum;
 }
 
-void IrlsMapSolver::UpdateIrlsWeights(const double* estimated_image_data) {
-  CHECK_NOTNULL(estimated_image_data);
-
-  // TODO: the regularizer is assumed to be L1 norm. Scale appropriately to L*
-  // norm based on the regularizer's properties.
-  // TODO: also, this assumes a single regularization term. Scale it up to more
-  // (which means we need separate weights for each one).
-  const int num_data_points = GetNumDataPoints();
-  for (const auto& regularizer_and_parameter : regularizers_) {
-    // TODO: maybe keep this from the computation phase to avoid recomputing?
-    const std::vector<double>& regularization_residuals =
-        regularizer_and_parameter.first->ApplyToImage(estimated_image_data);
-    CHECK_EQ(regularization_residuals.size(), num_data_points)
-        << "Number of residuals does not match number of weights.";
-    for (int i = 0; i < num_data_points; ++i) {
-      // TODO: this assumes L1 loss!
-      // w = |r|^(p-2)
-      irls_weights_[i] =
-          1.0 / std::max(kMinResidualValue, regularization_residuals[i]);
-    }
+void IrlsMapSolver::NotifyIterationComplete(const double total_residual_sum) {
+  last_iteration_residual_sum_ = total_residual_sum;
+  if (IsVerbose()) {
+    LOG(INFO) << "Callback: residual sum = " << total_residual_sum;
   }
 }
 

@@ -28,7 +28,7 @@ struct MapSolverOptions {
   //   The norm of the gradient is smaller than this.
   double gradient_norm_threshold = 0.0000000001;
   //   The change (decrease) in the cost is smaller than this.
-  double cost_decrease_threshold = 0.0;
+  double cost_decrease_threshold = 0.0000000001;
   //   The change in the norm of the parameter vector is smaller than this.
   double parameter_variation_threshold = 0.0;
 

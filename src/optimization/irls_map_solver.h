@@ -37,14 +37,22 @@ class IrlsMapSolver : public MapSolver {
   double ComputeRegularization(
     const double* estimated_image_data, double* gradient = nullptr) const;
 
-  // Updates the IRLS weights given the current data estimate.
-  void UpdateIrlsWeights(const double* estimated_image_data);
+  // Notifies the Solver
+  void NotifyIterationComplete(const double total_residual_sum);
 
  private:
-  // A vector containing the IRLS weights, one per parameter for which a
-  // regularization residual is computed. These weights get reweighted after
-  // every solver iteration to allow any regularizer norm under least squares.
+  // A vector containing the IRLS weights, one per parameter of the solver
+  // system. These weights get reweighted when the solver finishes and the
+  // system solves is run again. The effect of reweighting is to allow solving
+  // a 1-norm (or arbitrary p-norm) regularizer with least squares.
+  //
+  // TODO: one set of weights per regularizer.
   std::vector<double> irls_weights_;
+
+  // The residual sum from the last iteration of the solver. This is updated by
+  // calling NotifyIterationComplete with the correct residual sum value for
+  // that solver iteration.
+  double last_iteration_residual_sum_;
 };
 
 }  // namespace super_resolution
