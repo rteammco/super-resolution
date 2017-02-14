@@ -2,6 +2,7 @@
 // a given set of images or a video. It provides an interface for the user to
 // specify parameters of the algorithm without needing to code it directly.
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -173,8 +174,12 @@ int main(int argc, char** argv) {
 
   std::cout << "Super-resolving from "
             << input_data.low_res_images.size() << " images..." << std::endl;
+  const auto start_time = std::chrono::steady_clock::now();
   ImageData result = solver.Solve(initial_estimate);
-  std::cout << "Done!" << std::endl;
+  const auto end_time = std::chrono::steady_clock::now();
+  std::chrono::duration<double> elapsed_time_seconds = end_time - start_time;
+  std::cout << "Done! Finished in " << elapsed_time_seconds.count()
+            << " seconds."  << std::endl;
 
   // If SR was only done on the luminance channel, interpolate the colors now
   // and change the color space back to BGR.
