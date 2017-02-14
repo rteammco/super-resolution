@@ -21,6 +21,71 @@ namespace super_resolution {
 // zero.
 constexpr double kMinResidualValue = 0.00001;
 
+// Sets up and runs the conjugate gradient solver (using ALGLIB's
+// implementation) in numerical differentiation mode. The given solver_data
+// will be modified and should be initialized beforehand with the initial data
+// estimate.
+void RunCGSolverNumericalDiff(
+    const MapSolverOptions& solver_options,
+    const IrlsMapSolver* irls_map_solver,
+    alglib::real_1d_array* solver_data) {
+
+  alglib::mincgstate solver_state;
+  alglib::mincgreport solver_report;
+
+  alglib::mincgcreatef(
+      *solver_data,
+      solver_options.numerical_differentiation_step,
+      solver_state);
+
+  alglib::mincgsetcond(
+      solver_state,
+      solver_options.gradient_norm_threshold,
+      solver_options.cost_decrease_threshold,
+      solver_options.parameter_variation_threshold,
+      solver_options.max_num_solver_iterations);
+  alglib::mincgsetxrep(solver_state, true);
+
+  // Optimize with conjugate gradient.
+  alglib::mincgoptimize(
+      solver_state,
+      AlglibObjectiveFunctionNumericalDiff,
+      AlglibSolverIterationCallback,
+      const_cast<void*>(reinterpret_cast<const void*>(irls_map_solver)));
+
+  alglib::mincgresults(solver_state, *solver_data, solver_report);
+}
+
+// Sets up and runs the conjugate gradient solver in analytical differentiation
+// mode, similarly to RunCGSolverNumericalDiff().
+void RunCGSolverAnalyticalDiff(
+    const MapSolverOptions& solver_options,
+    const IrlsMapSolver* irls_map_solver,
+    alglib::real_1d_array* solver_data) {
+
+  alglib::mincgstate solver_state;
+  alglib::mincgreport solver_report;
+
+  alglib::mincgcreate(*solver_data, solver_state);
+
+  alglib::mincgsetcond(
+      solver_state,
+      solver_options.gradient_norm_threshold,
+      solver_options.cost_decrease_threshold,
+      solver_options.parameter_variation_threshold,
+      solver_options.max_num_solver_iterations);
+  alglib::mincgsetxrep(solver_state, true);
+
+  // Optimize with conjugate gradient.
+  alglib::mincgoptimize(
+      solver_state,
+      AlglibObjectiveFunction,
+      AlglibSolverIterationCallback,
+      const_cast<void*>(reinterpret_cast<const void*>(irls_map_solver)));
+
+  alglib::mincgresults(solver_state, *solver_data, solver_report);
+}
+
 IrlsMapSolver::IrlsMapSolver(
     const MapSolverOptions& solver_options,
     const ImageModel& image_model,
@@ -60,43 +125,11 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   double cost_difference = solver_options_.cost_decrease_threshold + 1.0;
   int num_iterations_ran = 0;
   while (std::abs(cost_difference) >= solver_options_.cost_decrease_threshold) {
-    alglib::mincgstate solver_state;
-    alglib::mincgreport solver_report;
     if (solver_options_.use_numerical_differentiation) {
-      // Numerical differentiation setup.
-      alglib::mincgcreatef(
-          solver_data,
-          solver_options_.numerical_differentiation_step,
-          solver_state);
+      RunCGSolverNumericalDiff(solver_options_, this, &solver_data);
     } else {
-      // Analytical differentiation setup.
-      alglib::mincgcreate(solver_data, solver_state);
+      RunCGSolverAnalyticalDiff(solver_options_, this, &solver_data);
     }
-    alglib::mincgsetcond(
-        solver_state,
-        solver_options_.gradient_norm_threshold,
-        solver_options_.cost_decrease_threshold,
-        solver_options_.parameter_variation_threshold,
-        solver_options_.max_num_solver_iterations);
-    alglib::mincgsetxrep(solver_state, true);
-
-    // Solve this iteration with ALGLIB CG.
-    if (solver_options_.use_numerical_differentiation) {
-      // Optimize with numerical differentiation.
-      alglib::mincgoptimize(
-          solver_state,
-          AlglibObjectiveFunctionNumericalDiff,
-          AlglibSolverIterationCallback,
-          const_cast<void*>(reinterpret_cast<const void*>(this)));
-    } else {
-      // Optimize with analytical differentiation.
-      alglib::mincgoptimize(
-          solver_state,
-          AlglibObjectiveFunction,
-          AlglibSolverIterationCallback,
-          const_cast<void*>(reinterpret_cast<const void*>(this)));
-    }
-    alglib::mincgresults(solver_state, solver_data, solver_report);
 
     // Update the IRLS weights.
     // TODO: the regularizer is assumed to be L1 norm. Scale appropriately to
