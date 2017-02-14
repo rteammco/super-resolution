@@ -54,31 +54,32 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     std::copy(channel_ptr, channel_ptr + num_pixels, data_ptr);
   }
 
-  alglib::mincgstate solver_state;
-  alglib::mincgreport solver_report;
-  if (solver_options_.use_numerical_differentiation) {
-    // Numerical differentiation setup.
-    alglib::mincgcreatef(
-        solver_data,
-        solver_options_.numerical_differentiation_step,
-        solver_state);
-  } else {
-    // Analytical differentiation setup.
-    alglib::mincgcreate(solver_data, solver_state);
-  }
-  alglib::mincgsetcond(
-      solver_state,
-      solver_options_.gradient_norm_threshold,
-      solver_options_.cost_decrease_threshold,
-      solver_options_.parameter_variation_threshold,
-      solver_options_.max_num_solver_iterations);
-  alglib::mincgsetxrep(solver_state, true);
-
   // Do the IRLS loop. After every iteration, update the IRLS weights and solve
   // again until the change in residual sum is sufficiently low.
   double previous_cost = std::numeric_limits<double>::infinity();
   double cost_difference = solver_options_.cost_decrease_threshold + 1.0;
+  int num_iterations_ran = 0;
   while (std::abs(cost_difference) >= solver_options_.cost_decrease_threshold) {
+    alglib::mincgstate solver_state;
+    alglib::mincgreport solver_report;
+    if (solver_options_.use_numerical_differentiation) {
+      // Numerical differentiation setup.
+      alglib::mincgcreatef(
+          solver_data,
+          solver_options_.numerical_differentiation_step,
+          solver_state);
+    } else {
+      // Analytical differentiation setup.
+      alglib::mincgcreate(solver_data, solver_state);
+    }
+    alglib::mincgsetcond(
+        solver_state,
+        solver_options_.gradient_norm_threshold,
+        solver_options_.cost_decrease_threshold,
+        solver_options_.parameter_variation_threshold,
+        solver_options_.max_num_solver_iterations);
+    alglib::mincgsetxrep(solver_state, true);
+
     // Solve this iteration with ALGLIB CG.
     if (solver_options_.use_numerical_differentiation) {
       // Optimize with numerical differentiation.
@@ -119,9 +120,13 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
 
     cost_difference = previous_cost - last_iteration_residual_sum_;
     previous_cost = last_iteration_residual_sum_;
-    LOG(INFO) << "IRLS Iteration complete. "
+    num_iterations_ran++;
+    LOG(INFO) << "IRLS Iteration complete (#" << num_iterations_ran << "). "
               << "New loss is " << last_iteration_residual_sum_
               << " with a difference of " << cost_difference << ".";
+    if (num_iterations_ran >= solver_options_.max_num_solver_iterations) {
+      break;
+    }
   }
 
   const ImageData estimated_image(

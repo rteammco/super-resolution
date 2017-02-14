@@ -24,11 +24,12 @@ struct MapSolverOptions {
   // Maximum number of solver iterations. 0 for infinite.
   int max_num_solver_iterations = 50;
 
+  // TODO: make IRLS outer loop have different variables.
   // Thresholds for stopping the solver if:
   //   The norm of the gradient is smaller than this.
   double gradient_norm_threshold = 0.0000000001;
   //   The change (decrease) in the cost is smaller than this.
-  double cost_decrease_threshold = 0.0000000001;
+  double cost_decrease_threshold = 1.0e-6;
   //   The change in the norm of the parameter vector is smaller than this.
   double parameter_variation_threshold = 0.0;
 
