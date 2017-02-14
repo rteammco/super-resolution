@@ -87,12 +87,12 @@ void RunCGSolverAnalyticalDiff(
 }
 
 IrlsMapSolver::IrlsMapSolver(
-    const MapSolverOptions& solver_options,
+    const IrlsMapSolverOptions& solver_options,
     const ImageModel& image_model,
     const std::vector<ImageData>& low_res_images,
     const bool print_solver_output)
-    : MapSolver(
-      solver_options, image_model, low_res_images, print_solver_output) {
+    : MapSolver(image_model, low_res_images, print_solver_output),
+      solver_options_(solver_options) {
 
   // Initialize IRLS weights to 1.
   irls_weights_.resize(GetNumDataPoints());
@@ -124,7 +124,8 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   double previous_cost = std::numeric_limits<double>::infinity();
   double cost_difference = solver_options_.cost_decrease_threshold + 1.0;
   int num_iterations_ran = 0;
-  while (std::abs(cost_difference) >= solver_options_.cost_decrease_threshold) {
+  while (std::abs(cost_difference) >=
+         solver_options_.irls_cost_difference_threshold) {
     if (solver_options_.use_numerical_differentiation) {
       RunCGSolverNumericalDiff(solver_options_, this, &solver_data);
     } else {
@@ -132,6 +133,8 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     }
 
     // Update the IRLS weights.
+    // TODO: should this be computed off of the initial estimate? That seems to
+    // get better results at the cost of A LOT of extra computational time.
     // TODO: the regularizer is assumed to be L1 norm. Scale appropriately to
     // L* norm based on the regularizer's properties.
     // TODO: also, this assumes a single regularization term. Scale it up to
@@ -157,7 +160,8 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     LOG(INFO) << "IRLS Iteration complete (#" << num_iterations_ran << "). "
               << "New loss is " << last_iteration_residual_sum_
               << " with a difference of " << cost_difference << ".";
-    if (num_iterations_ran >= solver_options_.max_num_solver_iterations) {
+    if (solver_options_.max_num_irls_iterations > 0 &&
+        num_iterations_ran >= solver_options_.max_num_irls_iterations) {
       break;
     }
   }

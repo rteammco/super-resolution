@@ -11,10 +11,27 @@
 
 namespace super_resolution {
 
+struct IrlsMapSolverOptions : public MapSolverOptions {
+  IrlsMapSolverOptions() {}  // Required for making a const instance.
+
+  // Maximum number of outer loop iterations. Each outer loop runs Conjugate
+  // Gradient which has its own max number of iterations
+  // (max_num_solver_iterations).
+  int max_num_irls_iterations = 50;
+
+  // The cost difference threshold for convergence of the IRLS algorithm. If
+  // the change in cost from one outer loop iteration to the next is below this
+  // threshold, the solver will stop.
+  //
+  // The stopping criteria for the inner loop (conjugate gradient) is defined
+  // independently in MapSolverOptions.
+  double irls_cost_difference_threshold = 1.0e-6;
+};
+
 class IrlsMapSolver : public MapSolver {
  public:
   IrlsMapSolver(
-      const MapSolverOptions& solver_options,
+      const IrlsMapSolverOptions& solver_options,
       const ImageModel& image_model,
       const std::vector<ImageData>& low_res_images,
       const bool print_solver_output = true);
@@ -41,6 +58,9 @@ class IrlsMapSolver : public MapSolver {
   void NotifyIterationComplete(const double total_residual_sum);
 
  private:
+  // Passed in through the constructor.
+  const IrlsMapSolverOptions solver_options_;
+
   // A vector containing the IRLS weights, one per parameter of the solver
   // system. These weights get reweighted when the solver finishes and the
   // system solves is run again. The effect of reweighting is to allow solving

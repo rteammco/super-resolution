@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
 
   // Set up the solver.
   // TODO: let the user choose the solver (once more solvers are supported).
-  super_resolution::MapSolverOptions solver_options;
+  super_resolution::IrlsMapSolverOptions solver_options;
   solver_options.max_num_solver_iterations = FLAGS_solver_iterations;
   solver_options.use_numerical_differentiation =
       FLAGS_use_numerical_differentiation;

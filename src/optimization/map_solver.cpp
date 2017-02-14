@@ -11,12 +11,10 @@
 namespace super_resolution {
 
 MapSolver::MapSolver(
-    const MapSolverOptions& solver_options,
     const ImageModel& image_model,
     const std::vector<ImageData>& low_res_images,
     const bool print_solver_output)
-    : Solver(image_model, print_solver_output),
-      solver_options_(solver_options) {
+    : Solver(image_model, print_solver_output) {
 
   const int num_observations = low_res_images.size();
   CHECK_GT(num_observations, 0)

@@ -42,7 +42,7 @@ static const cv::Size kDisplayImageSize(840, 840);
 constexpr bool kPrintSolverOutput = true;
 constexpr double kSolverResultErrorTolerance = 0.001;
 constexpr double kDerivativeErrorTolerance = 0.000001;
-static const super_resolution::MapSolverOptions kDefaultSolverOptions;
+static const super_resolution::IrlsMapSolverOptions kDefaultSolverOptions;
 
 // Small image (icon size):
 // NOTE: this image cannot exceed 30x30 because of limitations with computing
