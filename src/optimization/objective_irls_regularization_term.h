@@ -3,8 +3,8 @@
 // and y is an observation. For multiple observations, the term is computed as
 // the sum of costs over all observations k, ||A_kx - y_k||_2^2.
 
-#ifndef SRC_OPTIMIZATION_OBJECTIVE_REGULARIZATION_TERM_H_
-#define SRC_OPTIMIZATION_OBJECTIVE_REGULARIZATION_TERM_H_
+#ifndef SRC_OPTIMIZATION_OBJECTIVE_IRLS_REGULARIZATION_TERM_H_
+#define SRC_OPTIMIZATION_OBJECTIVE_IRLS_REGULARIZATION_TERM_H_
 
 #include <vector>
 
@@ -42,4 +42,4 @@ class ObjectiveIrlsRegularizationTerm : public ObjectiveTerm {
 
 }  // namespace super_resolution
 
-#endif  // SRC_OPTIMIZATION_OBJECTIVE_REGULARIZATION_TERM_H_
+#endif  // SRC_OPTIMIZATION_OBJECTIVE_IRLS_REGULARIZATION_TERM_H_

@@ -29,7 +29,7 @@ class ObjectiveTerm {
 // computed independently.
 class ObjectiveFunction {
  public:
-  ObjectiveFunction(const int num_parameters)
+  explicit ObjectiveFunction(const int num_parameters)
       : num_parameters_(num_parameters) {}
 
   // Add a new ObjectiveTerm to the list.

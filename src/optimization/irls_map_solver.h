@@ -47,14 +47,6 @@ class IrlsMapSolver : public MapSolver {
   // Passed in through the constructor.
   const IrlsMapSolverOptions solver_options_;
 
-  // A vector containing the IRLS weights, one per parameter of the solver
-  // system. These weights get reweighted when the solver finishes and the
-  // system solves is run again. The effect of reweighting is to allow solving
-  // a 1-norm (or arbitrary p-norm) regularizer with least squares.
-  //
-  // TODO: one set of weights per regularizer.
-  std::vector<double> irls_weights_;
-
   // The residual sum from the last iteration of the solver. This is updated by
   // calling NotifyIterationComplete with the correct residual sum value for
   // that solver iteration.
