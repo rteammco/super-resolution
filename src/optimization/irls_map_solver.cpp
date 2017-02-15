@@ -93,12 +93,14 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
       objective_function.AddTerm(regularization_term);
     }
 
-    // Run conjugate gradient on the reweighted objective function.
+    // Run conjugate gradient on the reweighted objective function. The final
+    // cost value is returned.
+    double final_cost = 0.0;
     if (solver_options_.use_numerical_differentiation) {
-      RunCGSolverNumericalDiff(
+      final_cost = RunCGSolverNumericalDiff(
           solver_options_, objective_function, &solver_data);
     } else {
-      RunCGSolverAnalyticalDiff(
+      final_cost = RunCGSolverAnalyticalDiff(
           solver_options_, objective_function, &solver_data);
     }
 
@@ -124,11 +126,11 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
       }
     }
 
-    cost_difference = previous_cost - last_iteration_residual_sum_;
-    previous_cost = last_iteration_residual_sum_;
+    cost_difference = previous_cost - final_cost;
+    previous_cost = final_cost;
     num_iterations_ran++;
     LOG(INFO) << "IRLS Iteration complete (#" << num_iterations_ran << "). "
-              << "New loss is " << last_iteration_residual_sum_
+              << "New loss is " << final_cost
               << " with a difference of " << cost_difference << ".";
     if (solver_options_.max_num_irls_iterations > 0 &&
         num_iterations_ran >= solver_options_.max_num_irls_iterations) {
@@ -139,13 +141,6 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   const ImageData estimated_image(
       solver_data.getcontent(), GetImageSize(), num_channels);
   return estimated_image;
-}
-
-void IrlsMapSolver::NotifyIterationComplete(const double total_residual_sum) {
-  last_iteration_residual_sum_ = total_residual_sum;
-  if (IsVerbose()) {
-    LOG(INFO) << "Callback: residual sum = " << total_residual_sum;
-  }
 }
 
 }  // namespace super_resolution

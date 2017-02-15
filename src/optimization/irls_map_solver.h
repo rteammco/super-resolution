@@ -40,17 +40,9 @@ class IrlsMapSolver : public MapSolver {
   // solver library to do the actual optimization.
   virtual ImageData Solve(const ImageData& initial_estimate);
 
-  // Notifies the Solver
-  void NotifyIterationComplete(const double total_residual_sum);
-
  private:
   // Passed in through the constructor.
   const IrlsMapSolverOptions solver_options_;
-
-  // The residual sum from the last iteration of the solver. This is updated by
-  // calling NotifyIterationComplete with the correct residual sum value for
-  // that solver iteration.
-  double last_iteration_residual_sum_;
 };
 
 }  // namespace super_resolution

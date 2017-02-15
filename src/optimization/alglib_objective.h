@@ -16,14 +16,16 @@ namespace super_resolution {
 // implementation) in numerical differentiation mode. The given solver_data
 // will be modified and should be initialized beforehand with the initial data
 // estimate.
-void RunCGSolverNumericalDiff(
+//
+// Returns the final objective cost value.
+double RunCGSolverNumericalDiff(
     const MapSolverOptions& solver_options,
     const ObjectiveFunction& objective_function,
     alglib::real_1d_array* solver_data);
 
 // Sets up and runs the conjugate gradient solver in analytical differentiation
 // mode, similarly to RunCGSolverNumericalDiff().
-void RunCGSolverAnalyticalDiff(
+double RunCGSolverAnalyticalDiff(
     const MapSolverOptions& solver_options,
     const ObjectiveFunction& objective_function,
     alglib::real_1d_array* solver_data);

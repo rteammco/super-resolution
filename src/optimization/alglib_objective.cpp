@@ -11,7 +11,7 @@
 
 namespace super_resolution {
 
-void RunCGSolverNumericalDiff(
+double RunCGSolverNumericalDiff(
     const MapSolverOptions& solver_options,
     const ObjectiveFunction& objective_function,
     alglib::real_1d_array* solver_data) {
@@ -40,9 +40,11 @@ void RunCGSolverNumericalDiff(
       const_cast<void*>(reinterpret_cast<const void*>(&objective_function)));
 
   alglib::mincgresults(solver_state, *solver_data, solver_report);
+
+  return solver_state.f;
 }
 
-void RunCGSolverAnalyticalDiff(
+double RunCGSolverAnalyticalDiff(
     const MapSolverOptions& solver_options,
     const ObjectiveFunction& objective_function,
     alglib::real_1d_array* solver_data) {
@@ -68,6 +70,8 @@ void RunCGSolverAnalyticalDiff(
       const_cast<void*>(reinterpret_cast<const void*>(&objective_function)));
 
   alglib::mincgresults(solver_state, *solver_data, solver_report);
+
+  return solver_state.f;
 }
 
 void AlglibObjectiveFunction(
