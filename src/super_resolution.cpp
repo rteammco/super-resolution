@@ -153,11 +153,11 @@ int main(int argc, char** argv) {
 
   // Add the appropriate regularizer based on user input.
   // TODO: support for multiple regularizers at once.
-  std::unique_ptr<super_resolution::Regularizer> regularizer;
+  std::shared_ptr<super_resolution::Regularizer> regularizer;
   if (FLAGS_regularization_parameter > 0.0) {
     if (FLAGS_regularizer == "tv" || FLAGS_regularizer == "3dtv") {
       regularizer =
-          std::unique_ptr<super_resolution::TotalVariationRegularizer>(
+          std::shared_ptr<super_resolution::Regularizer>(
               new super_resolution::TotalVariationRegularizer(
                   initial_estimate.GetImageSize(),
                   initial_estimate.GetNumChannels()));
@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
             regularizer.get())->SetUse3dTotalVariation(true);
       }
     }
-    solver.AddRegularizer(*regularizer, FLAGS_regularization_parameter);
+    solver.AddRegularizer(regularizer, FLAGS_regularization_parameter);
     LOG(INFO) << "Added " << FLAGS_regularizer
               << " regularizer with regularization parameter "
               << FLAGS_regularization_parameter;

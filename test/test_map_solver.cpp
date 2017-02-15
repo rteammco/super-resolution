@@ -411,8 +411,9 @@ TEST(MapSolver, RegularizationTest) {
   super_resolution::IrlsMapSolver solver_with_tv_regularization(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   // Add regularizer.
-  const super_resolution::TotalVariationRegularizer tv_regularizer(
-      image_size, ground_truth.GetNumChannels());
+  const std::shared_ptr<super_resolution::Regularizer> tv_regularizer(
+      new super_resolution::TotalVariationRegularizer(
+          image_size, ground_truth.GetNumChannels()));
   solver_with_tv_regularization.AddRegularizer(tv_regularizer, 0.01);
   // Solve.
   const ImageData solver_result_with_tv_regularization =

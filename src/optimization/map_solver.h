@@ -52,7 +52,7 @@ class MapSolver : public Solver {
 
   // Adds a regularizer term to the objective function.
   virtual void AddRegularizer(
-      const Regularizer& regularizer,
+      std::shared_ptr<Regularizer> regularizer,
       const double regularization_parameter);
 
   // Returns the number of pixels in a single image channel. This is NOT the
@@ -87,7 +87,7 @@ class MapSolver : public Solver {
  protected:
   // All regularization terms and their respective regularization parameters to
   // be applied in the cost function.
-  std::vector<std::pair<const Regularizer*, double>> regularizers_;
+  std::vector<std::pair<std::shared_ptr<Regularizer>, double>> regularizers_;
 
   // The observed LR images scaled up to the HR image size for use in the cost
   // function.

@@ -47,11 +47,11 @@ MapSolver::MapSolver(
 }
 
 void MapSolver::AddRegularizer(
-    const Regularizer& regularizer,
+    std::shared_ptr<Regularizer> regularizer,
     const double regularization_parameter) {
 
   regularizers_.push_back(
-      std::make_pair(&regularizer, regularization_parameter));
+      std::make_pair(regularizer, regularization_parameter));
 }
 
 }  // namespace super_resolution

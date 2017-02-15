@@ -81,7 +81,16 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   while (std::abs(cost_difference) >=
          solver_options_.irls_cost_difference_threshold) {
     ObjectiveFunction objective_function = objective_function_data_term_only;
-    // TODO: objective_function.AddTerm(regularizer);
+    for (const auto& regularizer_and_parameter : regularizers_) {
+      std::shared_ptr<ObjectiveTerm> regularization_term(
+          new ObjectiveIrlsRegularizationTerm(
+              regularizer_and_parameter.first,
+              regularizer_and_parameter.second,
+              irls_weights_,
+              num_channels,
+              GetImageSize()));
+      objective_function.AddTerm(regularization_term);
+    }
     if (solver_options_.use_numerical_differentiation) {
       RunCGSolverNumericalDiff(
           solver_options_, objective_function, &solver_data);
