@@ -102,11 +102,8 @@ void AlglibSolverIterationCallback(
     double residual_sum,
     void* objective_function_ptr) {
 
-  LOG(INFO) << residual_sum;
-// TODO: fix!
-//  IrlsMapSolver* irls_map_solver =
-//      reinterpret_cast<IrlsMapSolver*>(irls_map_solver_ptr);
-//  irls_map_solver->NotifyIterationComplete(residual_sum);
+  // TODO: Don't report this if the solver is not verbose...
+  LOG(INFO) << "Iteration complete: " << residual_sum;
 }
 
 }  // namespace super_resolution
