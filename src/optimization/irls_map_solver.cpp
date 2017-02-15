@@ -8,6 +8,9 @@
 #include "image/image_data.h"
 #include "image_model/image_model.h"
 #include "optimization/alglib_irls_objective.h"
+#include "optimization/objective_data_term.h"
+#include "optimization/objective_function.h"
+#include "optimization/objective_irls_regularization_term.h"
 
 #include "alglib/src/optimization.h"
 
@@ -27,7 +30,7 @@ constexpr double kMinResidualValue = 0.00001;
 // estimate.
 void RunCGSolverNumericalDiff(
     const MapSolverOptions& solver_options,
-    const IrlsMapSolver* irls_map_solver,
+    const ObjectiveFunction& objective_function,
     alglib::real_1d_array* solver_data) {
 
   alglib::mincgstate solver_state;
@@ -51,7 +54,7 @@ void RunCGSolverNumericalDiff(
       solver_state,
       AlglibObjectiveFunctionNumericalDiff,
       AlglibSolverIterationCallback,
-      const_cast<void*>(reinterpret_cast<const void*>(irls_map_solver)));
+      const_cast<void*>(reinterpret_cast<const void*>(&objective_function)));
 
   alglib::mincgresults(solver_state, *solver_data, solver_report);
 }
@@ -60,7 +63,7 @@ void RunCGSolverNumericalDiff(
 // mode, similarly to RunCGSolverNumericalDiff().
 void RunCGSolverAnalyticalDiff(
     const MapSolverOptions& solver_options,
-    const IrlsMapSolver* irls_map_solver,
+    const ObjectiveFunction& objective_function,
     alglib::real_1d_array* solver_data) {
 
   alglib::mincgstate solver_state;
@@ -81,7 +84,7 @@ void RunCGSolverAnalyticalDiff(
       solver_state,
       AlglibObjectiveFunction,
       AlglibSolverIterationCallback,
-      const_cast<void*>(reinterpret_cast<const void*>(irls_map_solver)));
+      const_cast<void*>(reinterpret_cast<const void*>(&objective_function)));
 
   alglib::mincgresults(solver_state, *solver_data, solver_report);
 }
@@ -105,12 +108,28 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   CHECK_EQ(initial_estimate.GetNumPixels(), GetNumPixels());
   CHECK_EQ(initial_estimate.GetNumChannels(), GetNumChannels());
 
+  const int num_data_points = GetNumDataPoints();
+  // TODO: here
+  ObjectiveFunction objective_function_data_term_only(num_data_points);
+  std::shared_ptr<ObjectiveTerm> data_term(new ObjectiveDataTerm(
+      image_model_, observations_, num_channels, GetImageSize())); 
+  objective_function_data_term_only.AddTerm(data_term);
+// TODO: add regularizers.
+//  std::shared_ptr<ObjectiveTerm> regularization_term(
+//      new ObjectiveRegularizationTerm(regularizer));
+  // TODO:
+  // 1. Add regularizers, each loop iteration w/ new weights.
+  // 2. Change AlglibObjectiveFunction to take the ObjectiveFunction object
+  //    instead of this IrlsMapSolver.
+  // 3. Change it all, and make sure it works.
+  // 4. Clean up code.
+  // 5. Implement ADMM.
+
   // Initialize the IRLS weights to 1.0.
   std::fill(irls_weights_.begin(), irls_weights_.end(), 1.0);
 
   // Set up the optimization code with ALGLIB.
   // Copy the initial estimate data to the solver's array.
-  const int num_data_points = GetNumDataPoints();
   alglib::real_1d_array solver_data;
   solver_data.setlength(num_data_points);
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
@@ -126,10 +145,14 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   int num_iterations_ran = 0;
   while (std::abs(cost_difference) >=
          solver_options_.irls_cost_difference_threshold) {
+    ObjectiveFunction objective_function = objective_function_data_term_only;
+    // TODO: objective_function.AddTerm(regularizer);
     if (solver_options_.use_numerical_differentiation) {
-      RunCGSolverNumericalDiff(solver_options_, this, &solver_data);
+      RunCGSolverNumericalDiff(
+          solver_options_, objective_function, &solver_data);
     } else {
-      RunCGSolverAnalyticalDiff(solver_options_, this, &solver_data);
+      RunCGSolverAnalyticalDiff(
+          solver_options_, objective_function, &solver_data);
     }
 
     // Update the IRLS weights.
