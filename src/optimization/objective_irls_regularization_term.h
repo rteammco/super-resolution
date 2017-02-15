@@ -35,7 +35,7 @@ class ObjectiveIrlsRegularizationTerm : public ObjectiveTerm {
  private:
   const std::shared_ptr<Regularizer> regularizer_;
   const double regularization_parameter_;
-  const std::vector<double> irls_weights_;
+  const std::vector<double>& irls_weights_;
   const int num_channels_;
   const cv::Size& image_size_;
 };

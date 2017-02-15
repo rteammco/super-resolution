@@ -62,14 +62,14 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   // The effect of reweighting is to allow solving a 1-norm (or arbitrary
   // p-norm) regularizer with least squares. Weights are initialized to 1.
   const int num_regularizers = regularizers_.size();
-  std::vector<std::vector<double>> irls_weights;
-  for (int i = 0; i < num_regularizers; ++i) {
-    std::vector<double> weights_for_regularizer_i(num_data_points);
+  std::vector<std::vector<double>> irls_weights(num_regularizers);
+  for (int reg_index = 0; reg_index < num_regularizers; ++reg_index) {
+    std::vector<double> weights_for_regularizer(num_data_points);
     std::fill(
-        weights_for_regularizer_i.begin(),
-        weights_for_regularizer_i.end(),
+        weights_for_regularizer.begin(),
+        weights_for_regularizer.end(),
         1.0);
-    irls_weights.push_back(weights_for_regularizer_i);
+    irls_weights[reg_index] = weights_for_regularizer;
   }
 
   // Do the IRLS loop. After every iteration, update the IRLS weights and solve
@@ -81,13 +81,13 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
          solver_options_.irls_cost_difference_threshold) {
     // Add the weighted regularization term(s) to the next objective function.
     ObjectiveFunction objective_function = objective_function_data_term_only;
-    for (int i = 0; i < num_regularizers; ++i) {
-      const auto& regularizer_and_parameter = regularizers_[i];
+    for (int reg_index = 0; reg_index < num_regularizers; ++reg_index) {
+      const auto& regularizer_and_parameter = regularizers_[reg_index];
       std::shared_ptr<ObjectiveTerm> regularization_term(
           new ObjectiveIrlsRegularizationTerm(
               regularizer_and_parameter.first,
               regularizer_and_parameter.second,
-              irls_weights[i],
+              irls_weights[reg_index],
               num_channels,
               GetImageSize()));
       objective_function.AddTerm(regularization_term);
@@ -108,8 +108,8 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     // TODO: the regularizer is assumed to be L1 norm. Scale appropriately to
     // L* norm based on the regularizer's properties.
     const int num_data_points = GetNumDataPoints();
-    for (int i = 0; i < num_regularizers; ++i) {
-      const auto& regularizer_and_parameter = regularizers_[i];
+    for (int reg_index = 0; reg_index < num_regularizers; ++reg_index) {
+      const auto& regularizer_and_parameter = regularizers_[reg_index];
       const double* estimated_image_data = solver_data.getcontent();
       const std::vector<double>& regularization_residuals =
           regularizer_and_parameter.first->ApplyToImage(estimated_image_data);
@@ -118,8 +118,9 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
       for (int pixel_index = 0; pixel_index < num_data_points; ++pixel_index) {
         // TODO: this assumes L1 loss!
         // w = |r|^(p-2)
-        irls_weights[i][pixel_index] =
-            1.0 / std::max(kMinResidualValue, regularization_residuals[i]);
+        const double residual_value = regularization_residuals[pixel_index];
+        irls_weights[reg_index][pixel_index] =
+            1.0 / std::max(kMinResidualValue, residual_value);
       }
     }
 
