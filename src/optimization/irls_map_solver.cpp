@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -41,9 +42,10 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   // Set up the base objective function, just the data term. The regularization
   // term depends on the weights, so it gets added in the IRLS loop.
   const int num_data_points = GetNumDataPoints();
+  const cv::Size image_size = GetImageSize();
   ObjectiveFunction objective_function_data_term_only(num_data_points);
   std::shared_ptr<ObjectiveTerm> data_term(new ObjectiveDataTerm(
-      image_model_, observations_, num_channels, GetImageSize()));
+      image_model_, observations_, num_channels, image_size));
   objective_function_data_term_only.AddTerm(data_term);
 
   // Set up the optimization code with ALGLIB.
@@ -80,6 +82,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   while (std::abs(cost_difference) >=
          solver_options_.irls_cost_difference_threshold) {
     // Add the weighted regularization term(s) to the next objective function.
+    // This makes a new copy of the objective function for each iteration.
     ObjectiveFunction objective_function = objective_function_data_term_only;
     for (int reg_index = 0; reg_index < num_regularizers; ++reg_index) {
       const auto& regularizer_and_parameter = regularizers_[reg_index];
@@ -89,7 +92,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
               regularizer_and_parameter.second,
               irls_weights[reg_index],
               num_channels,
-              GetImageSize()));
+              image_size));
       objective_function.AddTerm(regularization_term);
     }
 
@@ -139,7 +142,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   }
 
   const ImageData estimated_image(
-      solver_data.getcontent(), GetImageSize(), num_channels);
+      solver_data.getcontent(), image_size, num_channels);
   return estimated_image;
 }
 

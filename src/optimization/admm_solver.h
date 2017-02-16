@@ -8,7 +8,6 @@ namespace super_resolution {
 class AdmmSolver : public MapSolver {
  public:
   virtual ImageData Solve(const ImageData& initial_estimate);
-
 };
 
 }  // namespace super_resolution
