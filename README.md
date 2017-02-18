@@ -133,3 +133,11 @@ Tests are included in `./test` and follow a similar directory structure.
 The `./scripts` directory contains simple test or data generation scripts.
 
 The `./test_data` directory contains sample data used by the unit tests and otherwise for testing and experimentation.
+
+Other Resources
+--------------------
+
+<ul>
+  <li> [Install on Linux without root access](instructions/install_linux_no_root.txt) </li>
+  <li> [List of known issues (and solutions) for installing and running the code](instructions/known_issues.md) </li>
+</ul>
