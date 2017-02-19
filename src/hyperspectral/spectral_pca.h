@@ -39,43 +39,54 @@
 
 #include "image/image_data.h"
 
+#include "opencv2/core/core.hpp"
+
 namespace super_resolution {
 
 class SpectralPca {
  public:
   // Uses the given set of images to generate the PCA decomposition and finds
   // the top PCA bands.
-  explicit SpectralPca(const std::vector<ImageData>& hyperspectral_images);
+  //
+  // If num_pca_bands is positive, then the decomposition will have that many
+  // PCA bands (capped by the total number of spectral bands available). The
+  // reconstructed images will be approximations if the number of PCA bands is
+  // less than the total number of spectral bands (see the description above).
+  SpectralPca(
+      const std::vector<ImageData>& hyperspectral_images,
+      const int num_pca_bands = 0);
+
+  // Same as the first constructor, but the given variance amount (where 0 <
+  // retained_variance <= 1) will be used to find the top k eigenvalues such
+  // that v_1 + v_2 + ... + v_k >= retained_variance. This will use the minimum
+  // number of eigenvectors for the PCA basis such that the approximation
+  // preserves that much of the original data (see description above). The PCA
+  // decomposition will be the same as SpectralPca(image_data, k).
+  SpectralPca(
+      const std::vector<ImageData>& hyperspectral_images,
+      const double retained_variance);
 
   // Returns an image with PCA spectral channels (each pixel is converted into
-  // the precomputed PCA space). If num_pca_bands is positive, then the
-  // returned image will have that many PCA bands (capped by the total number
-  // of spectral bands available). The reconstructed image will be an
-  // approximation if the number of PCA bands is less than the total number of
-  // spectral bands (see the description above).
-  ImageData GetPcaImage(
-      const ImageData& image_data, const int num_pca_bands = 0) const;
-
-  // Same as the above GetPcaImage(), but the given approximation amount (where
-  // 0 < approximation <= 1) will be used to find the top k eigenvalues such
-  // that v_1 + v_2 + ... + v_k >= approximation. This will use the minimum
-  // number of eigenvectors for the PCA basis such that the approximation
-  // preserves that much of the original data (see description above). The
-  // returned image will then be GetPcaImage(image_data, k).
-  ImageData GetPcaImage(
-      const ImageData& image_data, const double approximation) const;
+  // the precomputed PCA space).
+  ImageData GetPcaImage(const ImageData& image_data) const;
 
   // Reconstructs the original hyperspectral image by inverting the PCA
   // operation. It is assumed that the given image was obtained from the same
-  // SpectralPca object using GetPcaImage() for a valid reconstruction. The
-  // number of spectral bands in the given image will indicate the PCA
-  // approximation used, and the reconstruction will be computed accordingly.
+  // SpectralPca object using GetPcaImage() for a valid reconstruction.
   ImageData ReconstructImage(const ImageData& pca_image_data) const;
 
  private:
-  // TODO:
-  // Matrix A
-  // Eigenvalues D
+  // The OpenCV PCA object that is used to compute the decomposition and
+  // convert to and from PCA space.
+  cv::PCA pca_;
+
+  // The original number of bands in the regular (non-PCA) image.
+  int num_spectral_bands_;
+
+  // The number of PCA bands used in the decomposition. If num_pca_bands_
+  // equals the original number of channels, then the image can be
+  // reconstructed exactly.
+  int num_pca_bands_;
 };
 
 }  // namespace super_resolution
