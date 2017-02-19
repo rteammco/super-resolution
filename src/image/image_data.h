@@ -58,13 +58,19 @@ enum ResizeInterpolationMethod {
   INTERPOLATE_ADDITIVE
 };
 
-// The image color scheme. Only applicable to 3-channel color images. Single
-// channel or hyperspectral images cannot be color-converted and should be
-// identified as COLOR_MODE_NONE.
-enum ImageColorMode {
-  COLOR_MODE_NONE,
-  COLOR_MODE_BGR,  // OpenCV uses BGR instead of RGB by default.
-  COLOR_MODE_YCRCB
+// The image spectral mode. For color images, this is used to determine the
+// color space (default BGR). For hyperspectral images, this is used to
+// determine if the image has been converted into a basis (e.g. using PCA).
+enum ImageSpectralMode {
+  SPECTRAL_MODE_NONE,               // Monochrome or undefined.
+
+  // Hyperspectral images (more than 3 channels):
+  SPECTRAL_MODE_HYPERSPECTRAL,      // Regular hyperspectral image, unchanged.
+  SPECTRAL_MODE_HYPERSPECTRAL_PCA,  // PCA basis of hyperspectral bands.
+
+  // Color modes (3-channel color images only):
+  SPECTRAL_MODE_COLOR_BGR,          // OpenCV uses BGR, not RGB, by default.
+  SPECTRAL_MODE_COLOR_YCRCB         // Luminance-dominant color.
 };
 
 // Contains information and statistics about an image. This can be useful for
@@ -186,7 +192,7 @@ class ImageData {
   // as YCrCb which have a luminance channel. If this is set, the image will be
   // treated as a single-channel image for the purposes of the solver.
   void ChangeColorSpace(
-      const ImageColorMode& new_color_mode,
+      const ImageSpectralMode& new_color_mode,
       const bool luminance_only = false);
 
   // This method will interpolate the color information from the given image
@@ -256,13 +262,14 @@ class ImageData {
   // are (x [col], y [row]).
   cv::Point GetPixelCoordinatesFromIndex(const int index) const;
 
-  // The color scheme of this image. If the image does not have exactly 3
-  // channels, it will be specified COLOR_MODE_NONE. By default, it is assumed
-  // that all images are represented in the BGR color space.
+  // The spectral mode of this image. SPECTRAL_MODE_COLOR_* is for 3-channel
+  // color images. By default, it is assumed that all 3-channel images are
+  // represented in the BGR color space. All images with more than 3 channels
+  // will be assumed to be regular hyperspectral images.
   //
-  // Color mode is automatically updated in the constructors and AddChannel()
-  // method based on the number of channels.
-  ImageColorMode color_mode_;
+  // The spectral mode is automatically updated in the constructors and
+  // AddChannel() method based on the number of channels.
+  ImageSpectralMode spectral_mode_;
 
   // If the color mode is set to a color space that has a dominant luminance
   // channel, such as the YCrCb color space, then this flag indicates how the

@@ -408,7 +408,7 @@ TEST(ImageData, ChangeColorSpace) {
   cv::split(converted_image, converted_channels);
 
   // Check that the image was converted correctly.
-  image.ChangeColorSpace(super_resolution::COLOR_MODE_YCRCB);
+  image.ChangeColorSpace(super_resolution::SPECTRAL_MODE_COLOR_YCRCB);
   EXPECT_EQ(image.GetNumChannels(), 3);
   for (int channel_index = 0; channel_index < 3; ++channel_index) {
     EXPECT_TRUE(AreMatricesEqual(
@@ -453,7 +453,7 @@ TEST(ImageData, ChangeColorSpace) {
   }
 
   // Now verify that the conversion back also works.
-  image.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
+  image.ChangeColorSpace(super_resolution::SPECTRAL_MODE_COLOR_BGR);
   EXPECT_EQ(image.GetNumChannels(), 3);
   for (int channel_index = 0; channel_index < 3; ++channel_index) {
     EXPECT_TRUE(AreMatricesEqual(
@@ -463,7 +463,7 @@ TEST(ImageData, ChangeColorSpace) {
   }
 
   // Also verify that the resized image is converted back to resized BGR.
-  image_resized.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
+  image_resized.ChangeColorSpace(super_resolution::SPECTRAL_MODE_COLOR_BGR);
   cv::Mat input_image_resized;
   cv::resize(
       input_image,
@@ -485,7 +485,7 @@ TEST(ImageData, ChangeColorSpace) {
 
   // Create a new test image to avoid snowballing numerical errors.
   ImageData image_2(input_image, false);
-  image_2.ChangeColorSpace(super_resolution::COLOR_MODE_YCRCB, true);
+  image_2.ChangeColorSpace(super_resolution::SPECTRAL_MODE_COLOR_YCRCB, true);
   EXPECT_EQ(image_2.GetNumChannels(), 1);
   EXPECT_TRUE(AreMatricesEqual(
       image_2.GetChannelImage(0), converted_channels[0], kPixelErrorTolerance));
@@ -538,7 +538,8 @@ TEST(ImageData, InterpolateColorFrom) {
 
   // Create the reference YCrCB image (converted from BGR image).
   ImageData reference_color_image(input_image, false);
-  reference_color_image.ChangeColorSpace(super_resolution::COLOR_MODE_YCRCB);
+  reference_color_image.ChangeColorSpace(
+      super_resolution::SPECTRAL_MODE_COLOR_YCRCB);
   EXPECT_EQ(reference_color_image.GetNumChannels(), 3);
 
   // Make a copy of the luminance image before changing it.

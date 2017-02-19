@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < input_data.low_res_images.size(); ++i) {
       // TODO: support for more color spaces.
       input_data.low_res_images[i].ChangeColorSpace(
-          super_resolution::COLOR_MODE_YCRCB, true);
+          super_resolution::SPECTRAL_MODE_COLOR_YCRCB, true);
     }
   }
 
@@ -185,8 +185,9 @@ int main(int argc, char** argv) {
   // and change the color space back to BGR.
   if (FLAGS_interpolate_color) {
     result.InterpolateColorFrom(initial_estimate);
-    result.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
-    initial_estimate.ChangeColorSpace(super_resolution::COLOR_MODE_BGR);
+    result.ChangeColorSpace(super_resolution::SPECTRAL_MODE_COLOR_BGR);
+    initial_estimate.ChangeColorSpace(
+        super_resolution::SPECTRAL_MODE_COLOR_BGR);
   }
 
   // If an evaluation criteria is passed in and the high-resolution image is

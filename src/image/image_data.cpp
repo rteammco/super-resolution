@@ -13,6 +13,34 @@
 
 namespace super_resolution {
 
+// Returns true if the given ImageSpectralMode represents a 3-channel color
+// image.
+bool IsColorImage(const ImageSpectralMode& spectral_mode) {
+  return (
+      spectral_mode == SPECTRAL_MODE_COLOR_BGR ||
+      spectral_mode == SPECTRAL_MODE_COLOR_YCRCB);
+}
+
+// Returns true if the given ImageSpectralMode represents a hyperspectral image
+// with more than 3 channels.
+bool IsHyperspectralImage(const ImageSpectralMode& spectral_mode) {
+  return (
+      spectral_mode == SPECTRAL_MODE_HYPERSPECTRAL ||
+      spectral_mode == SPECTRAL_MODE_HYPERSPECTRAL_PCA);
+}
+
+// Returns the default spectral mode based on the number of channels (3-channels
+// is BGR color, more is hyperspectral, otherwise none).
+ImageSpectralMode GetDefaultSpectralMode(const int num_channels) {
+  if (num_channels == 3) {
+    return SPECTRAL_MODE_COLOR_BGR;
+  } else if (num_channels > 3) {
+    return SPECTRAL_MODE_HYPERSPECTRAL;
+  } else {
+    return SPECTRAL_MODE_NONE;
+  }
+}
+
 // The actual implementation used by constructors ImageData(const cv::Mat&),
 // ImageData(const cv::Mat&, const bool), and
 // ImageData(const double*, const cv::Size&). The channels parameter should be
@@ -168,12 +196,12 @@ void ImageDataReport::Print() const {
 // Default constructor.
 ImageData::ImageData() {
   image_size_ = cv::Size(0, 0);
-  color_mode_ = COLOR_MODE_NONE;
+  spectral_mode_ = SPECTRAL_MODE_NONE;
 }
 
 // Copy constructor.
 ImageData::ImageData(const ImageData& other)
-    : color_mode_(other.color_mode_),
+    : spectral_mode_(other.spectral_mode_),
       luminance_channel_only_(other.luminance_channel_only_),
       image_size_(other.image_size_) {
 
@@ -198,12 +226,12 @@ ImageData::ImageData(const cv::Mat& image) {
 
   const bool normalize = max_pixel_value > 1.0;
   InitializeFromImage(image, normalize, &image_size_, &channels_);
-  color_mode_ = channels_.size() == 3 ? COLOR_MODE_BGR : COLOR_MODE_NONE;
+  spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 
 ImageData::ImageData(const cv::Mat& image, const bool normalize) {
   InitializeFromImage(image, normalize, &image_size_, &channels_);
-  color_mode_ = channels_.size() == 3 ? COLOR_MODE_BGR : COLOR_MODE_NONE;
+  spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 
 ImageData::ImageData(
@@ -226,7 +254,7 @@ ImageData::ImageData(
         const_cast<void*>(reinterpret_cast<const void*>(channel_pixels)));
     channels_.push_back(channel_image.clone());  // copy data
   }
-  color_mode_ = channels_.size() == 3 ? COLOR_MODE_BGR : COLOR_MODE_NONE;
+  spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 
 void ImageData::AddChannel(const cv::Mat& channel_image) {
@@ -261,7 +289,7 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
   channels_.push_back(converted_image);
 
   // Update color mode based on the number of channels now.
-  color_mode_ = channels_.size() == 3 ? COLOR_MODE_BGR : COLOR_MODE_NONE;
+  spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 
 void ImageData::ResizeImage(
@@ -321,7 +349,7 @@ void ImageData::ResizeImage(
 }
 
 int ImageData::GetNumChannels() const {
-  if (color_mode_ == COLOR_MODE_YCRCB && luminance_channel_only_) {
+  if (spectral_mode_ == SPECTRAL_MODE_COLOR_YCRCB && luminance_channel_only_) {
     return 1;
   }
   return channels_.size();
@@ -332,14 +360,17 @@ int ImageData::GetNumPixels() const {
 }
 
 void ImageData::ChangeColorSpace(
-    const ImageColorMode& new_color_mode, const bool luminance_only) {
+    const ImageSpectralMode& new_color_mode, const bool luminance_only) {
 
-  CHECK_NE(color_mode_, COLOR_MODE_NONE)
-      << "Cannot convert COLOR_MODE_NONE (monochrome or hyperspectral) "
+  CHECK(IsColorImage(spectral_mode_))
+      << "Cannot convert non-color (monochrome or hyperspectral) "
       << "images to a different color space.";
 
+  CHECK(IsColorImage(new_color_mode))
+      << "Invalid color space. new_color_mode must be SPECTRAL_MODE_COLOR_*.";
+
   // If it's already the same color mode, there's nothing to do.
-  if (new_color_mode == color_mode_) {
+  if (new_color_mode == spectral_mode_) {
     LOG(WARNING)
         << "This image is already set to the given color mode. "
         << "Image was not modified.";
@@ -348,12 +379,13 @@ void ImageData::ChangeColorSpace(
 
   // Set the OpenCV conversion mode value.
   int opencv_color_conversion_mode = 0;
-  if (color_mode_ == COLOR_MODE_BGR && new_color_mode == COLOR_MODE_YCRCB) {
+  if (spectral_mode_ == SPECTRAL_MODE_COLOR_BGR &&
+      new_color_mode == SPECTRAL_MODE_COLOR_YCRCB) {
     // BGR => YCrCb.
     opencv_color_conversion_mode = CV_BGR2YCrCb;
     luminance_channel_only_ = luminance_only;
-  } else if (color_mode_ == COLOR_MODE_YCRCB &&
-             new_color_mode == COLOR_MODE_BGR) {
+  } else if (spectral_mode_ == SPECTRAL_MODE_COLOR_YCRCB &&
+             new_color_mode == SPECTRAL_MODE_COLOR_BGR) {
     // YCrCb => BGR.
     opencv_color_conversion_mode = CV_YCrCb2BGR;
   } else {
@@ -365,7 +397,7 @@ void ImageData::ChangeColorSpace(
 
   // If going to BGR and luminance_channels_only_ is enabled, interpolate color
   // channels first to the appropriate size.
-  if (new_color_mode == COLOR_MODE_BGR && luminance_channel_only_) {
+  if (new_color_mode == SPECTRAL_MODE_COLOR_BGR && luminance_channel_only_) {
     InterpolateColor(channels_, &channels_);
   }
 
@@ -385,7 +417,7 @@ void ImageData::ChangeColorSpace(
   channels_.clear();
   cv::split(converted_image, channels_);
 
-  color_mode_ = new_color_mode;
+  spectral_mode_ = new_color_mode;
 }
 
 void ImageData::InterpolateColorFrom(const ImageData& color_image) {
@@ -396,7 +428,7 @@ void ImageData::InterpolateColorFrom(const ImageData& color_image) {
 
   channels_.resize(3);
   InterpolateColor(color_image.channels_, &channels_);
-  color_mode_ = color_image.color_mode_;
+  spectral_mode_ = color_image.spectral_mode_;
 }
 
 cv::Mat ImageData::GetChannelImage(const int index) const {
@@ -454,10 +486,11 @@ cv::Mat ImageData::GetVisualizationImage() const {
   } else {
     // If the image is a 3-channel image and the color mode was not BGR,
     // convert the visualization to BGR first.
-    if (!(color_mode_ == COLOR_MODE_NONE || color_mode_ == COLOR_MODE_BGR)) {
+    if (!(IsHyperspectralImage(spectral_mode_) ||
+          spectral_mode_ == SPECTRAL_MODE_COLOR_BGR)) {
       // TODO: this may be a bit hacky, but it works.
       ImageData converted_bgr_image = *this;  // Copy self.
-      converted_bgr_image.ChangeColorSpace(COLOR_MODE_BGR);
+      converted_bgr_image.ChangeColorSpace(SPECTRAL_MODE_COLOR_BGR);
       return converted_bgr_image.GetVisualizationImage();
     }
     // For 3 or more channels, return an RGB image of the first, middle, and

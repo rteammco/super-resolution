@@ -10,14 +10,14 @@ configuration = {
   'blur_sigma': 0.5,
   'noise_sigma': 5.0,
 #  'hr_image_path': '../test_data/fb.png',
-  'hr_image_path': '../test_data/dallas_half.jpg',
+  'hr_image_path': '../test_data/dallas_qtr.jpg',
   'lr_image_dir': '../test_data/OUT',
   'number_of_frames': 4,
   'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
   # Solver-only options:
   'interpolate_color': True,
   'regularizer': 'tv',
-  'regularization_parameter': 0.01,
+  'regularization_parameter': 0.001,
   'solver_iterations': 50,  # = 0 infinite
   'use_numerical_differentiation': False,
   'display_mode': 'compare',
