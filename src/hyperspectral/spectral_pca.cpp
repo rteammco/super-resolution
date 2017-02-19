@@ -12,6 +12,14 @@
 
 namespace super_resolution {
 
+// Returns the data from the given images (one or more required) in
+// pixel-vector form. That is, instead of the images being organized by
+// channel, each row of the returned matrix will be a pixel, and the columns
+// span the different channels. The number of rows is the total number of
+// pixels across all images.
+//
+// TODO: This will probably result in way-too-big images, so sum-sampling the
+// pixels might be a good idea.
 cv::Mat GetPcaInputData(const std::vector<ImageData>& hyperspectral_images) {
   CHECK(!hyperspectral_images.empty())
       << "At least one image is required to compute the PCA basis.";
@@ -51,6 +59,71 @@ cv::Mat GetPcaInputData(const std::vector<ImageData>& hyperspectral_images) {
   return input_data;
 }
 
+// This function will either convert images from hyperspectral space to PCA
+// space or vice versa. Use the forward_projection flag to control the
+// projection direction (true = hyperspectral to PCA projection, false = PCA to
+// hyperspectral backprojection).
+ImageData ConvertImage(
+    const ImageData& input_image,
+    const cv::PCA& pca,
+    const int num_spectral_bands,
+    const int num_pca_bands,
+    const bool forward_projection) {
+
+  int num_input_bands;
+  int num_output_bands;
+  if (forward_projection) {
+    num_input_bands = num_spectral_bands;
+    num_output_bands = num_pca_bands;
+  } else {
+    num_input_bands = num_pca_bands;
+    num_output_bands = num_spectral_bands;
+  }
+
+  CHECK_EQ(input_image.GetNumChannels(), num_input_bands)
+      << "The input image does not have the correct number of channels.";
+
+  // Create empty OpenCV images for the output image channels.
+  std::vector<cv::Mat> output_image_channels;
+  output_image_channels.reserve(num_output_bands);
+  for (int i = 0; i < num_output_bands; ++i) {
+    cv::Mat channel_image =
+        cv::Mat::zeros(input_image.GetImageSize(), util::kOpenCvMatrixType);
+    output_image_channels.push_back(channel_image);
+  }
+
+  // Project the input image into the ouput space pixel by pixel.
+  const int num_pixels = input_image.GetNumPixels();
+  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
+    // Extract the pixel vector from the input image.
+    cv::Mat input_pixel_vector(num_input_bands, 1, util::kOpenCvMatrixType);
+    for (int i = 0; i < num_input_bands; ++i) {
+      input_pixel_vector.at<double>(i) =
+          input_image.GetPixelValue(i, pixel_index);
+    }
+    // Project the input pixel vector into the other space and set the output
+    // channel values.
+    cv::Mat output_pixel_vector;
+    if (forward_projection) {
+      output_pixel_vector = pca.project(input_pixel_vector);
+    } else {
+      output_pixel_vector = pca.backProject(input_pixel_vector);
+    }
+    for (int i = 0; i < num_output_bands; ++i) {
+      output_image_channels[i].at<double>(pixel_index) =
+          output_pixel_vector.at<double>(i);
+    }
+  }
+
+  // Return the projected image.
+  ImageData output_image;
+  for (const cv::Mat& channel_image : output_image_channels) {
+    output_image.AddChannel(channel_image);
+    // TODO: set image spectral mode to the correct mode (manually!).
+  }
+  return output_image;
+}
+
 SpectralPca::SpectralPca(
     const std::vector<ImageData>& hyperspectral_images,
     const int num_pca_bands) {
@@ -78,47 +151,15 @@ SpectralPca::SpectralPca(
 }
 
 ImageData SpectralPca::GetPcaImage(const ImageData& image_data) const {
-  CHECK_EQ(image_data.GetNumChannels(), num_spectral_bands_)
-      << "The input image does not have the correct number of channels.";
-
-  // Create empty OpenCV images for the PCA image channels.
-  std::vector<cv::Mat> pca_image_channels;
-  pca_image_channels.reserve(num_pca_bands_);
-  for (int i = 0; i < num_pca_bands_; ++i) {
-    cv::Mat channel_image =
-        cv::Mat::zeros(image_data.GetImageSize(), util::kOpenCvMatrixType);
-    pca_image_channels.push_back(channel_image);
-  }
-
-  // Project the original image into PCA space pixel by pixel.
-  const int num_pixels = image_data.GetNumPixels();
-  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-    // Extract the pixel vector from the original image.
-    cv::Mat pixel_vector(num_spectral_bands_, 1, util::kOpenCvMatrixType);
-    for (int i = 0; i < num_spectral_bands_; ++i) {
-      pixel_vector.at<double>(i) = image_data.GetPixelValue(i, pixel_index);
-    }
-    // Project the pixel vector into PCA space and set the PCA channel values.
-    cv::Mat pca_pixel_vector = pca_.project(pixel_vector);
-    for (int i = 0; i< num_pca_bands_; ++i) {
-      pca_image_channels[i].at<double>(pixel_index) =
-          pca_pixel_vector.at<double>(i);
-    }
-  }
-
-  // Return the projected image.
-  ImageData pca_image;
-  for (const cv::Mat& channel_image : pca_image_channels) {
-    pca_image.AddChannel(channel_image);
-    // TODO: set PCA image spectral mode to PCA (manually).
-  }
-  return pca_image;
+  // true = forward projection (hyperspectral to PCA).
+  return ConvertImage(
+      image_data, pca_, num_spectral_bands_, num_pca_bands_, true);
 }
 
 ImageData SpectralPca::ReconstructImage(const ImageData& pca_image_data) const {
-  // TODO: this process is identical to the process for GetPcaImage(), but the
-  // channel counts are opposite and use pca_.backProject() instead of
-  // pca_.project().
+  // false = backwards projection (PCA to hyperspectral).
+  return ConvertImage(
+      pca_image_data, pca_, num_spectral_bands_, num_pca_bands_, false);
 }
 
 }  // namespace super_resolution

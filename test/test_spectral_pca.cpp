@@ -22,4 +22,7 @@ TEST(SpectralPca, Decomposition) {
     image
   });
   const super_resolution::SpectralPca spectral_pca(images);
+
+  // TODO: test GetPcaImage()!
+  // TODO: test ReconstructImage()!
 }
