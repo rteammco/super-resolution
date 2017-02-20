@@ -258,15 +258,7 @@ ImageData::ImageData(
   spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 
-void ImageData::AddChannel(const cv::Mat& channel_image) {
-  // Make sure all pixels are within some valid range.
-  double min_pixel_value, max_pixel_value;
-  cv::minMaxLoc(channel_image, &min_pixel_value, &max_pixel_value);
-  CHECK_GE(min_pixel_value, 0)
-      << "Invalid pixel range in given image: values cannot be negative.";
-  CHECK_LE(max_pixel_value, 255)
-      << "Invalid pixel range in given image: values cannot exceed 255.";
-
+void ImageData::AddChannel(const cv::Mat& channel_image, const bool normalize) {
   // Set or check size for consistency.
   if (channels_.empty()) {
     image_size_ = channel_image.size();
@@ -281,7 +273,9 @@ void ImageData::AddChannel(const cv::Mat& channel_image) {
   cv::Mat converted_image = channel_image.clone();
   // Scale pixels between 0 and 1 if they are in the 0-255 range instead. Always
   // convert to the standard Matrix type in any case.
-  if (max_pixel_value > 1.0) {
+  double min_pixel_value, max_pixel_value;
+  cv::minMaxLoc(channel_image, &min_pixel_value, &max_pixel_value);
+  if (normalize && max_pixel_value > 1.0) {
     converted_image.convertTo(
         converted_image, util::kOpenCvMatrixType, 1.0 / 255.0);
   } else {
@@ -443,7 +437,7 @@ void ImageData::SetSpectralMode(const ImageSpectralMode& spectral_mode) {
   if (spectral_mode == SPECTRAL_MODE_HYPERSPECTRAL && num_channels <= 3) {
     LOG(WARNING)
         << "Spectral mode set to hyperspectral but number of spectra is too "
-        << "low (" << num_channels << " spectral bands.";
+        << "low (" << num_channels << " spectral bands).";
   }
 }
 

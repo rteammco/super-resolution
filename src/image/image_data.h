@@ -140,7 +140,10 @@ class ImageData {
   // added channel must have the same dimensions as the rest of the image.
   // Images given in a non-normalized range (0-255 pixel values) will
   // automatically be noramlized to values between 0 and 1.
-  void AddChannel(const cv::Mat& channel_image);
+  //
+  // To add a channel explicity (without any checks or normalizations), set
+  // normalize = false.
+  void AddChannel(const cv::Mat& channel_image, const bool normalize = true);
 
   // Resizes this image to the given Size. The given Size must be valid (i.e.
   // positive values for width and height). All channels will be resized

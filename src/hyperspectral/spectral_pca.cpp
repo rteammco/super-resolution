@@ -12,6 +12,9 @@
 
 namespace super_resolution {
 
+constexpr bool kForwardProjectionFlag = true;
+constexpr bool kBackProjectionFlag = false;
+
 // Returns the data from the given images (one or more required) in
 // pixel-vector form. That is, instead of the images being organized by
 // channel, each row of the returned matrix will be a pixel, and the columns
@@ -36,11 +39,17 @@ cv::Mat GetPcaInputData(const std::vector<ImageData>& hyperspectral_images) {
         << "useful or applicable here.";
   }
 
-  // Format the input data as pixel vectors for PCA.
-  // TODO: Probably need to do subsampling. Images can be way too big.
   const int num_images = hyperspectral_images.size();
   const int num_pixels = hyperspectral_images[0].GetNumPixels();
   const int num_data_points = num_images * num_pixels;
+  if (num_data_points < num_channels) {
+    LOG(WARNING)
+        << "The number of channels exceeds the number of data points (pixels). "
+        << "PCA reconstruction quality will be limited. Use more data points.";
+  }
+
+  // Format the input data as pixel vectors for PCA.
+  // TODO: Probably need to do subsampling. Images can be way too big.
   cv::Mat input_data(num_data_points, num_channels, util::kOpenCvMatrixType);
   for (int image_index = 0; image_index < num_images; ++image_index) {
     const ImageData& image = hyperspectral_images[image_index];
@@ -70,6 +79,10 @@ ImageData ConvertImage(
     const int num_pca_bands,
     const bool forward_projection) {
 
+  const cv::Size pca_eigenvectors_size = pca.eigenvectors.size();
+  CHECK_EQ(pca_eigenvectors_size.width, num_spectral_bands);
+  CHECK_EQ(pca_eigenvectors_size.height, num_pca_bands);
+
   int num_input_bands;
   int num_output_bands;
   if (forward_projection) {
@@ -96,7 +109,7 @@ ImageData ConvertImage(
   const int num_pixels = input_image.GetNumPixels();
   for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
     // Extract the pixel vector from the input image.
-    cv::Mat input_pixel_vector(num_input_bands, 1, util::kOpenCvMatrixType);
+    cv::Mat input_pixel_vector(1, num_input_bands, util::kOpenCvMatrixType);
     for (int i = 0; i < num_input_bands; ++i) {
       input_pixel_vector.at<double>(i) =
           input_image.GetPixelValue(i, pixel_index);
@@ -118,7 +131,7 @@ ImageData ConvertImage(
   // Return the projected image.
   ImageData output_image;
   for (const cv::Mat& channel_image : output_image_channels) {
-    output_image.AddChannel(channel_image);
+    output_image.AddChannel(channel_image, false);
   }
   if (forward_projection) {
     output_image.SetSpectralMode(SPECTRAL_MODE_HYPERSPECTRAL_PCA);
@@ -155,15 +168,23 @@ SpectralPca::SpectralPca(
 }
 
 ImageData SpectralPca::GetPcaImage(const ImageData& image_data) const {
-  // true = forward projection (hyperspectral to PCA).
+  // Forward projection (hyperspectral to PCA).
   return ConvertImage(
-      image_data, pca_, num_spectral_bands_, num_pca_bands_, true);
+      image_data,
+      pca_,
+      num_spectral_bands_,
+      num_pca_bands_,
+      kForwardProjectionFlag);
 }
 
 ImageData SpectralPca::ReconstructImage(const ImageData& pca_image_data) const {
-  // false = backwards projection (PCA to hyperspectral).
+  // Backwards projection (PCA to hyperspectral).
   return ConvertImage(
-      pca_image_data, pca_, num_spectral_bands_, num_pca_bands_, false);
+      pca_image_data,
+      pca_,
+      num_spectral_bands_,
+      num_pca_bands_,
+      kBackProjectionFlag);
 }
 
 }  // namespace super_resolution
