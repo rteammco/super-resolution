@@ -2,6 +2,7 @@
 
 #include "hyperspectral/spectral_pca.h"
 #include "image/image_data.h"
+#include "util/matrix_util.h"
 #include "util/test_util.h"
 
 #include "opencv2/core/core.hpp"
@@ -9,6 +10,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+using super_resolution::ImageData;
 using super_resolution::test::AreMatricesEqual;
 
 constexpr double kReconstructionErrorTolerance = 0.00001;
@@ -21,12 +23,12 @@ TEST(SpectralPca, Decomposition) {
   const cv::Mat small_channel_2 = (cv::Mat_<double>(10, 1)
       << 2.2175, 2.5425, -1.2075, -1.9575, -3.3825,
          3.6425, 2.5925, 3.3175, -3.4825, -4.2825);
-  super_resolution::ImageData small_image;
+  ImageData small_image;
   small_image.AddChannel(small_channel_1, false);
   small_image.AddChannel(small_channel_2, false);
 
   // Set up the PCA decomposition.
-  const std::vector<super_resolution::ImageData> small_images({
+  const std::vector<ImageData> small_images({
     small_image
   });
   const super_resolution::SpectralPca spectral_pca_small({small_image});
@@ -38,7 +40,7 @@ TEST(SpectralPca, Decomposition) {
   const cv::Mat small_pca_known_channel_2 = (cv::Mat_<double>(10, 1)
       << 0.0538, 0.00622, 0.01545, 0.01729, 0.12995,
          -0.05886, -0.10306, 0.06669, 0.03664, -0.16411);
-  const super_resolution::ImageData small_pca_image =
+  const ImageData small_pca_image =
       spectral_pca_small.GetPcaImage(small_image);
   EXPECT_EQ(small_pca_image.GetNumChannels(), 2);
   EXPECT_TRUE(AreMatricesEqual(
@@ -51,7 +53,7 @@ TEST(SpectralPca, Decomposition) {
       kReconstructionErrorTolerance));
 
   // Convert it back and make sure the reconstruction matches.
-  const super_resolution::ImageData small_image_reconstructed =
+  const ImageData small_image_reconstructed =
       spectral_pca_small.ReconstructImage(small_pca_image);
   for (int i = 0; i < small_image.GetNumChannels(); ++i) {
     EXPECT_TRUE(AreMatricesEqual(
@@ -62,17 +64,18 @@ TEST(SpectralPca, Decomposition) {
 
   /* Run with a bigger image that has controlled strong correlations. */
 
-  // TODO: many more pixels and more channels.
-  super_resolution::ImageData hyperspectral_image;
-  const int num_channels = 10;
+  ImageData hyperspectral_image;
+  const int num_channels = 300;
+  const cv::Size test_image_size(50, 25);
+  const double random_mean = 0.5;
+  const double random_stddev = 0.1;
   for (int i = 0; i < num_channels; ++i) {
+    // Create a random matrix but compressed similar values in all axes.
     const double scalar =
         static_cast<double>(i) / static_cast<double>(num_channels);
-    // TODO: add random noise here.
-    cv::Mat channel = (cv::Mat_<double>(3, 4)
-        << 0.25, 0.5,  0.75, 0.4,
-           0.33, 0.66, 0.99, 0.28,
-           0.0,  0.5,  1.0,  0.55);
+    cv::Mat channel = cv::Mat::ones(
+        test_image_size, super_resolution::util::kOpenCvMatrixType);
+    cv::randn(channel, cv::Scalar(random_mean), cv::Scalar(random_stddev));
     channel = channel * scalar;
     hyperspectral_image.AddChannel(channel);
   }
@@ -80,9 +83,9 @@ TEST(SpectralPca, Decomposition) {
   // Test PCA decomposition with no approximations. The reconstruction should
   // be (almost) exact.
   const super_resolution::SpectralPca spectral_pca_full({hyperspectral_image});
-  const super_resolution::ImageData hyperspectral_pca_image_full =
+  const ImageData hyperspectral_pca_image_full =
       spectral_pca_full.GetPcaImage(hyperspectral_image);
-  const super_resolution::ImageData reconstructed_hyperspectral_image_full =
+  const ImageData reconstructed_hyperspectral_image_full =
       spectral_pca_full.ReconstructImage(hyperspectral_pca_image_full);
   for (int i = 0; i < num_channels; ++i) {
     EXPECT_TRUE(AreMatricesEqual(
@@ -91,5 +94,39 @@ TEST(SpectralPca, Decomposition) {
         kReconstructionErrorTolerance));
   }
 
-  // TODO: test with partial reconstruction.
+  // Test PCA decomposition using only a subset of bands and check that the
+  // reconstruction is a close-enough approximation.
+  const super_resolution::SpectralPca spectral_pca_approx_count(
+      {hyperspectral_image}, 250);
+  const ImageData hyperspectral_pca_image_approx_count =
+      spectral_pca_approx_count.GetPcaImage(hyperspectral_image);
+  const ImageData reconstructed_hyperspectral_image_approx_count =
+      spectral_pca_approx_count.ReconstructImage(
+          hyperspectral_pca_image_approx_count);
+  for (int i = 0; i < num_channels; ++i) {
+    EXPECT_TRUE(AreMatricesEqual(
+        reconstructed_hyperspectral_image_approx_count.GetChannelImage(i),
+        hyperspectral_image.GetChannelImage(i),
+        0.05));
+  }
+
+  // Finally test using a required retained variance amount (99%). This should
+  // limit the number of PCA bands but still yield a close approximation in the
+  // reconstruction.
+  const super_resolution::SpectralPca spectral_pca_approx_var(
+      {hyperspectral_image}, 0.999);
+  const ImageData hyperspectral_pca_image_approx_var =
+      spectral_pca_approx_var.GetPcaImage(hyperspectral_image);
+  EXPECT_LT(
+      hyperspectral_pca_image_approx_var.GetNumChannels(),
+      hyperspectral_image.GetNumChannels());
+  const ImageData reconstructed_hyperspectral_image_approx_var =
+      spectral_pca_approx_var.ReconstructImage(
+          hyperspectral_pca_image_approx_var);
+  for (int i = 0; i < num_channels; ++i) {
+    EXPECT_TRUE(AreMatricesEqual(
+        reconstructed_hyperspectral_image_approx_var.GetChannelImage(i),
+        hyperspectral_image.GetChannelImage(i),
+        0.05));
+  }
 }

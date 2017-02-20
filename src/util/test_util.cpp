@@ -42,7 +42,7 @@ bool AreMatricesEqual(
     diff = cv::abs(diff);
   } else {
     cv::absdiff(mat1, mat2, diff);
-    cv::threshold(diff, diff, diff_tolerance, 1, cv::THRESH_BINARY);
+    cv::threshold(diff, diff, diff_tolerance, 1, cv::THRESH_TOZERO);
   }
 
   const int non_equal_count = cv::countNonZero(diff);
