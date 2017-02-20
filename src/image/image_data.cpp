@@ -450,6 +450,7 @@ void ImageData::InterpolateColorFrom(const ImageData& color_image) {
   channels_.resize(3);
   InterpolateColor(color_image.channels_, &channels_);
   spectral_mode_ = color_image.spectral_mode_;
+  luminance_channel_only_ = false;
 }
 
 cv::Mat ImageData::GetChannelImage(const int index) const {
