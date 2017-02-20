@@ -11,9 +11,9 @@ The following OpenCV error might be displayed when trying to run tests or code t
 ```
 OpenCV Error: Unsupported format or combination of formats () in threshold, file /tmp/opencv3-20160626-61731-v18vfg/opencv-3.1.0/modules/imgproc/src/thresh.cpp, line 1273
 ```
-This happens due to a bug in an older version of OpenCV 3 where the `cv::threshold` function does not support 64-bit floats (doubles) in images.
+This happens due to a bug in an older version of OpenCV3 (3.1.0) where the `cv::threshold` function does not support 64-bit floats (doubles) in images.
 
-The fix is to update your OpenCV installation.
+The fix is to update your OpenCV installation to OpenCV version 3.2.0+.
 
 #### macOS
 
@@ -24,4 +24,4 @@ brew upgrade opencv3
 
 #### Linux
 
-Probably need to download and install the latest version again. Sorry :(
+Probably need to download and install the latest version again. Sorry :( You can re-install OpenCV the same way as you originally installed it. Follow the same instructions with the latest version.

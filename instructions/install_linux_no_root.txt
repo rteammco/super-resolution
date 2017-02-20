@@ -69,11 +69,11 @@ make install
 --------------------------------------------------------------------------------
 
 
-OPENCV 3+
+OPENCV 3.2+
 --------------------------------------------------------------------------------
-wget http://downloads.sourceforge.net/project/opencvlibrary/opencv-unix/3.1.0/opencv-3.1.0.zip
-unzip opencv-3.1.0.zip
-cd opencv-3.1.0
+wget http://downloads.sourceforge.net/project/opencvlibrary/opencv-unix/3.2.0/opencv-3.2.0.zip
+unzip opencv-3.2.0.zip
+cd opencv-3.2.0
 mkdir release
 cd release
 cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/PATH/TO/USER/HOME ..

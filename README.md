@@ -84,7 +84,7 @@ sudo apt-get install libgflags-dev
 sudo apt-get install libgoogle-glog-dev
 ```
 
-Install OpenCV 3 by following the instructions here: http://docs.opencv.org/3.0-beta/doc/tutorials/introduction/linux_install/linux_install.html.
+Install OpenCV 3 by following the instructions here: http://docs.opencv.org/3.0-beta/doc/tutorials/introduction/linux_install/linux_install.html. Install OpenCV 3.2.0+ since OpenCV 3.1.0 has a bug and parts of the code and tests may throw an error.
 Also probably install the optional stuff.
 
 Install gtest:
