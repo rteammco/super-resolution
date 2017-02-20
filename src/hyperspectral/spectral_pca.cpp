@@ -119,7 +119,11 @@ ImageData ConvertImage(
   ImageData output_image;
   for (const cv::Mat& channel_image : output_image_channels) {
     output_image.AddChannel(channel_image);
-    // TODO: set image spectral mode to the correct mode (manually!).
+  }
+  if (forward_projection) {
+    output_image.SetSpectralMode(SPECTRAL_MODE_HYPERSPECTRAL_PCA);
+  } else {
+    output_image.SetSpectralMode(SPECTRAL_MODE_HYPERSPECTRAL);
   }
   return output_image;
 }

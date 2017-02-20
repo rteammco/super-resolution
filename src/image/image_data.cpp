@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -418,6 +419,32 @@ void ImageData::ChangeColorSpace(
   cv::split(converted_image, channels_);
 
   spectral_mode_ = new_color_mode;
+}
+
+void ImageData::SetSpectralMode(const ImageSpectralMode& spectral_mode) {
+  spectral_mode_ = spectral_mode;
+
+  // Display some warnings if things don't line up.
+  const int num_channels = GetNumChannels();
+  const bool can_be_color =
+      (num_channels == 3) || (num_channels == 1 && luminance_channel_only_);
+  if (IsColorImage(spectral_mode) && !can_be_color) {
+    std::string luminance_on_or_off;
+    if (luminance_channel_only_) {
+      luminance_on_or_off = "on";
+    } else {
+      luminance_on_or_off = "off";
+    }
+    LOG(WARNING)
+        << "Spectral mode set to color but the image does not appear to be a "
+        << "color image (" << num_channels << " channel(s), luminance-only = "
+        << luminance_on_or_off << ").";
+  }
+  if (spectral_mode == SPECTRAL_MODE_HYPERSPECTRAL && num_channels <= 3) {
+    LOG(WARNING)
+        << "Spectral mode set to hyperspectral but number of spectra is too "
+        << "low (" << num_channels << " spectral bands.";
+  }
 }
 
 void ImageData::InterpolateColorFrom(const ImageData& color_image) {

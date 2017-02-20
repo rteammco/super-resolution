@@ -195,6 +195,10 @@ class ImageData {
       const ImageSpectralMode& new_color_mode,
       const bool luminance_only = false);
 
+  // Allows manually setting the spectral mode. This method will log warnings
+  // for potentially invalid settings.
+  void SetSpectralMode(const ImageSpectralMode& spectral_mode);
+
   // This method will interpolate the color information from the given image
   // into this monochrome image. Typically, this image would be higher
   // resolution than the other given image so that structure is preserved and
