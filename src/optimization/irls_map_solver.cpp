@@ -100,11 +100,28 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     // cost value is returned.
     double final_cost = 0.0;
     if (solver_options_.use_numerical_differentiation) {
-      final_cost = RunCGSolverNumericalDiff(
-          solver_options_, objective_function, &solver_data);
+      if (solver_options_.least_squares_solver == CG_SOLVER) {
+        final_cost = RunCGSolverNumericalDiff(
+            solver_options_, objective_function, &solver_data);
+      } else {
+        final_cost = RunLBFGSSolverNumericalDiff(
+            solver_options_, objective_function, &solver_data);
+      }
     } else {
-      final_cost = RunCGSolverAnalyticalDiff(
-          solver_options_, objective_function, &solver_data);
+      if (solver_options_.least_squares_solver == CG_SOLVER) {
+        final_cost = RunCGSolverAnalyticalDiff(
+            solver_options_, objective_function, &solver_data);
+      } else {
+        final_cost = RunLBFGSSolverAnalyticalDiff(
+            solver_options_, objective_function, &solver_data);
+      }
+    }
+
+    // If there are no regularizers, then no need to continue since the solver
+    // already converged and the objective won't change.
+    if (num_regularizers == 0) {
+      LOG(INFO) << "Least squares done (no regularization terms to reweight).";
+      break;
     }
 
     // Update the IRLS weights.

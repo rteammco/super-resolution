@@ -17,7 +17,8 @@ configuration = {
   # Solver-only options:
   'interpolate_color': True,
   'regularizer': 'tv',
-  'regularization_parameter': 0.001,
+  'regularization_parameter': 0.01,
+  'solver': 'cg',
   'solver_iterations': 50,  # = 0 infinite
   'use_numerical_differentiation': False,
   'display_mode': 'compare',
@@ -54,6 +55,7 @@ def run_super_resolution(binary_path, config):
   command += ' --regularization_parameter={}'.format(
       config['regularization_parameter'])
   command += ' --display_mode={}'.format(config['display_mode'])
+  command += ' --solver={}'.format(config['solver'])
   command += ' --solver_iterations={}'.format(config['solver_iterations'])
   if config['generate_lr_images']:
     command += ' --generate_lr_images'

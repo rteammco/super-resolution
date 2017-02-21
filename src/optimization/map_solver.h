@@ -17,10 +17,19 @@
 
 namespace super_resolution {
 
+// The available solvers to use for least squares minimization.
+enum LeastSquaresSolver {
+  CG_SOLVER,    // Conjugate gradient solver.
+  LBFGS_SOLVER  // Limited-memory BFGS solver.
+};
+
 // Options for the solver. Set/update these as needed for subclasses of
 // MapSolver.
 struct MapSolverOptions {
   MapSolverOptions() {}  // Required for making a const instance.
+
+  // Which solver to use.
+  LeastSquaresSolver least_squares_solver = CG_SOLVER;
 
   // Maximum number of solver iterations. 0 for infinite.
   int max_num_solver_iterations = 50;

@@ -30,6 +30,20 @@ double RunCGSolverAnalyticalDiff(
     const ObjectiveFunction& objective_function,
     alglib::real_1d_array* solver_data);
 
+// Same as RunCGSolverNumericalDiff, but uses ALGLIB's LBFGS solver instead of
+// conjugate gradient.
+double RunLBFGSSolverNumericalDiff(
+    const MapSolverOptions& solver_options,
+    const ObjectiveFunction& objective_function,
+    alglib::real_1d_array* solver_data);
+
+// Same as RunCGSolverAnalyticalDiff, but uses ALGLIB's LBFGS solver instead of
+// conjugate gradient.
+double RunLBFGSSolverAnalyticalDiff(
+    const MapSolverOptions& solver_options,
+    const ObjectiveFunction& objective_function,
+    alglib::real_1d_array* solver_data);
+
 // The objective function used by the ALGLIB solver to compute residuals. This
 // version uses analyitical differentiation, meaning that the gradient is
 // computed manually.

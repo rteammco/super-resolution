@@ -74,6 +74,71 @@ double RunCGSolverAnalyticalDiff(
   return solver_state.f;
 }
 
+double RunLBFGSSolverNumericalDiff(
+    const MapSolverOptions& solver_options,
+    const ObjectiveFunction& objective_function,
+    alglib::real_1d_array* solver_data) {
+
+  alglib::minlbfgsstate solver_state;
+  alglib::minlbfgsreport solver_report;
+
+  alglib::minlbfgscreatef(
+      5,  // TODO: set the number of corrections somehow
+      *solver_data,
+      solver_options.numerical_differentiation_step,
+      solver_state);
+
+  alglib::minlbfgssetcond(
+      solver_state,
+      solver_options.gradient_norm_threshold,
+      solver_options.cost_decrease_threshold,
+      solver_options.parameter_variation_threshold,
+      solver_options.max_num_solver_iterations);
+  alglib::minlbfgssetxrep(solver_state, true);
+
+  // Optimize with LBFGS.
+  alglib::minlbfgsoptimize(
+      solver_state,
+      AlglibObjectiveFunctionNumericalDiff,
+      AlglibSolverIterationCallback,
+      const_cast<void*>(reinterpret_cast<const void*>(&objective_function)));
+
+  alglib::minlbfgsresults(solver_state, *solver_data, solver_report);
+
+  return solver_state.f;
+}
+
+double RunLBFGSSolverAnalyticalDiff(
+    const MapSolverOptions& solver_options,
+    const ObjectiveFunction& objective_function,
+    alglib::real_1d_array* solver_data) {
+
+  alglib::minlbfgsstate solver_state;
+  alglib::minlbfgsreport solver_report;
+
+  // TODO: set the number of corrections somehow
+  alglib::minlbfgscreate(5, *solver_data, solver_state);
+
+  alglib::minlbfgssetcond(
+      solver_state,
+      solver_options.gradient_norm_threshold,
+      solver_options.cost_decrease_threshold,
+      solver_options.parameter_variation_threshold,
+      solver_options.max_num_solver_iterations);
+  alglib::minlbfgssetxrep(solver_state, true);
+
+  // Optimize with LBFGS.
+  alglib::minlbfgsoptimize(
+      solver_state,
+      AlglibObjectiveFunction,
+      AlglibSolverIterationCallback,
+      const_cast<void*>(reinterpret_cast<const void*>(&objective_function)));
+
+  alglib::minlbfgsresults(solver_state, *solver_data, solver_report);
+
+  return solver_state.f;
+}
+
 void AlglibObjectiveFunction(
     const alglib::real_1d_array& estimated_data,
     double& residual_sum,  // NOLINT
@@ -103,7 +168,8 @@ void AlglibSolverIterationCallback(
     void* objective_function_ptr) {
 
   // TODO: Don't report this if the solver is not verbose...
-  LOG(INFO) << "Iteration complete: " << residual_sum;
+  LOG(INFO) << "Iteration complete. "
+            << "Sum of squared residuals = " << residual_sum;
 }
 
 }  // namespace super_resolution

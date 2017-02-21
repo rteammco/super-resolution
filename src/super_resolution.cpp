@@ -61,6 +61,8 @@ DEFINE_string(regularizer, "tv",
     "The regularizer to use ('tv', '3dtv', 'btv').");
 DEFINE_double(regularization_parameter, 0.01,
     "The regularization parameter (lambda). 0 to not use regularization.");
+DEFINE_string(solver, "cg",
+    "The least squares solver to use ('cg' or 'lbfgs').");
 DEFINE_int32(solver_iterations, 50,
     "The maximum number of solver iterations.");
 DEFINE_bool(use_numerical_differentiation, false,
@@ -142,6 +144,15 @@ int main(int argc, char** argv) {
   // Set up the solver.
   // TODO: let the user choose the solver (once more solvers are supported).
   super_resolution::IrlsMapSolverOptions solver_options;
+  if (FLAGS_solver == "cg") {
+    solver_options.least_squares_solver = super_resolution::CG_SOLVER;
+    LOG(INFO) << "Using conjugate gradient solver.";
+  } else if (FLAGS_solver == "lbfgs") {
+    solver_options.least_squares_solver = super_resolution::LBFGS_SOLVER;
+    LOG(INFO) << "Using LBFGS solver.";
+  } else {
+    LOG(WARNING) << "Invalid solver flag. Using default (conjugate gradient).";
+  }
   solver_options.max_num_solver_iterations = FLAGS_solver_iterations;
   solver_options.use_numerical_differentiation =
       FLAGS_use_numerical_differentiation;
