@@ -96,8 +96,8 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
       objective_function.AddTerm(regularization_term);
     }
 
-    // Run conjugate gradient on the reweighted objective function. The final
-    // cost value is returned.
+    // Run the solver on the reweighted objective function. Solver choice and
+    // differentiation method are determined by options.
     double final_cost = 0.0;
     if (solver_options_.use_numerical_differentiation) {
       if (solver_options_.least_squares_solver == CG_SOLVER) {

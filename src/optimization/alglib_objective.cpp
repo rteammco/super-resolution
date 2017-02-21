@@ -83,7 +83,7 @@ double RunLBFGSSolverNumericalDiff(
   alglib::minlbfgsreport solver_report;
 
   alglib::minlbfgscreatef(
-      5,  // TODO: set the number of corrections somehow
+      solver_options.num_lbfgs_hessian_corrections,
       *solver_data,
       solver_options.numerical_differentiation_step,
       solver_state);
@@ -116,8 +116,8 @@ double RunLBFGSSolverAnalyticalDiff(
   alglib::minlbfgsstate solver_state;
   alglib::minlbfgsreport solver_report;
 
-  // TODO: set the number of corrections somehow
-  alglib::minlbfgscreate(5, *solver_data, solver_state);
+  alglib::minlbfgscreate(
+      solver_options.num_lbfgs_hessian_corrections, *solver_data, solver_state);
 
   alglib::minlbfgssetcond(
       solver_state,

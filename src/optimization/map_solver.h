@@ -31,6 +31,12 @@ struct MapSolverOptions {
   // Which solver to use.
   LeastSquaresSolver least_squares_solver = CG_SOLVER;
 
+  // The number of corrections for approximating the Hessian for an LBFGS
+  // iteration. ALGLIB recommends 3 <= num_lbfgs_hessian_corrections <= 7.
+  //
+  // Only applicable if using LBFGS_SOLVER.
+  int num_lbfgs_hessian_corrections = 5;
+
   // Maximum number of solver iterations. 0 for infinite.
   int max_num_solver_iterations = 50;
 
