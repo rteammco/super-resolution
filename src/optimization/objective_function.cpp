@@ -19,4 +19,8 @@ double ObjectiveFunction::ComputeAllTerms(
   return residual_sum;
 }
 
+void ObjectiveFunction::ReportIterationComplete(const double residual_sum) {
+  num_iterations_completed_++;
+}
+
 }  // namespace super_resolution

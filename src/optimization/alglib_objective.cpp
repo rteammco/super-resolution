@@ -167,9 +167,14 @@ void AlglibSolverIterationCallback(
     double residual_sum,
     void* objective_function_ptr) {
 
-  // TODO: Don't report this if the solver is not verbose...
-  LOG(INFO) << "Iteration complete. "
-            << "Sum of squared residuals = " << residual_sum;
+  ObjectiveFunction* objective_function =
+      reinterpret_cast<ObjectiveFunction*>(objective_function_ptr);
+  objective_function->ReportIterationComplete(residual_sum);
+
+  // TODO: Don't log this if the solver is not verbose...
+  LOG(INFO) << "Iteration complete ("
+            << objective_function->GetNumCompletedIterations()
+            << "). Sum of squared residuals = " << residual_sum;
 }
 
 }  // namespace super_resolution

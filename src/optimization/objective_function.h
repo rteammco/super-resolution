@@ -30,7 +30,8 @@ class ObjectiveTerm {
 class ObjectiveFunction {
  public:
   explicit ObjectiveFunction(const int num_parameters)
-      : num_parameters_(num_parameters) {}
+      : num_parameters_(num_parameters),
+        num_iterations_completed_(0) {}
 
   // Add a new ObjectiveTerm to the list.
   void AddTerm(const std::shared_ptr<ObjectiveTerm> objective_term) {
@@ -42,12 +43,32 @@ class ObjectiveFunction {
   double ComputeAllTerms(
       const double* estimated_image_data, double* gradient = nullptr) const;
 
+  // Callback to report that a solver iteration was complete, allowing the
+  // ObjectiveFunction to track progress and statistics about the solver's
+  // progress. This is optional.
+  //
+  // TODO: Do some more advanced tracking of the solver progress, like
+  // visualizing a graph of the cost, etc.
+  void ReportIterationComplete(const double residual_sum);
+
+  // Returns the number of iterations that were completed by the solver. This
+  // only works if the solver reports its progress after every iteration by
+  // calling ReportIterationComplete().
+  int GetNumCompletedIterations() const {
+    return num_iterations_completed_;
+  }
+
  private:
   // The number of parameters in the given estimated_image_data. This is also
   // the number of variables in the gradient vector.
   const int num_parameters_;
 
+  // Independent terms of the ObjectiveFunction. The costs and gradients of all
+  // terms are added together for the final cost/gradient produced.
   std::vector<std::shared_ptr<ObjectiveTerm>> terms_;
+
+  // The number of iterations performed. Updated with ReportIterationComplete().
+  int num_iterations_completed_;
 };
 
 }  // namespace super_resolution
