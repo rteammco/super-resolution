@@ -12,7 +12,12 @@ double ObjectiveIrlsRegularizationTerm::Compute(
 
   CHECK_NOTNULL(estimated_image_data);
 
-  double residual_sum = 0;
+  // Don't compute anything if the regularization parameter is 0.
+  if (regularization_parameter_ <= 0.0) {
+    return 0.0;
+  }
+
+  double residual_sum = 0.0;
 
   // Precompute the constant terms in the gradients at each pixel. This is
   // the regularization parameter (lambda) and the IRLS weights.
