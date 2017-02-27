@@ -15,12 +15,23 @@ static const std::string kTestImagePath = "../test_data/dallas.jpg";
 TEST(WaveletTransform, WaveletTransform) {
   const super_resolution::ImageData original_image =
       super_resolution::util::LoadImage(kTestImagePath);
+
+  // Wavelet transform (DWT).
   super_resolution::wavelet::WaveletCoefficients coefficients =
       super_resolution::wavelet::WaveletTransform(original_image);
 
-  // TODO: Do an actual test, not display.
+  // Reconstruct the image (iDWT).
+  const super_resolution::ImageData reconstructed_image =
+      super_resolution::wavelet::InverseWaveletTransform(coefficients);
+
+  EXPECT_EQ(
+      reconstructed_image.GetNumChannels(), original_image.GetNumChannels());
+  EXPECT_EQ(reconstructed_image.GetImageSize(), original_image.GetImageSize());
+
+  // TODO: Do not display, just run tests.
   super_resolution::util::DisplayImagesSideBySide({
       original_image,
+      reconstructed_image,
       coefficients.ll,
       coefficients.lh,
       coefficients.hl,
