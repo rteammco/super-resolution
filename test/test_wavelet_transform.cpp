@@ -2,6 +2,7 @@
 
 #include "image/image_data.h"
 #include "util/data_loader.h"
+#include "util/test_util.h"
 #include "util/util.h"
 #include "wavelet/wavelet_transform.h"
 
@@ -11,6 +12,7 @@
 #include "gmock/gmock.h"
 
 static const std::string kTestImagePath = "../test_data/dallas.jpg";
+constexpr double kReconstructionErrorTolerance = 1.0 / 255.0;
 
 TEST(WaveletTransform, WaveletTransform) {
   const super_resolution::ImageData original_image =
@@ -27,6 +29,8 @@ TEST(WaveletTransform, WaveletTransform) {
   EXPECT_EQ(
       reconstructed_image.GetNumChannels(), original_image.GetNumChannels());
   EXPECT_EQ(reconstructed_image.GetImageSize(), original_image.GetImageSize());
+  EXPECT_TRUE(super_resolution::test::AreImagesEqual(
+      original_image, reconstructed_image, kReconstructionErrorTolerance));
 
   // TODO: Do not display, just run tests.
   super_resolution::util::DisplayImagesSideBySide({

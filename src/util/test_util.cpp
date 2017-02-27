@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "image/image_data.h"
+
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
@@ -93,6 +95,31 @@ bool AreMatricesEqualCroppedBorder(
   const cv::Mat cropped_mat2 = mat2(region_of_interest);
 
   return AreMatricesEqual(cropped_mat1, cropped_mat2, diff_tolerance);
+}
+
+bool AreImagesEqual(
+    const ImageData& image1,
+    const ImageData& image2,
+    const double diff_tolerance) {
+
+  const int num_channels = image1.GetNumChannels();
+  if (num_channels != image2.GetNumChannels()) {
+    std::cout << "Images do not have the same number of channels: "
+              << num_channels << " vs. "
+              << image2.GetNumChannels() << std::endl;
+    return false;
+  }
+
+  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+    if (!AreMatricesEqual(
+          image1.GetChannelImage(channel_index),
+          image2.GetChannelImage(channel_index),
+          diff_tolerance)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace test

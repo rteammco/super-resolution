@@ -117,6 +117,7 @@ ImageData InverseWaveletTransform(const WaveletCoefficients& coefficients) {
     }
     reconstructed_image.AddChannel(channel_image, DO_NOT_NORMALIZE_IMAGE);
   }
+
   return reconstructed_image;
 }
 
