@@ -42,6 +42,7 @@ file(GLOB   motion_SRC          "src/motion/*.cpp")
 file(GLOB   optimization_SRC    "src/optimization/*.cpp")
 file(GLOB   util_SRC            "src/util/*.cpp")
 file(GLOB   video_SRC           "src/video/*.cpp")
+file(GLOB   wavelet_SRC         "src/wavelet/*.cpp")
 
 add_library(
   LibSuperResolution
@@ -54,6 +55,7 @@ add_library(
   ${optimization_SRC}
   ${util_SRC}
   ${video_SRC}
+  ${wavelet_SRC}
 )
 
 
@@ -68,6 +70,7 @@ target_link_libraries(
   Test
   LibSuperResolution
   glog
+  gflags
   gmock
   gmock_main
   gtest
