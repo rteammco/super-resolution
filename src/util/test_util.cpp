@@ -1,6 +1,7 @@
 #include "util/test_util.h"
 
 #include <iostream>
+#include <limits>
 
 #include "image/image_data.h"
 
@@ -110,11 +111,18 @@ bool AreImagesEqual(
     return false;
   }
 
+  // If the given diff_tolerance is zero, use "epsilon" to account for possible
+  // double precision numerical errors.
+  double applied_diff_tolerance = diff_tolerance;
+  if (diff_tolerance < std::numeric_limits<double>::epsilon()) {
+    applied_diff_tolerance = std::numeric_limits<double>::epsilon();
+  }
+
   for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
     if (!AreMatricesEqual(
           image1.GetChannelImage(channel_index),
           image2.GetChannelImage(channel_index),
-          diff_tolerance)) {
+          applied_diff_tolerance)) {
       return false;
     }
   }
