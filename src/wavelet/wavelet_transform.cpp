@@ -9,6 +9,57 @@
 namespace super_resolution {
 namespace wavelet {
 
+ImageData WaveletCoefficients::GetCoefficientsImage() const {
+  const int num_channels = ll.GetNumChannels();
+  CHECK_GT(num_channels, 0)
+      << "Coefficient images may not be empty.";
+
+  CHECK_EQ(num_channels, lh.GetNumChannels())
+      << "All coefficients must have the same number of channels.";
+  CHECK_EQ(num_channels, hl.GetNumChannels())
+      << "All coefficients must have the same number of channels.";
+  CHECK_EQ(num_channels, hh.GetNumChannels())
+      << "All coefficients must have the same number of channels.";
+
+  const cv::Size coefficients_size = ll.GetImageSize();
+  CHECK_EQ(coefficients_size, lh.GetImageSize())
+      << "All coefficients must be the same size.";
+  CHECK_EQ(coefficients_size, hl.GetImageSize())
+      << "All coefficients must be the same size.";
+  CHECK_EQ(coefficients_size, hh.GetImageSize())
+      << "All coefficients must be the same size.";
+
+  const int width = coefficients_size.width;
+  const int height = coefficients_size.height;
+  const cv::Size visualization_image_size(width * 2, height * 2);
+  ImageData stitched_image;
+  for (int channel = 0; channel < num_channels; ++channel) {
+    const cv::Mat channel_ll = ll.GetChannelImage(channel);
+    const cv::Mat channel_lh = lh.GetChannelImage(channel);
+    const cv::Mat channel_hl = hl.GetChannelImage(channel);
+    const cv::Mat channel_hh = hh.GetChannelImage(channel);
+    cv::Mat channel_image(visualization_image_size, channel_ll.type());
+
+    cv::Mat top_left =
+        channel_image(cv::Rect(0, 0, width, height));
+    channel_ll.copyTo(top_left);
+
+    cv::Mat top_right = channel_image(cv::Rect(width, 0, width, height));
+    channel_lh.copyTo(top_right);
+
+    cv::Mat bottom_left = channel_image(cv::Rect(0, height, width, height));
+    channel_hl.copyTo(bottom_left);
+
+    cv::Mat bottom_right =
+        channel_image(cv::Rect(width, height, width, height));
+    channel_hh.copyTo(bottom_right);
+
+    stitched_image.AddChannel(channel_image, DO_NOT_NORMALIZE_IMAGE);
+  }
+
+  return stitched_image;
+}
+
 WaveletCoefficients WaveletTransform(const ImageData& image) {
   CHECK_GT(image.GetNumChannels(), 0) << "Image cannot be empty.";
 

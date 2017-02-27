@@ -14,6 +14,11 @@ struct WaveletCoefficients {
   ImageData lh;
   ImageData hl;
   ImageData hh;
+
+  // Returns an image that of the stitched coefficients as a 2x2 grid. The top
+  // row contains LL and LH, and the bottom row contains HL and HH
+  // (left-to-right). This is the standard visualization format.
+  ImageData GetCoefficientsImage() const;
 };
 
 // Computes a discrete wavelet transform (DWT) of the given image.

@@ -36,9 +36,6 @@ TEST(WaveletTransform, WaveletTransform) {
   super_resolution::util::DisplayImagesSideBySide({
       original_image,
       reconstructed_image,
-      coefficients.ll,
-      coefficients.lh,
-      coefficients.hl,
-      coefficients.hh
+      coefficients.GetCoefficientsImage()
   });
 }
