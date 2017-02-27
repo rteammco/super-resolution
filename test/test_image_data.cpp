@@ -9,6 +9,7 @@
 #include "gmock/gmock.h"
 
 using super_resolution::ImageData;
+using super_resolution::test::AreImagesEqual;
 using super_resolution::test::AreMatricesEqual;
 
 constexpr double kPixelErrorTolerance = 1.0 / 255.0;
@@ -71,24 +72,12 @@ TEST(ImageData, AddAndAccessImageData) {
   // Check that another ImageData created with pre-normalized values (between 0
   // and 1 instead of between 0 and 255) will have identical data.
   ImageData image_data2(channel_0);  // channel_0 is NOT converted.
-  const int num_pixels = num_test_rows * num_test_cols;
-  for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-    EXPECT_NEAR(
-        image_data.GetPixelValue(0, pixel_index),  // channel 0, pixel_index
-        image_data2.GetPixelValue(0, pixel_index),
-        kPixelErrorTolerance);
-  }
+  EXPECT_TRUE(AreImagesEqual(image_data, image_data2, kPixelErrorTolerance));
 
   // Check that the returned channel image matches.
   cv::Mat returned_channel_0 = image_data.GetChannelImage(0);
-  for (int row = 0; row < num_test_rows; ++row) {
-    for (int col = 0; col < num_test_cols; ++col) {
-      EXPECT_NEAR(
-          returned_channel_0.at<double>(row, col),
-          channel_0.at<double>(row, col),
-          kPixelErrorTolerance);
-    }
-  }
+  EXPECT_TRUE(AreMatricesEqual(
+      returned_channel_0, channel_0, kPixelErrorTolerance));
 
   // Check data pointer access.
   double* pixel_ptr = image_data.GetMutableChannelData(0);
@@ -124,13 +113,8 @@ TEST(ImageData, AddAndAccessImageData) {
   // modified.
   cv::Mat channel_0_clone_converted;
   channel_0_original_clone.convertTo(channel_0_clone_converted, CV_8UC1, 255);
-  for (int row = 0; row < num_test_rows; ++row) {
-    for (int col = 0; col < num_test_cols; ++col) {
-      EXPECT_EQ(
-          channel_0_converted.at<uchar>(row, col),
-          channel_0_clone_converted.at<uchar>(row, col));
-    }
-  }
+  EXPECT_TRUE(AreMatricesEqual(
+      channel_0_converted, channel_0_clone_converted));
 
   /* Verify behavior with multiple channels. */
 
@@ -262,13 +246,7 @@ TEST(ImageData, CopyConstructor) {
   EXPECT_EQ(image_data2.GetImageSize(), cv::Size(25, 25));
   EXPECT_EQ(image_data2.GetNumPixels(), 25 * 25);
 
-  for (int channel_index = 0; channel_index < 10; ++channel_index) {
-    for (int pixel_index = 0; pixel_index < 25 * 25; ++pixel_index) {
-      EXPECT_DOUBLE_EQ(
-          image_data.GetPixelValue(channel_index, pixel_index),
-          image_data2.GetPixelValue(channel_index, pixel_index));
-    }
-  }
+  EXPECT_TRUE(AreImagesEqual(image_data, image_data2));
 
   // Check that the new ImageData is a clone, and changing the data will not
   // affect the old ImageData object.

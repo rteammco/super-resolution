@@ -335,7 +335,7 @@ TEST(MapSolver, RealBigImageTest) {
     EXPECT_TRUE(super_resolution::test::AreMatricesEqualCroppedBorder(
         solver_result.GetChannelImage(channel_index),
         ground_truth.GetChannelImage(channel_index),
-        1,  // Don't check the border pixels.
+        1,  // Don't check the border pixels (border of size 1).
         kSolverResultErrorTolerance));
   }
 
