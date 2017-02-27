@@ -51,7 +51,7 @@ ImageSpectralMode GetDefaultSpectralMode(const int num_channels) {
 // image is not modified when this ImageData is modified.
 void InitializeFromImage(
     const cv::Mat& image,
-    const bool normalize,
+    const ImageNormalizeMode normalize_mode,
     cv::Size* image_size,
     std::vector<cv::Mat>* channels) {
 
@@ -61,7 +61,7 @@ void InitializeFromImage(
   *image_size = image.size();
   cv::split(image, *channels);  // makes a copy, even if just one channel
   for (int i = 0; i < channels->size(); ++i) {
-    if (normalize) {
+    if (normalize_mode == NORMALIZE_IMAGE) {
       (*channels)[i].convertTo(
           (*channels)[i],
           util::kOpenCvMatrixType,
@@ -225,13 +225,16 @@ ImageData::ImageData(const cv::Mat& image) {
       << "Use ImageData(cv::Mat&, false) to avoid normalization, where any "
       << "image values are okay.";
 
-  const bool normalize = max_pixel_value > 1.0;
-  InitializeFromImage(image, normalize, &image_size_, &channels_);
+  const ImageNormalizeMode normalize_mode =
+      (max_pixel_value > 1.0) ? NORMALIZE_IMAGE : DO_NOT_NORMALIZE_IMAGE;
+  InitializeFromImage(image, normalize_mode, &image_size_, &channels_);
   spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 
-ImageData::ImageData(const cv::Mat& image, const bool normalize) {
-  InitializeFromImage(image, normalize, &image_size_, &channels_);
+ImageData::ImageData(
+    const cv::Mat& image, const ImageNormalizeMode normalize_mode) {
+
+  InitializeFromImage(image, normalize_mode, &image_size_, &channels_);
   spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 
@@ -258,7 +261,9 @@ ImageData::ImageData(
   spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 
-void ImageData::AddChannel(const cv::Mat& channel_image, const bool normalize) {
+void ImageData::AddChannel(
+    const cv::Mat& channel_image, const ImageNormalizeMode normalize_mode) {
+
   // Set or check size for consistency.
   if (channels_.empty()) {
     image_size_ = channel_image.size();
@@ -275,7 +280,7 @@ void ImageData::AddChannel(const cv::Mat& channel_image, const bool normalize) {
   // convert to the standard Matrix type in any case.
   double min_pixel_value, max_pixel_value;
   cv::minMaxLoc(channel_image, &min_pixel_value, &max_pixel_value);
-  if (normalize && max_pixel_value > 1.0) {
+  if ((normalize_mode == NORMALIZE_IMAGE) && (max_pixel_value > 1.0)) {
     converted_image.convertTo(
         converted_image, util::kOpenCvMatrixType, 1.0 / 255.0);
   } else {

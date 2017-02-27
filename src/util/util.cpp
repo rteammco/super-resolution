@@ -113,7 +113,7 @@ void DisplayImagesSideBySide(
 
   // Create an ImageData (force normalization since this is with unsigned
   // values) and display normally.
-  ImageData stitched_image_data(stitched_images, true);
+  ImageData stitched_image_data(stitched_images, NORMALIZE_IMAGE);
   DisplayImage(stitched_image_data, window_name, rescale);
 }
 

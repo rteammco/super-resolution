@@ -218,7 +218,7 @@ TEST(ImageModel, DownsamplingModule) {
 
   // Now test the algorithmic transpose function.
   super_resolution::ImageData upsampled_image(
-      kSmallTestImage, /* normalize = */ false);
+      kSmallTestImage, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   downsampling_module.ApplyTransposeToImage(&upsampled_image, 0);
 
   EXPECT_TRUE(AreMatricesEqual(
@@ -365,7 +365,8 @@ TEST(ImageModel, BlurModule) {
          5.0,     6.5,    5.75,    3.875,   1.9375,  0.9375,
          2.5625,  3.75,   4.3125,  3.6875,  1.6875,  0.5);
 
-  super_resolution::ImageData image_data(kSmallTestImage, false);
+  super_resolution::ImageData image_data(
+      kSmallTestImage, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   blur_module.ApplyToImage(&image_data, 0);
 
   const double diff_tolerance = 0.001;
@@ -399,7 +400,8 @@ TEST(ImageModel, BlurModule) {
 
   // Now check that we get the same results if applied to the image using the
   // convolution operator directly.
-  super_resolution::ImageData image_data2(kSmallTestImage, false);
+  super_resolution::ImageData image_data2(
+      kSmallTestImage, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   blur_module.ApplyTransposeToImage(&image_data2, 0);
   EXPECT_TRUE(AreMatricesEqual(
       image_data2.GetChannelImage(0), expected_blurred_image, diff_tolerance));

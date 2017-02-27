@@ -131,7 +131,7 @@ ImageData ConvertImage(
   // Return the projected image.
   ImageData output_image;
   for (const cv::Mat& channel_image : output_image_channels) {
-    output_image.AddChannel(channel_image, false);
+    output_image.AddChannel(channel_image, DO_NOT_NORMALIZE_IMAGE);
   }
   if (forward_projection) {
     output_image.SetSpectralMode(SPECTRAL_MODE_HYPERSPECTRAL_PCA);

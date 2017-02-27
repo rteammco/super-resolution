@@ -14,6 +14,15 @@
 
 namespace super_resolution {
 
+// Methods within ImageData that add channels from OpenCV Mat images may
+// optionally normalize the image between 0 and 1 if it isn't already in that
+// range. To increase readability, normalization mode is explicit and named
+// (instead of just using a true/false flag).
+enum ImageNormalizeMode {
+  NORMALIZE_IMAGE,
+  DO_NOT_NORMALIZE_IMAGE
+};
+
 enum ResizeInterpolationMethod {
   // Standard interpolation modes:
   INTERPOLATE_LINEAR,  // Bilinear interpolation. Uses cv::INTER_LINEAR.
@@ -122,7 +131,7 @@ class ImageData {
   //
   // TODO: for now it always assumes a range of 0-255 but that might not always
   // be the case.
-  ImageData(const cv::Mat& image, const bool normalize);
+  ImageData(const cv::Mat& image, const ImageNormalizeMode normalize_mode);
 
   // Builds the ImageData directly from the given pixel value array, so the
   // user doesn't have to explicitly build a cv::Mat beforehand. The number of
@@ -139,11 +148,11 @@ class ImageData {
   // the last index. Channel images should be single-band OpenCV images. The
   // added channel must have the same dimensions as the rest of the image.
   // Images given in a non-normalized range (0-255 pixel values) will
-  // automatically be noramlized to values between 0 and 1.
-  //
-  // To add a channel explicity (without any checks or normalizations), set
-  // normalize = false.
-  void AddChannel(const cv::Mat& channel_image, const bool normalize = true);
+  // automatically be noramlized to values between 0 and 1 if normalization
+  // mode is set to NORMALIZE_IMAGE (which is the default).
+  void AddChannel(
+      const cv::Mat& channel_image,
+      const ImageNormalizeMode normalize_mode = NORMALIZE_IMAGE);
 
   // Resizes this image to the given Size. The given Size must be valid (i.e.
   // positive values for width and height). All channels will be resized

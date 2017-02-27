@@ -24,8 +24,10 @@ TEST(SpectralPca, Decomposition) {
       << 2.2175, 2.5425, -1.2075, -1.9575, -3.3825,
          3.6425, 2.5925, 3.3175, -3.4825, -4.2825);
   ImageData small_image;
-  small_image.AddChannel(small_channel_1, false);
-  small_image.AddChannel(small_channel_2, false);
+  small_image.AddChannel(
+      small_channel_1, super_resolution::DO_NOT_NORMALIZE_IMAGE);
+  small_image.AddChannel(
+      small_channel_2, super_resolution::DO_NOT_NORMALIZE_IMAGE);
 
   // Set up the PCA decomposition.
   const std::vector<ImageData> small_images({
@@ -77,7 +79,8 @@ TEST(SpectralPca, Decomposition) {
         test_image_size, super_resolution::util::kOpenCvMatrixType);
     cv::randn(channel, cv::Scalar(random_mean), cv::Scalar(random_stddev));
     channel = channel * scalar;
-    hyperspectral_image.AddChannel(channel);
+    hyperspectral_image.AddChannel(
+        channel, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   }
 
   // Test PCA decomposition with no approximations. The reconstruction should

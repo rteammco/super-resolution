@@ -75,7 +75,7 @@ void HyperspectralDataLoader::LoadData() {
         band_matrix.at<double>(row, col) = data_cube[row][col][band];
       }
     }
-    hyperspectral_image_.AddChannel(band_matrix);
+    hyperspectral_image_.AddChannel(band_matrix, DO_NOT_NORMALIZE_IMAGE);
   }
   CHECK_EQ(hyperspectral_image_.GetNumChannels(), num_bands)
       << "Number of spectral bands does not match the given size.";

@@ -287,7 +287,8 @@ TEST(ImageData, FromOpenCvImageConstructor) {
       << 0.5, 1.5,  100,
          -25, 0.0,  -30,
          55,  1.98, 1000);
-  ImageData image_data_not_normalized(invalid_image, false);
+  ImageData image_data_not_normalized(
+      invalid_image, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   for (int i = 0; i < 9; ++i) {
     EXPECT_DOUBLE_EQ(
         invalid_image.at<double>(i),
@@ -371,7 +372,7 @@ TEST(ImageData, ResizeImage) {
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
          0.4, 0.0, 0.6, 0.0, 0.8, 0.0, 1.0, 0.0,
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  ImageData image_2(image_pixels, false);
+  ImageData image_2(image_pixels, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   image_2.ResizeImage(2, super_resolution::INTERPOLATE_ADDITIVE);
   EXPECT_TRUE(AreMatricesEqual(
       image_2.GetChannelImage(0),
@@ -382,7 +383,7 @@ TEST(ImageData, ResizeImage) {
   const cv::Mat expected_additive_downsampled = (cv::Mat_<double>(2, 2)
       << (0.1 + 0.2 + 0.5 + 0.6), (0.3 + 0.4 + 0.7 + 0.8),
          (0.9 + 1.0 + 0.4 + 0.6), (0.0 + 0.2 + 0.8 + 1.0));
-  ImageData image_3(image_pixels, false);
+  ImageData image_3(image_pixels, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   image_3.ResizeImage(0.5, super_resolution::INTERPOLATE_ADDITIVE);
   EXPECT_TRUE(AreMatricesEqual(
       image_3.GetChannelImage(0),
@@ -396,7 +397,7 @@ TEST(ImageData, ChangeColorSpace) {
   cv::Mat input_image;
   cv::merge(kTestColorChannels, input_image);
 
-  ImageData image(input_image, false);  // Do not normalize. Copies cv::Mat.
+  ImageData image(input_image, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   EXPECT_EQ(image.GetNumChannels(), 3);
 
   // Get the expected conversion to the YCrCb color space.
@@ -484,7 +485,7 @@ TEST(ImageData, ChangeColorSpace) {
   /* Now verify that the image works correctly in lumiance-only mode. */
 
   // Create a new test image to avoid snowballing numerical errors.
-  ImageData image_2(input_image, false);
+  ImageData image_2(input_image, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   image_2.ChangeColorSpace(super_resolution::SPECTRAL_MODE_COLOR_YCRCB, true);
   EXPECT_EQ(image_2.GetNumChannels(), 1);
   EXPECT_TRUE(AreMatricesEqual(
@@ -533,11 +534,13 @@ TEST(ImageData, InterpolateColorFrom) {
 
   // Create the luminance-only monochrome image. Do not normalize. Copies
   // cv::Mat.
-  ImageData luminance_image(converted_channels[0], false);
+  ImageData luminance_image(
+      converted_channels[0], super_resolution::DO_NOT_NORMALIZE_IMAGE);
   EXPECT_EQ(luminance_image.GetNumChannels(), 1);
 
   // Create the reference YCrCB image (converted from BGR image).
-  ImageData reference_color_image(input_image, false);
+  ImageData reference_color_image(
+      input_image, super_resolution::DO_NOT_NORMALIZE_IMAGE);
   reference_color_image.ChangeColorSpace(
       super_resolution::SPECTRAL_MODE_COLOR_YCRCB);
   EXPECT_EQ(reference_color_image.GetNumChannels(), 3);
