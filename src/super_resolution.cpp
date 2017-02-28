@@ -25,6 +25,7 @@
 #include "glog/logging.h"
 
 using super_resolution::ImageData;
+using super_resolution::ImageModel;
 
 // Input images (required):
 DEFINE_string(data_path, "",
@@ -86,60 +87,13 @@ struct InputData {
   std::vector<ImageData> low_res_images;  // Necessary for super-resolution.
 };
 
-int main(int argc, char** argv) {
-  super_resolution::util::InitApp(argc, argv, "Super resolution.");
-
-  REQUIRE_ARG(FLAGS_data_path);
-
-  // Create the forward image model.
-  super_resolution::ImageModelParameters model_parameters;
-  model_parameters.scale = FLAGS_upsampling_scale;
-  model_parameters.blur_radius = FLAGS_blur_radius;
-  model_parameters.blur_sigma = FLAGS_blur_sigma;
-  model_parameters.motion_sequence_path = FLAGS_motion_sequence_path;
-
-  const super_resolution::ImageModel image_model =
-      super_resolution::ImageModel::CreateImageModel(model_parameters);
-
-  // Load in or generate the low-resolution images.
-  InputData input_data;
-  if (FLAGS_generate_lr_images) {
-    LOG(INFO) << "Generating low-resolution images from ground truth.";
-    input_data.high_res_image =
-        super_resolution::util::LoadImage(FLAGS_data_path);
-    // Create another image model with the noise module to generate LR images.
-    model_parameters.noise_sigma = FLAGS_noise_sigma;
-    super_resolution::ImageModel image_model_with_noise =
-        super_resolution::ImageModel::CreateImageModel(model_parameters);
-    for (int i = 0; i < FLAGS_number_of_frames; ++i) {
-      const ImageData low_res_frame =
-          image_model_with_noise.ApplyToImage(input_data.high_res_image, i);
-      input_data.low_res_images.push_back(low_res_frame);
-    }
-  } else {
-    input_data.low_res_images =
-        super_resolution::util::LoadImages(FLAGS_data_path);
-  }
-  CHECK_GT(input_data.low_res_images.size(), 0)
-      << "At least one low-resolution image is required for super-resolution.";
-
-  // If the interpolate_color flag is set, only run super-resolution on the
-  // luminance channel and interpolate color information after. This will only
-  // work on color images and will not work for grayscale or hyperspectral
-  // inputs.
-  if (FLAGS_interpolate_color) {
-    LOG(INFO) << "Super-resolving only the luminance channel.";
-    for (int i = 0; i < input_data.low_res_images.size(); ++i) {
-      // TODO: support for more color spaces.
-      input_data.low_res_images[i].ChangeColorSpace(
-          super_resolution::SPECTRAL_MODE_COLOR_YCRCB, true);
-    }
-  }
-
-  // Set initial estimate.
-  ImageData initial_estimate = input_data.low_res_images[0];
-  initial_estimate.ResizeImage(
-      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+// Runs the solver on the given inputs and returns the output. All solver
+// options are set based on the user input flags. Post-processing the result
+// (such as changing color space back to BGR) is not handled here.
+ImageData SetupAndRunSolver(
+    const ImageModel& image_model,
+    const InputData& input_data,
+    const ImageData& initial_estimate) {
 
   // Set up the solver.
   // TODO: let the user choose the solver (once more solvers are supported).
@@ -183,14 +137,77 @@ int main(int argc, char** argv) {
               << FLAGS_regularization_parameter;
   }
 
-  std::cout << "Super-resolving from "
-            << input_data.low_res_images.size() << " images..." << std::endl;
+  LOG(INFO) << "Super-resolving from "
+            << input_data.low_res_images.size() << " images...";
   const auto start_time = std::chrono::steady_clock::now();
   ImageData result = solver.Solve(initial_estimate);
   const auto end_time = std::chrono::steady_clock::now();
   std::chrono::duration<double> elapsed_time_seconds = end_time - start_time;
-  std::cout << "Done! Finished in " << elapsed_time_seconds.count()
-            << " seconds."  << std::endl;
+  LOG(INFO) << "Done! Finished in "
+            << elapsed_time_seconds.count() << " seconds.";
+
+  return result;
+}
+
+int main(int argc, char** argv) {
+  super_resolution::util::InitApp(argc, argv, "Super resolution.");
+
+  REQUIRE_ARG(FLAGS_data_path);
+
+  // Create the forward image model.
+  super_resolution::ImageModelParameters model_parameters;
+  model_parameters.scale = FLAGS_upsampling_scale;
+  model_parameters.blur_radius = FLAGS_blur_radius;
+  model_parameters.blur_sigma = FLAGS_blur_sigma;
+  model_parameters.motion_sequence_path = FLAGS_motion_sequence_path;
+
+  const ImageModel image_model =
+      ImageModel::CreateImageModel(model_parameters);
+
+  // Load in or generate the low-resolution images.
+  InputData input_data;
+  if (FLAGS_generate_lr_images) {
+    LOG(INFO) << "Generating low-resolution images from ground truth.";
+    input_data.high_res_image =
+        super_resolution::util::LoadImage(FLAGS_data_path);
+    // Create another image model with the noise module to generate LR images.
+    model_parameters.noise_sigma = FLAGS_noise_sigma;
+    ImageModel image_model_with_noise =
+        ImageModel::CreateImageModel(model_parameters);
+    for (int i = 0; i < FLAGS_number_of_frames; ++i) {
+      const ImageData low_res_frame =
+          image_model_with_noise.ApplyToImage(input_data.high_res_image, i);
+      input_data.low_res_images.push_back(low_res_frame);
+    }
+  } else {
+    input_data.low_res_images =
+        super_resolution::util::LoadImages(FLAGS_data_path);
+  }
+  CHECK_GT(input_data.low_res_images.size(), 0)
+      << "At least one low-resolution image is required for super-resolution.";
+
+  // If the interpolate_color flag is set, only run super-resolution on the
+  // luminance channel and interpolate color information after. This will only
+  // work on color images and will not work for grayscale or hyperspectral
+  // inputs.
+  if (FLAGS_interpolate_color) {
+    LOG(INFO) << "Super-resolving only the luminance channel.";
+    for (int i = 0; i < input_data.low_res_images.size(); ++i) {
+      // TODO: support for more color spaces.
+      // Switch color mode (true = use only the luminance channel for SR).
+      input_data.low_res_images[i].ChangeColorSpace(
+          super_resolution::SPECTRAL_MODE_COLOR_YCRCB, true);
+    }
+  }
+
+  // Set initial estimate.
+  ImageData initial_estimate = input_data.low_res_images[0];
+  initial_estimate.ResizeImage(
+      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+
+  // Solving is handled in the SetupAndRunSolver function above.
+  ImageData result =
+      SetupAndRunSolver(image_model, input_data, initial_estimate);
 
   // If SR was only done on the luminance channel, interpolate the colors now
   // and change the color space back to BGR.
@@ -209,8 +226,8 @@ int main(int argc, char** argv) {
           input_data.high_res_image);
       const double upsampled_psnr = psnr_evaluator.Evaluate(initial_estimate);
       const double result_psnr = psnr_evaluator.Evaluate(result);
-      std::cout << "PSNR score on upsampled: " << upsampled_psnr << std::endl;
-      std::cout << "PSNR score on result:    " << result_psnr << std::endl;
+      LOG(INFO) << "PSNR score on upsampled: " << upsampled_psnr;
+      LOG(INFO) << "PSNR score on result:    " << result_psnr;
     }
   }
   result.GetImageDataReport().Print();  // TODO

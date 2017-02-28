@@ -32,10 +32,10 @@ TEST(WaveletTransform, WaveletTransform) {
   EXPECT_TRUE(super_resolution::test::AreImagesEqual(
       original_image, reconstructed_image, kReconstructionErrorTolerance));
 
-  // TODO: Do not display, just run tests.
-  super_resolution::util::DisplayImagesSideBySide({
-      original_image,
-      reconstructed_image,
-      coefficients.GetCoefficientsImage()
-  });
+  // TODO: Remove this display code.
+  // super_resolution::util::DisplayImagesSideBySide({
+  //     original_image,
+  //     reconstructed_image,
+  //     coefficients.GetCoefficientsImage()
+  // });
 }
