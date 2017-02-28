@@ -571,6 +571,19 @@ TEST(ImageData, InterpolateColorFrom) {
   }
 }
 
+// Tests the MultiplyByScalar method.
+TEST(ImageData, MultiplyByScalar) {
+  cv::Mat image_matrix;
+  cv::merge(kTestColorChannels, image_matrix);
+
+  ImageData image(image_matrix, super_resolution::DO_NOT_NORMALIZE_IMAGE);
+  image.MultiplyByScalar(3.0);
+  EXPECT_EQ(image.GetNumChannels(), 3);
+  EXPECT_DOUBLE_EQ(image.GetPixelValue(0, 0), 0.3);
+  EXPECT_DOUBLE_EQ(image.GetPixelValue(1, 1), 0.9);
+  EXPECT_DOUBLE_EQ(image.GetPixelValue(2, 2), 0.3);
+}
+
 // Tests that the report for analyzing images is correctly generated.
 TEST(ImageData, GetImageDataReport) {
   const double pixel_values[(5 * 3) * 2] = {

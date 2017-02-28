@@ -176,25 +176,6 @@ class ImageData {
       const ResizeInterpolationMethod interpolation_method
           = INTERPOLATE_NEAREST);
 
-  // Returns the total number of channels (bands) in this image. Note that this
-  // value may be 0.
-  //
-  // If the color mode of this ImageData is set to a luminance-dominant color
-  // space such as YCrCb and luminance_channel_only_ is enabled, the number of
-  // channels will be reported as 1 instead of 3. The other two channels will
-  // be hidden until the image is converted back to the BGR color space.
-  int GetNumChannels() const;
-
-  // Returns the size of the image (width and height). If there are no channels
-  // in this image (i.e. it is empty), the returned size will be (0, 0).
-  cv::Size GetImageSize() const {
-    return image_size_;
-  }
-
-  // Returns the number of pixels in the image at each channel. Each channel
-  // has the same number of pixels. If the image is empty, 0 will be returned.
-  int GetNumPixels() const;
-
   // Converts a 3-channel image into whichever OpenCV color space is specified.
   // This method can only be used on 3-channel color images. If the image does
   // not have exactly three channels, this will cause an error (check fail).
@@ -225,6 +206,29 @@ class ImageData {
   //
   // TODO: currently only works for YCrCb images.
   void InterpolateColorFrom(const ImageData& color_image);
+
+  // Multiplies every pixel in the image (uniformly across all channels) by the
+  // given scalar value. This will modify the image intensity globally.
+  void MultiplyByScalar(const double scalar);
+
+  // Returns the total number of channels (bands) in this image. Note that this
+  // value may be 0.
+  //
+  // If the color mode of this ImageData is set to a luminance-dominant color
+  // space such as YCrCb and luminance_channel_only_ is enabled, the number of
+  // channels will be reported as 1 instead of 3. The other two channels will
+  // be hidden until the image is converted back to the BGR color space.
+  int GetNumChannels() const;
+
+  // Returns the size of the image (width and height). If there are no channels
+  // in this image (i.e. it is empty), the returned size will be (0, 0).
+  cv::Size GetImageSize() const {
+    return image_size_;
+  }
+
+  // Returns the number of pixels in the image at each channel. Each channel
+  // has the same number of pixels. If the image is empty, 0 will be returned.
+  int GetNumPixels() const;
 
   // Returns the channel image (OpenCV Mat) at the given index. Error if index
   // is out of bounds. Use GetNumChannels() to get a valid range. Note that the

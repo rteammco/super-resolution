@@ -348,17 +348,6 @@ void ImageData::ResizeImage(
   ResizeImage(new_size, interpolation_method);
 }
 
-int ImageData::GetNumChannels() const {
-  if (spectral_mode_ == SPECTRAL_MODE_COLOR_YCRCB && luminance_channel_only_) {
-    return 1;
-  }
-  return channels_.size();
-}
-
-int ImageData::GetNumPixels() const {
-  return image_size_.width * image_size_.height;  // (0, 0) if image is empty.
-}
-
 void ImageData::ChangeColorSpace(
     const ImageSpectralMode& new_color_mode, const bool luminance_only) {
 
@@ -456,6 +445,23 @@ void ImageData::InterpolateColorFrom(const ImageData& color_image) {
   InterpolateColor(color_image.channels_, &channels_);
   spectral_mode_ = color_image.spectral_mode_;
   luminance_channel_only_ = false;
+}
+
+void ImageData::MultiplyByScalar(const double scalar) {
+  for (int i = 0; i < channels_.size(); ++i) {
+    channels_[i] *= scalar;
+  }
+}
+
+int ImageData::GetNumChannels() const {
+  if (spectral_mode_ == SPECTRAL_MODE_COLOR_YCRCB && luminance_channel_only_) {
+    return 1;
+  }
+  return channels_.size();
+}
+
+int ImageData::GetNumPixels() const {
+  return image_size_.width * image_size_.height;  // (0, 0) if image is empty.
 }
 
 cv::Mat ImageData::GetChannelImage(const int index) const {
