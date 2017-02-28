@@ -453,6 +453,25 @@ void ImageData::MultiplyByScalar(const double scalar) {
   }
 }
 
+ImageData ImageData::MultiplyByScalarCopy(const double scalar) const {
+  ImageData copy = *this;
+  copy.MultiplyByScalar(scalar);
+  return copy;
+}
+
+ImageData ImageData::AddImages(const ImageData& other) const {
+  CHECK_EQ(other.channels_.size(), channels_.size())
+      << "Images must have the same number of channels to be added.";
+  CHECK_EQ(other.GetImageSize(), GetImageSize())
+      << "Images of different sizes cannot be added together.";
+
+  ImageData sum = *this;
+  for (int i = 0; i < channels_.size(); ++i) {
+    sum.channels_[i] += other.channels_[i];
+  }
+  return sum;
+}
+
 int ImageData::GetNumChannels() const {
   if (spectral_mode_ == SPECTRAL_MODE_COLOR_YCRCB && luminance_channel_only_) {
     return 1;

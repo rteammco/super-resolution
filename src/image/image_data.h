@@ -208,8 +208,35 @@ class ImageData {
   void InterpolateColorFrom(const ImageData& color_image);
 
   // Multiplies every pixel in the image (uniformly across all channels) by the
-  // given scalar value. This will modify the image intensity globally.
+  // given scalar value. This will modify the image intensity globally. All
+  // channels will be modified, including hidden channels.
   void MultiplyByScalar(const double scalar);
+
+  // Same as MultiplyByScalar, but does not modify this image; instead, returns
+  // a modified copy of this modified image. Used by the overloaded multiply.
+  ImageData MultiplyByScalarCopy(const double scalar) const;
+
+  // Returns a new image whose pixel intensities are the sum of this image and
+  // the other given image. The returned image will preserve the properties of
+  // this image. All channels will be added, including hidden channels.
+  ImageData AddImages(const ImageData& other) const;
+
+  // Returns an image multipled by the given scalar. E.g.:
+  //   ImageData image2 = image * 2.0;
+  ImageData operator * (const double scalar) const {
+    return MultiplyByScalarCopy(scalar);
+  }
+
+  // Returns an image divided by the given scalar. E.g.:
+  //   ImageData image2 = image / 255.0;
+  ImageData operator / (const double scalar) const {
+    return MultiplyByScalarCopy(1.0 / scalar);
+  }
+
+  // Returns the sum of this image and the other image.
+  ImageData operator + (const ImageData& other) const {
+    return AddImages(other);
+  }
 
   // Returns the total number of channels (bands) in this image. Note that this
   // value may be 0.

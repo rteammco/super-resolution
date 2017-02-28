@@ -571,17 +571,37 @@ TEST(ImageData, InterpolateColorFrom) {
   }
 }
 
-// Tests the MultiplyByScalar method.
-TEST(ImageData, MultiplyByScalar) {
+// Tests the multiplication and addition methods for the ImageData object,
+// including the overloaded operators.
+TEST(ImageData, AddMultiplyDivideImage) {
   cv::Mat image_matrix;
   cv::merge(kTestColorChannels, image_matrix);
-
   ImageData image(image_matrix, super_resolution::DO_NOT_NORMALIZE_IMAGE);
-  image.MultiplyByScalar(3.0);
-  EXPECT_EQ(image.GetNumChannels(), 3);
-  EXPECT_DOUBLE_EQ(image.GetPixelValue(0, 0), 0.3);
-  EXPECT_DOUBLE_EQ(image.GetPixelValue(1, 1), 0.9);
-  EXPECT_DOUBLE_EQ(image.GetPixelValue(2, 2), 0.3);
+
+  ImageData test_image_1 = image;  // Copy.
+  test_image_1.MultiplyByScalar(3.0);
+  EXPECT_EQ(test_image_1.GetNumChannels(), 3);
+  EXPECT_DOUBLE_EQ(test_image_1.GetPixelValue(0, 0), 0.3);  // Was 0.1.
+  EXPECT_DOUBLE_EQ(test_image_1.GetPixelValue(1, 1), 0.9);  // Was 0.3.
+  EXPECT_DOUBLE_EQ(test_image_1.GetPixelValue(2, 2), 0.3);  // Was 0.1.
+
+  const ImageData test_image_2 = image * -2.0;
+  EXPECT_EQ(test_image_2.GetNumChannels(), 3);
+  EXPECT_DOUBLE_EQ(test_image_2.GetPixelValue(0, 4), -0.3);  // Was 0.15.
+  EXPECT_DOUBLE_EQ(test_image_2.GetPixelValue(1, 4), -0.2);  // Was 0.1.
+  EXPECT_DOUBLE_EQ(test_image_2.GetPixelValue(2, 15), -0.3);  // Was 0.15.
+
+  const ImageData test_image_3 = image / 2.0;
+  EXPECT_EQ(test_image_3.GetNumChannels(), 3);
+  EXPECT_DOUBLE_EQ(test_image_3.GetPixelValue(0, 5), 0.125);  // Was 0.25.
+  EXPECT_DOUBLE_EQ(test_image_3.GetPixelValue(1, 7), 0.2);  // Was 0.4.
+  EXPECT_DOUBLE_EQ(test_image_3.GetPixelValue(2, 4), 0.0);  // Was 0.0.
+
+  const ImageData test_image_4 = test_image_1 + test_image_3;
+  EXPECT_EQ(test_image_4.GetNumChannels(), 3);
+  EXPECT_DOUBLE_EQ(test_image_4.GetPixelValue(0, 0), 0.35);  // 0.3 + 0.05.
+  EXPECT_DOUBLE_EQ(test_image_4.GetPixelValue(1, 1), 1.05);  // 0.9 + 0.15.
+  EXPECT_DOUBLE_EQ(test_image_4.GetPixelValue(2, 2), 0.35);  // 0.3 + 0.05.
 }
 
 // Tests that the report for analyzing images is correctly generated.
