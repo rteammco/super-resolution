@@ -12,13 +12,14 @@ configuration = {
 #  'hr_image_path': '../test_data/fb.png',
   'hr_image_path': '../test_data/dallas_qtr.jpg',
   'lr_image_dir': '../test_data/OUT',
-  'number_of_frames': 4,
-  'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
+  'number_of_frames': 9,
+  'motion_sequence_path': '../test_data/test_motion_sequence_9.txt',
   # Solver-only options:
   'interpolate_color': True,
+  'solve_in_wavelet_domain': False,
   'regularizer': 'tv',
-  'regularization_parameter': 0.01,
-  'solver': 'cg',
+  'regularization_parameter': 0.001,
+  'solver': 'lbfgs',
   'solver_iterations': 50,  # = 0 infinite
   'use_numerical_differentiation': False,
   'display_mode': 'compare',
@@ -67,6 +68,8 @@ def run_super_resolution(binary_path, config):
     command += ' --data_path={}'.format(config['lr_image_dir'])
   if config['interpolate_color']:
     command += ' --interpolate_color'
+  if config['solve_in_wavelet_domain']:
+    command += ' --solve_in_wavelet_domain'
   if config['verbose_solver']:
      command += ' --verbose'
   if config['use_numerical_differentiation']:

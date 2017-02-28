@@ -5,6 +5,7 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "evaluation/peak_signal_to_noise_ratio.h"
@@ -20,6 +21,7 @@
 #include "util/data_loader.h"
 #include "util/macros.h"
 #include "util/util.h"
+#include "wavelet/wavelet_transform.h"
 
 #include "gflags/gflags.h"
 #include "glog/logging.h"
@@ -58,6 +60,8 @@ DEFINE_string(motion_sequence_path, "",
 // TODO: add support for multiple regularizers simultaneously.
 DEFINE_bool(interpolate_color, false,
     "Run SR only on the luminance channel and interpolate colors later.");
+DEFINE_bool(solve_in_wavelet_domain, false,
+    "Run super-resolution in the wavelet domain (experimental).");
 DEFINE_string(regularizer, "tv",
     "The regularizer to use ('tv', '3dtv', 'btv').");
 DEFINE_double(regularization_parameter, 0.01,
@@ -92,7 +96,7 @@ struct InputData {
 // (such as changing color space back to BGR) is not handled here.
 ImageData SetupAndRunSolver(
     const ImageModel& image_model,
-    const InputData& input_data,
+    const std::vector<ImageData>& input_images,
     const ImageData& initial_estimate) {
 
   // Set up the solver.
@@ -111,7 +115,7 @@ ImageData SetupAndRunSolver(
   solver_options.use_numerical_differentiation =
       FLAGS_use_numerical_differentiation;
   super_resolution::IrlsMapSolver solver(
-      solver_options, image_model, input_data.low_res_images);
+      solver_options, image_model, input_images);
   if (!FLAGS_verbose) {
     solver.Stfu();
   }
@@ -137,8 +141,7 @@ ImageData SetupAndRunSolver(
               << FLAGS_regularization_parameter;
   }
 
-  LOG(INFO) << "Super-resolving from "
-            << input_data.low_res_images.size() << " images...";
+  LOG(INFO) << "Super-resolving from " << input_images.size() << " images...";
   const auto start_time = std::chrono::steady_clock::now();
   ImageData result = solver.Solve(initial_estimate);
   const auto end_time = std::chrono::steady_clock::now();
@@ -146,6 +149,66 @@ ImageData SetupAndRunSolver(
   LOG(INFO) << "Done! Finished in "
             << elapsed_time_seconds.count() << " seconds.";
 
+  return result;
+}
+
+ImageData SolveInWaveletDomain(
+    const ImageModel& image_model,
+    const std::vector<ImageData>& input_images) {
+
+  // Generate coefficients for each input image.
+  std::vector<ImageData> input_dwt_lh_coefficients;
+  std::vector<ImageData> input_dwt_hl_coefficients;
+  std::vector<ImageData> input_dwt_hh_coefficients;
+  for (const ImageData& input : input_images) {
+    super_resolution::wavelet::WaveletCoefficients coefficients
+        = super_resolution::wavelet::WaveletTransform(input);
+    input_dwt_lh_coefficients.push_back(coefficients.lh);
+    input_dwt_hl_coefficients.push_back(coefficients.hl);
+    input_dwt_hh_coefficients.push_back(coefficients.hh);
+  }
+
+  // Run super-resolution on each component individually.
+  // TODO: Allow selecting which of these actually get super-resolved.
+  // LH:
+  ImageData initial_estimate_lh = input_dwt_lh_coefficients[0];
+  initial_estimate_lh.ResizeImage(
+      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+  ImageData result_lh = SetupAndRunSolver(
+      image_model, input_dwt_lh_coefficients, initial_estimate_lh);
+  // HL:
+  ImageData initial_estimate_hl = input_dwt_hl_coefficients[0];
+  initial_estimate_hl.ResizeImage(
+      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+  ImageData result_hl = SetupAndRunSolver(
+      image_model, input_dwt_hl_coefficients, initial_estimate_hl);
+  // HH:
+  ImageData initial_estimate_hh = input_dwt_hh_coefficients[0];
+  initial_estimate_hh.ResizeImage(
+      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+  ImageData result_hh = SetupAndRunSolver(
+      image_model, input_dwt_hh_coefficients, initial_estimate_hh);
+
+  // Merge and reconstruct. Because of size precision errors where the lower
+  // resolutions don't divide evenly by the upsampling scale, scale the ll
+  // coefficient to the same size as the others. Then once reconstructed, scale
+  // everything back to the target size. This offset should be only one pixel.
+  super_resolution::wavelet::WaveletCoefficients result_coefficients;
+  result_coefficients.ll = input_images[0];
+  result_coefficients.lh = result_lh;
+  result_coefficients.hl = result_hl;
+  result_coefficients.hh = result_hh;
+  result_coefficients.ll.ResizeImage(
+      result_coefficients.lh.GetImageSize(),
+      super_resolution::INTERPOLATE_CUBIC);
+  ImageData result = super_resolution::wavelet::InverseWaveletTransform(
+      result_coefficients);
+
+  const cv::Size original_size = input_images[0].GetImageSize();
+  const cv::Size target_size(
+      original_size.width * FLAGS_upsampling_scale,
+      original_size.height * FLAGS_upsampling_scale);
+  result.ResizeImage(target_size, super_resolution::INTERPOLATE_CUBIC);
   return result;
 }
 
@@ -200,21 +263,27 @@ int main(int argc, char** argv) {
     }
   }
 
-  // Set initial estimate.
-  ImageData initial_estimate = input_data.low_res_images[0];
-  initial_estimate.ResizeImage(
+  // Create an interpolated (bilinear upsampled) image as a reference.
+  ImageData upsampled_image = input_data.low_res_images[0];
+  upsampled_image.ResizeImage(
       FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
 
-  // Solving is handled in the SetupAndRunSolver function above.
-  ImageData result =
-      SetupAndRunSolver(image_model, input_data, initial_estimate);
+  // Run super-resolution in the selected domain.
+  ImageData result;
+  if (FLAGS_solve_in_wavelet_domain) {
+    result = SolveInWaveletDomain(image_model, input_data.low_res_images);
+  } else {
+    // Solving is handled in the SetupAndRunSolver function above.
+    result = SetupAndRunSolver(
+        image_model, input_data.low_res_images, upsampled_image);
+  }
 
   // If SR was only done on the luminance channel, interpolate the colors now
   // and change the color space back to BGR.
   if (FLAGS_interpolate_color) {
-    result.InterpolateColorFrom(initial_estimate);
+    result.InterpolateColorFrom(upsampled_image);
     result.ChangeColorSpace(super_resolution::SPECTRAL_MODE_COLOR_BGR);
-    initial_estimate.ChangeColorSpace(
+    upsampled_image.ChangeColorSpace(
         super_resolution::SPECTRAL_MODE_COLOR_BGR);
   }
 
@@ -224,20 +293,25 @@ int main(int argc, char** argv) {
     if (FLAGS_evaluator == "psnr") {
       super_resolution::PeakSignalToNoiseRatioEvaluator psnr_evaluator(
           input_data.high_res_image);
-      const double upsampled_psnr = psnr_evaluator.Evaluate(initial_estimate);
+      const double upsampled_psnr = psnr_evaluator.Evaluate(upsampled_image);
       const double result_psnr = psnr_evaluator.Evaluate(result);
       LOG(INFO) << "PSNR score on upsampled: " << upsampled_psnr;
       LOG(INFO) << "PSNR score on result:    " << result_psnr;
     }
   }
-  result.GetImageDataReport().Print();  // TODO
+  result.GetImageDataReport().Print();
 
   if (FLAGS_display_mode == "result") {
     super_resolution::util::DisplayImage(result, "Result");
   } else if (FLAGS_display_mode == "compare") {
+    std::vector<ImageData> display_images = {result, upsampled_image};
+    std::string display_title = "Super-Resolution vs. Linear Interpolation";
+    if (FLAGS_generate_lr_images) {
+      display_images.insert(display_images.begin(), input_data.high_res_image);
+      display_title = "Ground Truth vs. " + display_title;
+    }
     super_resolution::util::DisplayImagesSideBySide(
-        {result, initial_estimate},
-        "Super-Resolution vs. Linear Interpolation");
+        display_images, display_title);
   }
 
   return EXIT_SUCCESS;
