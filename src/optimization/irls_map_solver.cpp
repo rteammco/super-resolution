@@ -83,7 +83,8 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
   // Do the IRLS loop. After every iteration, update the IRLS weights and solve
   // again until the change in residual sum is sufficiently low.
   double previous_cost = std::numeric_limits<double>::infinity();
-  double cost_difference = solver_options_scaled.cost_decrease_threshold + 1.0;
+  double cost_difference =
+      solver_options_scaled.irls_cost_difference_threshold + 1.0;
   int num_iterations_ran = 0;
   while (std::abs(cost_difference) >=
          solver_options_scaled.irls_cost_difference_threshold) {

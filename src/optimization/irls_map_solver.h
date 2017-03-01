@@ -17,10 +17,14 @@ struct IrlsMapSolverOptions : public MapSolverOptions {
   // Augments the adjustment to also include the irls cost difference.
   virtual void AdjustThresholdsAdaptively(
       const int num_parameters, const double regularization_parameter_sum) {
+    const double threshold_scale =
+        num_parameters * regularization_parameter_sum;
+    if (threshold_scale < 1.0) {
+      return;  // Only scale up if needed, not down.
+    }
     MapSolverOptions::AdjustThresholdsAdaptively(
         num_parameters, regularization_parameter_sum);
-    irls_cost_difference_threshold *=
-        num_parameters * regularization_parameter_sum;
+    irls_cost_difference_threshold *= threshold_scale;
   }
 
   // Maximum number of outer loop iterations. Each outer loop runs Conjugate
@@ -34,7 +38,7 @@ struct IrlsMapSolverOptions : public MapSolverOptions {
   //
   // The stopping criteria for the inner loop (conjugate gradient) is defined
   // independently in MapSolverOptions.
-  double irls_cost_difference_threshold = 1.0e-6;
+  double irls_cost_difference_threshold = 1.0e-5;
 };
 
 class IrlsMapSolver : public MapSolver {
