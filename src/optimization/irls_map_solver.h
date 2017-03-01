@@ -26,7 +26,7 @@ struct IrlsMapSolverOptions : public MapSolverOptions {
   // Maximum number of outer loop iterations. Each outer loop runs Conjugate
   // Gradient which has its own max number of iterations
   // (max_num_solver_iterations).
-  int max_num_irls_iterations = 50;
+  int max_num_irls_iterations = 20;
 
   // The cost difference threshold for convergence of the IRLS algorithm. If
   // the change in cost from one outer loop iteration to the next is below this

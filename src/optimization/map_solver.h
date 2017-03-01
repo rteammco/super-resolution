@@ -58,11 +58,11 @@ struct MapSolverOptions {
 
   // Thresholds for stopping the solver if:
   //   The norm of the gradient is smaller than this.
-  double gradient_norm_threshold = 1e-10;
+  double gradient_norm_threshold = 1.0e-6;
   //   The change (decrease) in the cost is smaller than this.
-  double cost_decrease_threshold = 1e-10;
+  double cost_decrease_threshold = 1.0e-6;
   //   The change in the norm of the parameter vector is smaller than this.
-  double parameter_variation_threshold = 1e-10;
+  double parameter_variation_threshold = 1.0e-6;
 
   // Optional parameters for numerical differentiation. Use for testing
   // analytical differentiation only. Numerical differentiation is very slow
