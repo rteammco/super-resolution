@@ -14,6 +14,15 @@ namespace super_resolution {
 struct IrlsMapSolverOptions : public MapSolverOptions {
   IrlsMapSolverOptions() {}  // Required for making a const instance.
 
+  // Augments the adjustment to also include the irls cost difference.
+  virtual void AdjustThresholdsAdaptively(
+      const int num_parameters, const double regularization_parameter_sum) {
+    MapSolverOptions::AdjustThresholdsAdaptively(
+        num_parameters, regularization_parameter_sum);
+    irls_cost_difference_threshold *=
+        num_parameters * regularization_parameter_sum;
+  }
+
   // Maximum number of outer loop iterations. Each outer loop runs Conjugate
   // Gradient which has its own max number of iterations
   // (max_num_solver_iterations).

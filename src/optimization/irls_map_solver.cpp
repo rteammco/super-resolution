@@ -74,13 +74,19 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     irls_weights[reg_index] = weights_for_regularizer;
   }
 
+  // Scale the option stop criteria parameters based on the number of parameters
+  // and strength of the regularizers.
+  IrlsMapSolverOptions solver_options_scaled = solver_options_;
+  solver_options_scaled.AdjustThresholdsAdaptively(
+      GetNumDataPoints(), GetRegularizationParameterSum());
+
   // Do the IRLS loop. After every iteration, update the IRLS weights and solve
   // again until the change in residual sum is sufficiently low.
   double previous_cost = std::numeric_limits<double>::infinity();
-  double cost_difference = solver_options_.cost_decrease_threshold + 1.0;
+  double cost_difference = solver_options_scaled.cost_decrease_threshold + 1.0;
   int num_iterations_ran = 0;
   while (std::abs(cost_difference) >=
-         solver_options_.irls_cost_difference_threshold) {
+         solver_options_scaled.irls_cost_difference_threshold) {
     // Add the weighted regularization term(s) to the next objective function.
     // This makes a new copy of the objective function for each iteration.
     ObjectiveFunction objective_function = objective_function_data_term_only;
@@ -99,21 +105,21 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     // Run the solver on the reweighted objective function. Solver choice and
     // differentiation method are determined by options.
     double final_cost = 0.0;
-    if (solver_options_.use_numerical_differentiation) {
-      if (solver_options_.least_squares_solver == CG_SOLVER) {
+    if (solver_options_scaled.use_numerical_differentiation) {
+      if (solver_options_scaled.least_squares_solver == CG_SOLVER) {
         final_cost = RunCGSolverNumericalDiff(
-            solver_options_, objective_function, &solver_data);
+            solver_options_scaled, objective_function, &solver_data);
       } else {
         final_cost = RunLBFGSSolverNumericalDiff(
-            solver_options_, objective_function, &solver_data);
+            solver_options_scaled, objective_function, &solver_data);
       }
     } else {
-      if (solver_options_.least_squares_solver == CG_SOLVER) {
+      if (solver_options_scaled.least_squares_solver == CG_SOLVER) {
         final_cost = RunCGSolverAnalyticalDiff(
-            solver_options_, objective_function, &solver_data);
+            solver_options_scaled, objective_function, &solver_data);
       } else {
         final_cost = RunLBFGSSolverAnalyticalDiff(
-            solver_options_, objective_function, &solver_data);
+            solver_options_scaled, objective_function, &solver_data);
       }
     }
 
@@ -152,8 +158,8 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     LOG(INFO) << "IRLS Iteration complete (#" << num_iterations_ran << "). "
               << "New loss is " << final_cost
               << " with a difference of " << cost_difference << ".";
-    if (solver_options_.max_num_irls_iterations > 0 &&
-        num_iterations_ran >= solver_options_.max_num_irls_iterations) {
+    if (solver_options_scaled.max_num_irls_iterations > 0 &&
+        num_iterations_ran >= solver_options_scaled.max_num_irls_iterations) {
       break;
     }
   }

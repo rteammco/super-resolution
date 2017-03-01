@@ -54,4 +54,12 @@ void MapSolver::AddRegularizer(
       std::make_pair(regularizer, regularization_parameter));
 }
 
+double MapSolver::GetRegularizationParameterSum() const {
+  double regularization_parameter_sum = 0.0;
+  for (const auto& regularizer_and_parameter : regularizers_) {
+    regularization_parameter_sum += regularizer_and_parameter.second;
+  }
+  return regularization_parameter_sum;
+}
+
 }  // namespace super_resolution

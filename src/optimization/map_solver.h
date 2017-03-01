@@ -28,6 +28,22 @@ enum LeastSquaresSolver {
 struct MapSolverOptions {
   MapSolverOptions() {}  // Required for making a const instance.
 
+  // Adaptively adjusts all of the termination criteria thresholds based on the
+  // number of parameters and the regularization parameter sum. These factors
+  // contribute to the total cost of the objective function, so scaled
+  // threshold values may be desirable for quicker convergence.
+  //
+  // NOTE: The base thresholds must be set appropriately beforehand for this
+  // adjustment to work.
+  virtual void AdjustThresholdsAdaptively(
+      const int num_parameters, const double regularization_parameter_sum) {
+    const double threshold_scale =
+        num_parameters * regularization_parameter_sum;
+    gradient_norm_threshold *= threshold_scale;
+    cost_decrease_threshold *= threshold_scale;
+    parameter_variation_threshold *= threshold_scale;
+  }
+
   // Which solver to use.
   LeastSquaresSolver least_squares_solver = CG_SOLVER;
 
@@ -42,11 +58,11 @@ struct MapSolverOptions {
 
   // Thresholds for stopping the solver if:
   //   The norm of the gradient is smaller than this.
-  double gradient_norm_threshold = 0.0000000001;
+  double gradient_norm_threshold = 1e-10;
   //   The change (decrease) in the cost is smaller than this.
-  double cost_decrease_threshold = 0.0;
+  double cost_decrease_threshold = 1e-10;
   //   The change in the norm of the parameter vector is smaller than this.
-  double parameter_variation_threshold = 0.0;
+  double parameter_variation_threshold = 1e-10;
 
   // Optional parameters for numerical differentiation. Use for testing
   // analytical differentiation only. Numerical differentiation is very slow
@@ -98,6 +114,9 @@ class MapSolver : public Solver {
   int GetNumDataPoints() const {
     return GetNumPixels() * GetNumChannels();
   }
+
+  // Returns the sum of all regularization parameters.
+  double GetRegularizationParameterSum() const;
 
  protected:
   // All regularization terms and their respective regularization parameters to
