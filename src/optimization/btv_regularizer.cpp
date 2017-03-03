@@ -5,30 +5,27 @@
 #include <vector>
 
 #include "optimization/regularizer.h"
+#include "util/util.h"
 
 #include "opencv2/core/core.hpp"
 
-#include "FADBAD++/fadiff.h"
-
 #include "glog/logging.h"
-
-using fadbad::F;  // FADBAD++ forward derivative template.
 
 namespace super_resolution {
 
 // Returns the bilateral total variation value for the pixel at the given row
 // and col. Returned value will be 0 for invalid row and col values.
-template<typename T>
-T GetBilateralTotalVariation(
-    const T* image_data,
+double GetBilateralTotalVariation(
+    const double* image_data,
     const cv::Size& image_size,
+    const int channel,
     const int row,
     const int col,
     const int scale_range,
     const double spatial_decay) {
 
-  T total_variation = T(0);
-  const int index = row * image_size.width + col;
+  double total_variation = 0.0;
+  const int index = util::GetPixelIndex(image_size, channel, row, col);
   for (int i = 0; i <= scale_range; ++i) {
     for (int j = 0; j <= scale_range; ++j) {
       const int offset_row = row + i;
@@ -36,12 +33,11 @@ T GetBilateralTotalVariation(
       if (offset_row >= image_size.height || offset_col >= image_size.width) {
         continue;
       }
-      const int offset_index = offset_row * image_size.width + offset_col;
-      const T decay = T(std::pow(spatial_decay, i + j));
-      T absdiff = image_data[index] - image_data[offset_index];
-      if (absdiff < T(0)) {
-        absdiff *= T(-1);
-      }
+      const int offset_index =
+          util::GetPixelIndex(image_size, channel, offset_row, offset_col);
+      const double decay = std::pow(spatial_decay, i + j);
+      const double absdiff =
+          std::abs(image_data[index] - image_data[offset_index]);
       total_variation += decay * absdiff;
     }
   }
@@ -71,13 +67,17 @@ std::vector<double> BilateralTotalVariationRegularizer::ApplyToImage(
   const int num_pixels = image_size_.width * image_size_.height;
   std::vector<double> residuals(num_pixels * num_channels_);
   for (int channel = 0; channel < num_channels_; ++channel) {
-    const int channel_index = channel * num_pixels;
-    const double* data_ptr = image_data + channel_index;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const int index = channel_index + (row * image_size_.width + col);
-        residuals[index] = GetBilateralTotalVariation<double>(
-            data_ptr, image_size_, row, col, scale_range_, spatial_decay_);
+        const int index = util::GetPixelIndex(image_size_, channel, row, col);
+        residuals[index] = GetBilateralTotalVariation(
+            image_data,
+            image_size_,
+            channel,
+            row,
+            col,
+            scale_range_,
+            spatial_decay_);
       }
     }
   }
@@ -91,62 +91,73 @@ BilateralTotalVariationRegularizer::ApplyToImageWithDifferentiation(
 
   CHECK_NOTNULL(image_data);
 
-  // Initialize the derivatives of each parameter with respect to itself.
+  const std::vector<double> residuals = ApplyToImage(image_data);
+
+  // Compute the gradient.
+  // TODO: add some descriptive comments about computing the gradient.
   const int num_pixels = image_size_.width * image_size_.height;
   const int num_parameters = num_pixels * num_channels_;
-  std::vector<F<double>> parameters(
-      image_data, image_data + num_parameters);
-  for (int i = 0; i < num_parameters; ++i) {
-    parameters[i].diff(i, num_parameters);
-  }
-
-  // TODO: copy/pasted >.>
-  std::vector<double> residual_values(num_parameters);
-  std::vector<F<double>> residuals(num_parameters);
-  for (int channel = 0; channel < num_channels_; ++channel) {
-    const int channel_index = channel * num_pixels;
-    const F<double>* data_ptr = parameters.data() + channel_index;
-    for (int row = 0; row < image_size_.height; ++row) {
-      for (int col = 0; col < image_size_.width; ++col) {
-        const int index = channel_index + (row * image_size_.width + col);
-        residuals[index] = GetBilateralTotalVariation<F<double>>(
-            data_ptr, image_size_, row, col, scale_range_, spatial_decay_);
-        residual_values[index] = residuals[index].x();
-      }
-    }
-  }
-
-  // Compute the gradient vector. Only consider gradients of pixels within
-  // range of each other to avoid O(n^2) comparison.
   std::vector<double> gradient(num_parameters);
   for (int channel = 0; channel < num_channels_; ++channel) {
-    const int channel_index = channel * num_pixels;
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const int index = channel_index + (row * image_size_.width + col);
-        for (int i = 0; i <= scale_range_; ++i) {
-          for (int j = 0; j <= scale_range_; ++j) {
+        const int index = util::GetPixelIndex(image_size_, channel, row, col);
+        // Derivative w.r.t. the pixel itself. Need to consider every pixel in
+        // this pixel's range window.
+        double didi = 0.0;
+        for (int i = 0; i < scale_range_; ++i) {
+          for (int j = 0; j < scale_range_; ++j) {
+            const int offset_row = row + i;
+            const int offset_col = col + j;
+            if (offset_row >= image_size_.height ||
+                offset_col >= image_size_.width) {
+              continue;
+            }
+            const int offset_index = util::GetPixelIndex(
+                image_size_, channel, offset_row, offset_col);
+            const double diff = image_data[index] - image_data[offset_index];
+            double abs_gradient = 0.0;
+            if (diff < 0.0) {
+              abs_gradient += 1.0;
+            } else if (diff > 0.0) {
+              abs_gradient -= 1.0;
+            }
+            const double decay = std::pow(spatial_decay_, i + j);
+            didi += decay * abs_gradient;
+          }
+        }
+        gradient[index] +=
+            2 * gradient_constants[index] * residuals[index] * didi;
+        // Derivative w.r.t. all other pixels where the range window overlaps
+        // this pixel.
+        for (int i = 0; i < scale_range_; ++i) {
+          for (int j = 0; j < scale_range_; ++j) {
             const int offset_row = row - i;
             const int offset_col = col - j;
-            if (offset_row >= 0 && offset_col >= 0) {
-              const int offset_index =
-                  channel_index + (offset_row * image_size_.width + offset_col);
-              const double dodi = residuals[offset_index].d(index);
-              if (!isnan(dodi)) {
-                gradient[index] +=
-                    2 *
-                    gradient_constants[offset_index] *
-                    residual_values[offset_index] *
-                    dodi;
-              }
+            if (offset_row < 0 || offset_col < 0) {
+              continue;
             }
+            const int offset_index = util::GetPixelIndex(
+                image_size_, channel, offset_row, offset_col);
+            const double diff = image_data[offset_index] - image_data[index];
+            double didj = 0.0;
+            if (diff > 0.0) {
+              didj = 1.0;
+            } else if (diff < 0.0) {
+              didj = -1.0;
+            }
+            gradient[index] +=
+                2 *
+                gradient_constants[offset_index] *
+                residuals[offset_index] *
+                didj;
           }
         }
       }
     }
   }
 
-  return std::make_pair(residual_values, gradient);
+  return std::make_pair(residuals, gradient);
 }
 
 }  // namespace super_resolution
