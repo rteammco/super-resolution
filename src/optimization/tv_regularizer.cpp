@@ -135,27 +135,12 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
 
   CHECK_NOTNULL(image_data);
 
-  // Initialize the derivatives of each parameter with respect to itself.
-  const int num_pixels = image_size_.area();
-  const int num_parameters = num_pixels * num_channels_;
-  std::vector<double> residuals(num_parameters);
-  for (int channel = 0; channel < num_channels_; ++channel) {
-    for (int row = 0; row < image_size_.height; ++row) {
-      for (int col = 0; col < image_size_.width; ++col) {
-        const int index = util::GetPixelIndex(image_size_, channel, row, col);
-        if (use_3d_total_variation_) {
-          residuals[index] = GetTotalVariation3d(
-              image_data, image_size_, row, col, channel, num_channels_);
-        } else {
-          residuals[index] = GetTotalVariationAbs(
-              image_data, image_size_, row, col, channel);
-        }
-      }
-    }
-  }
+  const std::vector<double> residuals = ApplyToImage(image_data);
 
   // Compute the gradient.
   // TODO: add some descriptive comments about computing the gradient.
+  const int num_pixels = image_size_.area();
+  const int num_parameters = num_pixels * num_channels_;
   std::vector<double> gradient(num_parameters);
   for (int channel = 0; channel < num_channels_; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {
