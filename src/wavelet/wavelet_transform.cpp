@@ -158,10 +158,10 @@ ImageData InverseWaveletTransform(const WaveletCoefficients& coefficients) {
 
         channel_image.at<double>(row * 2, col * 2) =
             0.5 * (ll_value + lh_value + hl_value + hh_value);
-        channel_image.at<double>(row * 2 + 1, col * 2) =
-            0.5 * (ll_value + lh_value - hl_value - hh_value);
         channel_image.at<double>(row * 2, col * 2 + 1) =
             0.5 * (ll_value - lh_value + hl_value - hh_value);
+        channel_image.at<double>(row * 2 + 1, col * 2) =
+            0.5 * (ll_value + lh_value - hl_value - hh_value);
         channel_image.at<double>(row * 2 + 1, col * 2 + 1) =
             0.5 * (ll_value - lh_value - hl_value + hh_value);
       }
