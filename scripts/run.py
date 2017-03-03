@@ -10,16 +10,18 @@ configuration = {
   'blur_sigma': 0.5,
   'noise_sigma': 5.0,
 #  'hr_image_path': '../test_data/fb.png',
-  'hr_image_path': '../test_data/dallas_qtr.jpg',
+  'hr_image_path': '../test_data/dallas_half.jpg',
   'lr_image_dir': '../test_data/OUT',
   'number_of_frames': 9,
   'motion_sequence_path': '../test_data/test_motion_sequence_9.txt',
   # Solver-only options:
   'interpolate_color': True,
   'solve_in_wavelet_domain': False,
-  'regularizer': 'tv',
-  'regularization_parameter': 0.001,
-  'solver': 'lbfgs',
+  'regularizer': 'btv',
+  'regularization_parameter': 0.01,
+  'btv_scale_range': 3,
+  'btv_spatial_decay': 0.5,
+  'solver': 'cg',
   'solver_iterations': 50,  # = 0 infinite
   'use_numerical_differentiation': False,
   'display_mode': 'compare',
@@ -53,6 +55,9 @@ def run_super_resolution(binary_path, config):
   command += ' --blur_sigma={}'.format(config['blur_sigma'])
   command += ' --motion_sequence_path={}'.format(config['motion_sequence_path'])
   command += ' --regularizer={}'.format(config['regularizer'])
+  if config['regularizer'] == 'btv':
+    command += ' --btv_scale_range={}'.format(config['btv_scale_range'])
+    command += ' --btv_spatial_decay={}'.format(config['btv_spatial_decay'])
   command += ' --regularization_parameter={}'.format(
       config['regularization_parameter'])
   command += ' --display_mode={}'.format(config['display_mode'])

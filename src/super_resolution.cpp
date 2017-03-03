@@ -16,6 +16,7 @@
 #include "image_model/image_model.h"
 #include "image_model/motion_module.h"
 #include "motion/motion_shift.h"
+#include "optimization/btv_regularizer.h"
 #include "optimization/irls_map_solver.h"
 #include "optimization/tv_regularizer.h"
 #include "util/data_loader.h"
@@ -64,6 +65,10 @@ DEFINE_bool(solve_in_wavelet_domain, false,
     "Run super-resolution in the wavelet domain (experimental).");
 DEFINE_string(regularizer, "tv",
     "The regularizer to use ('tv', '3dtv', 'btv').");
+DEFINE_int32(btv_scale_range, 3,
+    "The range (window size) for BTV regularization. Minumum range is 1.");
+DEFINE_double(btv_spatial_decay, 0.5,
+    "The spatial decay factor for BTV regularization (0 < decay <= 1).");
 DEFINE_double(regularization_parameter, 0.01,
     "The regularization parameter (lambda). 0 to not use regularization.");
 DEFINE_string(solver, "cg",
@@ -134,6 +139,23 @@ ImageData SetupAndRunSolver(
         reinterpret_cast<super_resolution::TotalVariationRegularizer*>(
             regularizer.get())->SetUse3dTotalVariation(true);
       }
+    } else if (FLAGS_regularizer == "btv") {
+      regularizer =
+          std::shared_ptr<super_resolution::Regularizer>(
+              new super_resolution::BilateralTotalVariationRegularizer(
+                  initial_estimate.GetImageSize(),
+                  initial_estimate.GetNumChannels(),
+                  FLAGS_btv_scale_range,
+                  FLAGS_btv_spatial_decay));
+    } else {
+      LOG(WARNING) << "Unknown regularizer option '" << FLAGS_regularizer
+                   << "'. Using default Total Variation regularizer.";
+      FLAGS_regularizer = "tv";
+      regularizer =
+          std::shared_ptr<super_resolution::Regularizer>(
+              new super_resolution::TotalVariationRegularizer(
+                  initial_estimate.GetImageSize(),
+                  initial_estimate.GetNumChannels()));
     }
     solver.AddRegularizer(regularizer, FLAGS_regularization_parameter);
     LOG(INFO) << "Added " << FLAGS_regularizer

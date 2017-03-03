@@ -55,8 +55,11 @@ BilateralTotalVariationRegularizer::BilateralTotalVariationRegularizer(
 
   CHECK_GE(scale_range_, 1)
       << "Range must be at least 1 (1 pixel in each direction).";
-  CHECK(0 < spatial_decay_ && spatial_decay_ < 1)
-      << "Spatial decay must be between 0 and 1 (non-inclusive).";
+  CHECK(0 < spatial_decay_ && spatial_decay_ <= 1)
+      << "Spatial decay must be between 0 and 1, (0, 1].";
+
+  LOG(INFO) << "BTV set with range " << scale_range_
+            << " and decay " << spatial_decay_;
 }
 
 std::vector<double> BilateralTotalVariationRegularizer::ApplyToImage(
