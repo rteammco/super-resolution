@@ -170,8 +170,10 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
               util::GetPixelIndex(image_size_, channel, row, col - 1);
           const double left_gradient = GetXGradientAtPixel(
               image_data, image_size_, channel, row, col - 1);
-          double dldi = 1.0;
-          if (left_gradient < 0.0) {
+          double dldi = 0.0;
+          if (left_gradient > 0.0) {
+            dldi = 1.0;
+          } else if (left_gradient < 0.0) {
             dldi = -1.0;
           }
           gradient[index] +=
@@ -183,8 +185,10 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
               util::GetPixelIndex(image_size_, channel, row - 1, col);
           const double above_gradient = GetYGradientAtPixel(
               image_data, image_size_, channel, row - 1, col);
-          double dadi = 1.0;
-          if (above_gradient < 0.0) {
+          double dadi = 0.0;
+          if (above_gradient > 0.0) {
+            dadi = 1.0;
+          } else if (above_gradient < 0.0) {
             dadi = -1.0;
           }
           gradient[index] +=
@@ -199,8 +203,10 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
               util::GetPixelIndex(image_size_, channel - 1, row, col);
           const double before_gradient = GetZGradientAtPixel(
               image_data, image_size_, channel - 1, row, col);
-          double dbdi = 1.0;
-          if (before_gradient < 0.0) {
+          double dbdi = 0.0;
+          if (before_gradient > 0.0) {
+            dbdi = 1.0;
+          } else if (before_gradient < 0.0) {
             dbdi = -1.0;
           }
           gradient[index] +=
