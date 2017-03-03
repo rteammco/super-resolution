@@ -22,7 +22,7 @@ constexpr char kDataDelimiter = ',';
 // format exported from Matlab using dlmwrite.
 void HyperspectralDataLoader::LoadData() {
   std::ifstream fin(file_path_);
-  CHECK(fin.is_open()) << "Could not open file " << file_path_;
+  CHECK(fin.is_open()) << "Could not open file '" << file_path_ << "'.";
 
   // The files are organized as follows:
   //

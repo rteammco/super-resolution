@@ -80,6 +80,7 @@ ImageData LoadImage(const std::string& file_path) {
       extension.begin(), extension.end(), extension.begin(), tolower);
   if (DoesSetContain(kSupportedImageExtensions, extension)) {
     const cv::Mat image = cv::imread(file_path, cv::IMREAD_UNCHANGED);
+    CHECK(!image.empty()) << "Could not load image '" << file_path << "'.";
     return ImageData(image);
   } else if (DoesSetContain(kSupportedHyperspectralExtensions, extension)) {
     hyperspectral::HyperspectralDataLoader hs_data_loader(file_path);
