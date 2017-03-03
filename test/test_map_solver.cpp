@@ -420,13 +420,14 @@ TEST(MapSolver, RegularizationTest) {
       solver_with_tv_regularization.Solve(initial_estimate);
 
   // Create a solver with BTV regularization.
-//  super_resolution::IrlsMapSolver solver_with_btv_regularization(
-//      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
-//  const super_resolution::BilateralTotalVariationRegularizer btv_regularizer(
-//      image_size, ground_truth.GetNumChannels(), 3, 0.5);
-//  solver_with_btv_regularization.AddRegularizer(btv_regularizer, 0.01);
-//  const ImageData solver_result_with_btv_regularization =
-//      solver_with_btv_regularization.Solve(initial_estimate);
+  super_resolution::IrlsMapSolver solver_with_btv_regularization(
+      kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
+  const std::shared_ptr<super_resolution::Regularizer> btv_regularizer(
+      new super_resolution::BilateralTotalVariationRegularizer(
+          image_size, ground_truth.GetNumChannels(), 3, 0.5));
+  solver_with_btv_regularization.AddRegularizer(btv_regularizer, 0.01);
+  const ImageData solver_result_with_btv_regularization =
+      solver_with_btv_regularization.Solve(initial_estimate);
 
   // Create the solver without regularization.
   super_resolution::IrlsMapSolver solver_unregularized(
@@ -439,9 +440,12 @@ TEST(MapSolver, RegularizationTest) {
       ground_truth);
   const double psnr_with_tv_regularization =
       psnr_evaluator.Evaluate(solver_result_with_tv_regularization);
+  const double psnr_with_btv_regularization =
+      psnr_evaluator.Evaluate(solver_result_with_btv_regularization);
   const double psnr_without_regularization =
       psnr_evaluator.Evaluate(solver_result_unregularized);
   EXPECT_GT(psnr_with_tv_regularization, psnr_without_regularization);
+  EXPECT_GT(psnr_with_btv_regularization, psnr_with_tv_regularization);
 
   if (kDisplaySolverResults) {
     ImageData disp_ground_truth = ground_truth;
@@ -465,12 +469,12 @@ TEST(MapSolver, RegularizationTest) {
         "Solver Result With TV Regularization",
         disp_result_with_tv_regularization.GetVisualizationImage());
 
-//    ImageData disp_result_with_btv_regularization =
-//        solver_result_with_btv_regularization;
-//    disp_result_with_btv_regularization.ResizeImage(kDisplayImageSize);
-//    cv::imshow(
-//        "Solver Result With BTV Regularization",
-//        disp_result_with_btv_regularization.GetVisualizationImage());
+    ImageData disp_result_with_btv_regularization =
+        solver_result_with_btv_regularization;
+    disp_result_with_btv_regularization.ResizeImage(kDisplayImageSize);
+    cv::imshow(
+        "Solver Result With BTV Regularization",
+        disp_result_with_btv_regularization.GetVisualizationImage());
 
     cv::waitKey(0);
   }

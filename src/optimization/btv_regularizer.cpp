@@ -117,10 +117,10 @@ BilateralTotalVariationRegularizer::ApplyToImageWithDifferentiation(
                 image_size_, channel, offset_row, offset_col);
             const double diff = image_data[index] - image_data[offset_index];
             double abs_gradient = 0.0;
-            if (diff < 0.0) {
-              abs_gradient += 1.0;
-            } else if (diff > 0.0) {
-              abs_gradient -= 1.0;
+            if (diff > 0.0) {
+              abs_gradient = 1.0;
+            } else if (diff < 0.0) {
+              abs_gradient = -1.0;
             }
             const double decay = std::pow(spatial_decay_, i + j);
             didi += decay * abs_gradient;
@@ -134,18 +134,21 @@ BilateralTotalVariationRegularizer::ApplyToImageWithDifferentiation(
           for (int j = 0; j < scale_range_; ++j) {
             const int offset_row = row - i;
             const int offset_col = col - j;
-            if (offset_row < 0 || offset_col < 0) {
+            if ((offset_row == 0 && offset_col == 0) ||
+                 offset_row < 0 || offset_col < 0) {
               continue;
             }
             const int offset_index = util::GetPixelIndex(
                 image_size_, channel, offset_row, offset_col);
             const double diff = image_data[offset_index] - image_data[index];
             double didj = 0.0;
-            if (diff > 0.0) {
+            if (diff < 0.0) {
               didj = 1.0;
-            } else if (diff < 0.0) {
+            } else if (diff > 0.0) {
               didj = -1.0;
             }
+            const double decay = std::pow(spatial_decay_, i + j);
+            didj *= decay;
             gradient[index] +=
                 2 *
                 gradient_constants[offset_index] *
