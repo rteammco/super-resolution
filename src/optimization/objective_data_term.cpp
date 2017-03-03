@@ -53,7 +53,7 @@ double ComputeTermForObservation(
     const int scale = image_model.GetDownsamplingScale();
     residual_image.ResizeImage(
         cv::Size(image_size.width / scale, image_size.height / scale),
-        INTERPOLATE_NEAREST);
+        INTERPOLATE_ADDITIVE);
     image_model.ApplyTransposeToImage(&residual_image, image_index);
 
     // Add to the gradient.
