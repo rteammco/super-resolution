@@ -157,12 +157,14 @@ ImageData SolveInWaveletDomain(
     const std::vector<ImageData>& input_images) {
 
   // Generate coefficients for each input image.
+  std::vector<ImageData> input_dwt_ll_coefficients;
   std::vector<ImageData> input_dwt_lh_coefficients;
   std::vector<ImageData> input_dwt_hl_coefficients;
   std::vector<ImageData> input_dwt_hh_coefficients;
   for (const ImageData& input : input_images) {
     super_resolution::wavelet::WaveletCoefficients coefficients
         = super_resolution::wavelet::WaveletTransform(input);
+    input_dwt_ll_coefficients.push_back(coefficients.ll);
     input_dwt_lh_coefficients.push_back(coefficients.lh);
     input_dwt_hl_coefficients.push_back(coefficients.hl);
     input_dwt_hh_coefficients.push_back(coefficients.hh);
@@ -170,6 +172,12 @@ ImageData SolveInWaveletDomain(
 
   // Run super-resolution on each component individually.
   // TODO: Allow selecting which of these actually get super-resolved.
+  // LL:
+  ImageData initial_estimate_ll = input_dwt_ll_coefficients[0];
+  initial_estimate_ll.ResizeImage(
+      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+  ImageData result_ll = SetupAndRunSolver(
+      image_model, input_dwt_ll_coefficients, initial_estimate_ll);
   // LH:
   ImageData initial_estimate_lh = input_dwt_lh_coefficients[0];
   initial_estimate_lh.ResizeImage(
@@ -194,13 +202,13 @@ ImageData SolveInWaveletDomain(
   // coefficient to the same size as the others. Then once reconstructed, scale
   // everything back to the target size. This offset should be only one pixel.
   super_resolution::wavelet::WaveletCoefficients result_coefficients;
-  result_coefficients.ll = input_images[0];
+  result_coefficients.ll = result_ll;
   result_coefficients.lh = result_lh;
   result_coefficients.hl = result_hl;
   result_coefficients.hh = result_hh;
-  result_coefficients.ll.ResizeImage(
-      result_coefficients.lh.GetImageSize(),
-      super_resolution::INTERPOLATE_CUBIC);
+  // result_coefficients.ll.ResizeImage(  // TODO: Put back if needed.
+  //     result_coefficients.lh.GetImageSize(),
+  //     super_resolution::INTERPOLATE_CUBIC);
   ImageData result = super_resolution::wavelet::InverseWaveletTransform(
       result_coefficients);
 
