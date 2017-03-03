@@ -5,23 +5,13 @@
 #include <utility>
 #include <vector>
 
+#include "util/util.h"
+
 #include "opencv2/core/core.hpp"
 
 #include "glog/logging.h"
 
 namespace super_resolution {
-
-// Returns the index into the image pixel array given the image size and the
-// row, column, and channel of the pixel.
-int GetPixelIndex(
-    const cv::Size& image_size,
-    const int row,
-    const int col,
-    const int channel) {
-
-  const int channel_index = channel * (image_size.width * image_size.height);
-  return channel_index + (row * image_size.width + col);
-}
 
 // For a given image row and col, returns the value of (x_{r,c+1} - x_{r,c}) if
 // c+1 is a valid column position, or 0 otherwise. That is, the X-direction
@@ -35,9 +25,9 @@ double GetXGradientAtPixel(
     const int channel) {
 
   if (col >= 0 && col + 1 < image_size.width) {
-    const int pixel_index = GetPixelIndex(image_size, row, col, channel);
+    const int pixel_index = util::GetPixelIndex(image_size, channel, row, col);
     const int x_neighbor_index =
-        GetPixelIndex(image_size, row, col + 1, channel);
+        util::GetPixelIndex(image_size, channel, row, col + 1);
     return image_data[x_neighbor_index] - image_data[pixel_index];
   }
   return 0;
@@ -53,9 +43,9 @@ double GetYGradientAtPixel(
     const int channel) {
 
   if (row >= 0 && row + 1 < image_size.height) {
-    const int pixel_index = GetPixelIndex(image_size, row, col, channel);
+    const int pixel_index = util::GetPixelIndex(image_size, channel, row, col);
     const int y_neighbor_index =
-        GetPixelIndex(image_size, row + 1, col, channel);
+        util::GetPixelIndex(image_size, channel, row + 1, col);
     return image_data[y_neighbor_index] - image_data[pixel_index];
   }
   return 0;
@@ -71,8 +61,9 @@ double GetZGradientAtPixel(
     const int col,
     const int channel) {
 
-  const int pixel_index = GetPixelIndex(image_size, row, col, channel);
-  const int z_neighbor_index = GetPixelIndex(image_size, row, col, channel + 1);
+  const int pixel_index = util::GetPixelIndex(image_size, channel, row, col);
+  const int z_neighbor_index =
+      util::GetPixelIndex(image_size, channel + 1, row, col);
   return image_data[z_neighbor_index] - image_data[pixel_index];
 }
 
@@ -123,7 +114,7 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
   for (int channel = 0; channel < num_channels_; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const int index = GetPixelIndex(image_size_, row, col, channel);
+        const int index = util::GetPixelIndex(image_size_, channel, row, col);
         if (use_3d_total_variation_) {
           residuals[index] = GetTotalVariation3d(
               image_data, image_size_, row, col, channel, num_channels_);
@@ -151,7 +142,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   for (int channel = 0; channel < num_channels_; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const int index = GetPixelIndex(image_size_, row, col, channel);
+        const int index = util::GetPixelIndex(image_size_, channel, row, col);
         if (use_3d_total_variation_) {
           residuals[index] = GetTotalVariation3d(
               image_data, image_size_, row, col, channel, num_channels_);
@@ -169,7 +160,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
   for (int channel = 0; channel < num_channels_; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
-        const int index = GetPixelIndex(image_size_, row, col, channel);
+        const int index = util::GetPixelIndex(image_size_, channel, row, col);
         // Derivative w.r.t. the pixel itself.
         double didi = 0.0;
         const double x_gradient =
@@ -191,7 +182,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
         // Derivative w.r.t. the pixel to the left.
         if (col - 1 >= 0) {
           const int left_index =
-              GetPixelIndex(image_size_, row, col - 1, channel);
+              util::GetPixelIndex(image_size_, channel, row, col - 1);
           const double left_gradient = GetXGradientAtPixel(
               image_data, image_size_, row, col - 1, channel);
           double dldi = 1.0;
@@ -204,7 +195,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
         // Derivative w.r.t. the pixel above.
         if (row - 1 >= 0) {
           const int above_index =
-              GetPixelIndex(image_size_, row - 1, col, channel);
+              util::GetPixelIndex(image_size_, channel, row - 1, col);
           const double above_gradient = GetYGradientAtPixel(
               image_data, image_size_, row - 1, col, channel);
           double dadi = 1.0;
@@ -220,7 +211,7 @@ TotalVariationRegularizer::ApplyToImageWithDifferentiation(
         // Derivative w.r.t. the pixel in the channel before (if 3D TV).
         if (use_3d_total_variation_ && channel > 0) {
           const int before_index =
-              GetPixelIndex(image_size_, row, col, channel - 1);
+              util::GetPixelIndex(image_size_, channel - 1, row, col);
           const double before_gradient = GetZGradientAtPixel(
               image_data, image_size_, row, col, channel - 1);
           double dbdi = 1.0;

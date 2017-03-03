@@ -8,6 +8,8 @@
 
 #include "image/image_data.h"
 
+#include "opencv2/core/core.hpp"
+
 namespace super_resolution {
 namespace util {
 
@@ -36,6 +38,15 @@ void DisplayImagesSideBySide(
     const std::vector<ImageData>& images,
     const std::string& window_name = "Images",
     const bool rescale = true);
+
+// Returns the index into a pixel array given its channel (band), row, and
+// column coordinates. This assumes the standard channel-row-col ordering on an
+// array containing image data.
+int GetPixelIndex(
+    const cv::Size& image_size,
+    const int channel,
+    const int row,
+    const int col);
 
 }  // namespace util
 }  // namespace super_resolution

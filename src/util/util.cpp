@@ -117,5 +117,15 @@ void DisplayImagesSideBySide(
   DisplayImage(stitched_image_data, window_name, rescale);
 }
 
+int GetPixelIndex(
+    const cv::Size& image_size,
+    const int channel,
+    const int row,
+    const int col) {
+
+  const int channel_index = channel * (image_size.width * image_size.height);
+  return channel_index + (row * image_size.width + col);
+}
+
 }  // namespace util
 }  // namespace super_resolution
