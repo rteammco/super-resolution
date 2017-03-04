@@ -2,8 +2,10 @@
 
 import argparse
 import subprocess
+import Tkinter as tk
 
-# TODO: this is temporary and should be filled in using a GUI or config file.
+# The default configuration values.
+# TODO: This should be loaded from a config file.
 configuration = {
   'scale': 2,
   'blur_radius': 3,
@@ -32,6 +34,10 @@ configuration = {
 
 def run_generate_data(binary_path, config):
   """ Runs the GenerateData binary.
+
+  Args:
+    binary_path: The path to the GenerateData executable binary.
+    config: The configuration dictionary (see default configuration above).
   """
   command = binary_path + '/GenerateData'
   command += ' --input_image={}'.format(config['hr_image_path'])
@@ -48,6 +54,10 @@ def run_generate_data(binary_path, config):
 
 def run_super_resolution(binary_path, config):
   """ Runs the SuperResolution binary.
+
+  Args:
+    binary_path: The path to the SuperResolution executable binary.
+    config: The configuration dictionary (see default configuration above).
   """
   command = binary_path + '/SuperResolution'
   command += ' --upsampling_scale={}'.format(config['scale'])
@@ -83,15 +93,59 @@ def run_super_resolution(binary_path, config):
   print command
   subprocess.call(command.split(' '))
 
+def make_gui_window(binary_path):
+  """ Creates a Tkinter window so the user can set input values.
+
+  Args:
+    binary_path: The path to the executable binaries to be run.
+  """
+  gui_window = tk.Tk()
+  gui_window.title('Run Super-Resolution')
+  # Make the input fields:
+  next_row = 0
+  for parameter in configuration:
+    tk.Label(gui_window, text = parameter).grid(row = next_row)
+    def text_change_callback(key, sv):
+      """ When the StringVar gets changed, update the configuration. """
+      val = sv.get()
+      if val.lower() == 'true':
+        val = True
+      elif val.lower() == 'false':
+        val = False
+      configuration[key] = val
+    sv = tk.StringVar()
+    sv.trace('w', lambda name, index, mode, key = parameter, sv = sv:
+        text_change_callback(key, sv))
+    sv.set(str(configuration[parameter]))
+    entry = tk.Entry(gui_window, textvariable = sv)
+    entry.grid(row = next_row, column = 1)
+    next_row += 1
+  # Make the run buttons:
+  tk.Button(
+      gui_window,
+      text='SuperResolution',
+      command = lambda: run_super_resolution(binary_path, configuration)).grid(
+          row = next_row, column = 0, sticky = tk.W, pady = 10, padx = 10)
+  tk.Button(
+      gui_window,
+      text='GenerateData',
+      command = lambda: run_generate_data(binary_path, configuration)).grid(
+          row = next_row, column = 1, sticky = tk.W, pady = 10, padx = 10)
+  tk.mainloop()
+
 if __name__ == '__main__':
-  # Run the appropriate binary based on the --binary argument.
   parser = argparse.ArgumentParser(
       description='Run script for super-resolution binaries.')
-  parser.add_argument('--binary', required=True,
+  parser.add_argument('--binary', required=False,
       help='The binary to run (SuperResolution or GenerateData).')
   args = parser.parse_args()
   binary_path = 'bin'
-  if args.binary == 'SuperResolution':
-    run_super_resolution(binary_path, configuration)
-  elif args.binary == 'GenerateData':
-    run_generate_data(binary_path, configuration)
+  # Run the appropriate binary based on the --binary argument.
+  if args.binary:
+    if args.binary == 'SuperResolution':
+      run_super_resolution(binary_path, configuration)
+    elif args.binary == 'GenerateData':
+      run_generate_data(binary_path, configuration)
+  # Otherwise open a GUI and let the user select run parameters.
+  else:
+    make_gui_window(binary_path)
