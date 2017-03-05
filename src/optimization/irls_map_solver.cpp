@@ -159,6 +159,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     LOG(INFO) << "IRLS Iteration complete (#" << num_iterations_ran << "). "
               << "New loss is " << final_cost
               << " with a difference of " << cost_difference << ".";
+    // Stop if max number of iterations have been completed.
     if (solver_options_scaled.max_num_irls_iterations > 0 &&
         num_iterations_ran >= solver_options_scaled.max_num_irls_iterations) {
       break;

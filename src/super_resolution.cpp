@@ -163,6 +163,7 @@ ImageData SetupAndRunSolver(
               << FLAGS_regularization_parameter;
   }
 
+  // Run the solver and time it.
   LOG(INFO) << "Super-resolving from " << input_images.size() << " images...";
   const auto start_time = std::chrono::steady_clock::now();
   ImageData result = solver.Solve(initial_estimate);
