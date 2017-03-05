@@ -56,13 +56,17 @@ DEFINE_double(blur_sigma, 1.0,
 DEFINE_string(motion_sequence_path, "",
     "Path to a file containing the motion shifts for each image.");
 
-// Solver parameters:
-// TODO: add support for these regularizers.
-// TODO: add support for multiple regularizers simultaneously.
+// Solver strategy parameters:
+// TODO: Add support for different solver strategies (e.g. ADMM).
+DEFINE_int32(optimization_iterations, 20,
+    "Max number of optimization iterations (e.g. number of IRLS iterations).");
 DEFINE_bool(interpolate_color, false,
     "Run SR only on the luminance channel and interpolate colors later.");
 DEFINE_bool(solve_in_wavelet_domain, false,
     "Run super-resolution in the wavelet domain (experimental).");
+
+// Regularization options:
+// TODO: Add support for multiple regularizers simultaneously.
 DEFINE_string(regularizer, "tv",
     "The regularizer to use ('tv', '3dtv', 'btv').");
 DEFINE_int32(btv_scale_range, 3,
@@ -71,6 +75,8 @@ DEFINE_double(btv_spatial_decay, 0.5,
     "The spatial decay factor for BTV regularization (0 < decay <= 1).");
 DEFINE_double(regularization_parameter, 0.01,
     "The regularization parameter (lambda). 0 to not use regularization.");
+
+// Solver parameters:
 DEFINE_string(solver, "cg",
     "The least squares solver to use ('cg' or 'lbfgs').");
 DEFINE_int32(solver_iterations, 50,
@@ -116,6 +122,7 @@ ImageData SetupAndRunSolver(
   } else {
     LOG(WARNING) << "Invalid solver flag. Using default (conjugate gradient).";
   }
+  solver_options.max_num_irls_iterations = FLAGS_optimization_iterations;
   solver_options.max_num_solver_iterations = FLAGS_solver_iterations;
   solver_options.use_numerical_differentiation =
       FLAGS_use_numerical_differentiation;

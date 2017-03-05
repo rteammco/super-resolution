@@ -25,6 +25,7 @@ configuration = {
   'btv_spatial_decay': 0.5,
   'solver': 'cg',
   'solver_iterations': 50,  # = 0 infinite
+  'optimization_iterations': 20,  # = 0 infinite
   'use_numerical_differentiation': False,
   'display_mode': 'compare',
   'generate_lr_images': True,  # for SR binary testing
@@ -73,6 +74,8 @@ def run_super_resolution(binary_path, config):
   command += ' --display_mode={}'.format(config['display_mode'])
   command += ' --solver={}'.format(config['solver'])
   command += ' --solver_iterations={}'.format(config['solver_iterations'])
+  command += ' --optimization_iterations={}'.format(
+      config['optimization_iterations'])
   if config['generate_lr_images']:
     command += ' --generate_lr_images'
     command += ' --number_of_frames={}'.format(config['number_of_frames'])
