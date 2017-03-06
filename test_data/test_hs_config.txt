@@ -1,0 +1,21 @@
+# This file defines the path to an HSI file to be modified. Hyperspectral data
+# can be loaded by the super-resolution program based on these parameters.
+#
+# THIS IS AN EXAMPLE TEST FILE. Do not remove or modify - it is used by a unit
+# test.
+
+file             /path/to/file
+interleave       bsq
+data_type        float
+big_endian       false
+header_offset    0
+num_data_rows    11620
+num_data_cols    11620
+num_data_bands   1506
+
+start_row        3380
+end_row          3383
+start_col        7030
+end_col          7038
+start_band       1000
+end_band         1506

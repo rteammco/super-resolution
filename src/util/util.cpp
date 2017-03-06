@@ -63,18 +63,24 @@ std::vector<std::string> ListFilesInDirectory(const std::string& directory) {
 }
 
 std::vector<std::string> SplitString(
-    const std::string& whole_string, const char delimiter) {
+    const std::string& whole_string,
+    const char delimiter,
+    const bool ignore_empty_pieces) {
 
   std::vector<std::string> parts;
   std::string remaining = whole_string;
   int split_position = remaining.find(delimiter);
   while (split_position >= 0) {
     const std::string part = remaining.substr(0, split_position);
-    parts.push_back(part);
+    if (!ignore_empty_pieces || !part.empty()) {
+      parts.push_back(part);
+    }
     remaining = remaining.substr(split_position + 1);
     split_position = remaining.find(delimiter);
   }
-  parts.push_back(remaining);
+  if (!ignore_empty_pieces || !remaining.empty()) {
+    parts.push_back(remaining);
+  }
 
   return parts;
 }
