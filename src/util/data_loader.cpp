@@ -34,9 +34,13 @@ static const std::unordered_set<std::string> kSupportedImageExtensions({
 });
 
 // Supported text-based hyperspectral data file extensions.
-static const std::unordered_set<std::string> kSupportedHyperspectralExtensions({
+static const std::unordered_set<std::string> kSupportedTextHSIExtensions({
     "txt"
-    // TODO: add support for binary extensions.
+});
+
+// Supported binary hyperspectral data file extensions.
+static const std::unordered_set<std::string> kSupportedBinaryHSIExtensions({
+    ""  // No extension at all.
 });
 
 // Returns true if the given set contains the given value.
@@ -82,16 +86,20 @@ ImageData LoadImage(const std::string& file_path) {
     const cv::Mat image = cv::imread(file_path, cv::IMREAD_UNCHANGED);
     CHECK(!image.empty()) << "Could not load image '" << file_path << "'.";
     return ImageData(image);
-  } else if (DoesSetContain(kSupportedHyperspectralExtensions, extension)) {
+  } else {
     hyperspectral::HyperspectralDataLoader hs_data_loader(file_path);
-    hs_data_loader.LoadData();
+    if (DoesSetContain(kSupportedTextHSIExtensions, extension)) {
+      hs_data_loader.LoadDataFromTextFile();
+      return hs_data_loader.GetImage();
+    } else if (DoesSetContain(kSupportedBinaryHSIExtensions, extension)) {
+      hs_data_loader.LoadDataFromBinaryFile();
+    } else {
+      // Unsupported/unknown extension, so return empty image.
+      LOG(WARNING) << "Could not load image " << file_path
+                   << ": extension is not recognized. Returning empty image.";
+    }
     return hs_data_loader.GetImage();
   }
-
-  // Unsupported/unknown extension, so return empty image.
-  LOG(WARNING) << "Could not load image " << file_path
-               << ": extension is not recognized.";
-  return ImageData();
 }
 
 void SaveImage(const ImageData& image, const std::string& data_path) {

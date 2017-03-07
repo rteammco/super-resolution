@@ -43,7 +43,7 @@ TEST(HyperspectralDataLoader, ReadHSIHeaderFromFile) {
 TEST(HyperspectralDataLoader, DataLoaderTest) {
   super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader(
       kTestDataPath);
-  hs_data_loader.LoadData();
+  hs_data_loader.LoadDataFromTextFile();
   const super_resolution::ImageData& hs_image = hs_data_loader.GetImage();
 
   const int num_pixels = 128 * 128;  // Test image is 128 x 128 x 5.

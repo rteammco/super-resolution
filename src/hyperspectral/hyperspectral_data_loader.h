@@ -16,23 +16,7 @@ namespace hyperspectral {
 // information must be provided separately.
 //
 // TODO: Add support for BIP and BIL binary formats.
-enum HSIDataFormat {
-  // This format is generated from MATLAB's "dlmwrite" function to export the
-  // hyperspectral 3D matrix to a text file.
-  //
-  // First line contains 3 numbers: width (cols), height (rows), and number of
-  // bands. Each other line contains a complete row of the data,
-  // column-ordered.
-  //
-  // Example: for a 3 x 2 x 4 image (rows, cols, bands) where first digit is
-  // row#, then col#, then band# (e.g. 123 is row 1, col 2, band 3):
-  //   000 001 002 003 010 011 012 013 020 021 022 023
-  //   100 101 102 103 110 111 112 113 120 121 122 123
-  //   200 201 202 203 210 211 212 213 220 221 222 223
-  //
-  // All values are space-delimited in this format.
-  HSI_MATLAB_TEXT,
-
+enum HSIDataInterleaveFormat {
   // BSQ (band sequential) is a binary data format organized in order of
   // bands(rows(cols)). For example, for a file with 2 bands, 2 rows, and 2
   // columns, the order would be as follows:
@@ -69,7 +53,7 @@ struct HSIBinaryDataParameters {
   void ReadHeaderFromFile(const std::string& header_file_path);
 
   // The format and type of the data.
-  HSIDataFormat interleave_format = HSI_BINARY_INTERLEAVE_BSQ;
+  HSIDataInterleaveFormat interleave_format = HSI_BINARY_INTERLEAVE_BSQ;
   HSIBinaryDataType data_type = HSI_DATA_TYPE_FLOAT;
   bool big_endian = false;
 
@@ -86,20 +70,33 @@ struct HSIBinaryDataParameters {
 
 class HyperspectralDataLoader {
  public:
-  // Provide a data file name that will be processed or written out to. If the
-  // data is being read from a file, the file should contain meta information
-  // about the image size and number of spectral bands.
+  // The given file path can serve three potential purposes:
+  //
+  // 1. If the data is to be read from a text hyperspectral data file, then
+  //    file_path should be the path to that text data file directly.
+  //
+  // 2. If the data is to be read from a binary hyperspectral file, then
+  //    file_path should be the path to a CONFIGURATION file containing all
+  //    information about the HSI data file.
+  //
+  // 3. If the data is to be written to a file, then the given file_path will
+  //    be the produced output file.
   explicit HyperspectralDataLoader(const std::string& file_path)
       : file_path_(file_path) {}
 
-  // Call this to actually execute the data load process using the information
-  // provided to the constructor. If the data load process was unsuccessful or
-  // if the data file size does not matche the given data_size value, an error
-  // check will fail.
-  void LoadData();
+  // Attempts to load text data directly from the file provided to the
+  // constructor. If the file is not in the correct text format, the data load
+  // process was unsuccessful, or if the data file size is not specified in the
+  // file, an error check will fail.
+  void LoadDataFromTextFile();
+
+  // Attempts to load binary data. This assumes the file given to the
+  // constructor is a configuration file which specifies all the necessary data
+  // parameters.
+  void LoadDataFromBinaryFile();
 
   // Returns the ImageData object containing the hyperspectral image data. The
-  // image will be empty if LoadData() was not called.
+  // image will be empty if one of the LoadData methods was never called.
   ImageData GetImage() const;
 
   // Writes the given image to the data path. This will not store the image for

@@ -61,9 +61,7 @@ void HSIBinaryDataParameters::ReadHeaderFromFile(
   }
 }
 
-// TODO: Currently, this only loads a single hyperspectral image from text
-// format exported from Matlab using dlmwrite.
-void HyperspectralDataLoader::LoadData() {
+void HyperspectralDataLoader::LoadDataFromTextFile() {
   std::ifstream fin(file_path_);
   CHECK(fin.is_open()) << "Could not open file '" << file_path_ << "'.";
 
@@ -126,6 +124,14 @@ void HyperspectralDataLoader::LoadData() {
   LOG(INFO) << "Successfully loaded a ("
             << num_rows << " rows) x (" << num_cols << " cols) "
             << "image with " << num_bands << " spectral bands.";
+}
+
+void HyperspectralDataLoader::LoadDataFromBinaryFile() {
+  // TODO: Implement.
+  //
+  // 1. Read config file and make sure all the parameters are set up correctly.
+  // 2. Attempt to load the binary data based on the specified interleave.
+  // 3. Keep track of the HSI metadata somehow for writing out later.
 }
 
 ImageData HyperspectralDataLoader::GetImage() const {
