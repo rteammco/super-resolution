@@ -16,7 +16,10 @@ ENDIF()
 
 # Release mode makes the code run faster.
 IF(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
+  MESSAGE("Build type: Release.")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -Ofast")
+ELSE()
+  MESSAGE("WARNING: Building in DEBUG MODE! Use 'cmake -DCMAKE_BUILD_TYPE=Release' for faster runtime.")
 ENDIF()
 
 # Require C++ 11.
