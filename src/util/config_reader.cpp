@@ -38,5 +38,15 @@ std::unordered_map<std::string, std::string> ReadConfigurationFile(
   return config_map;
 }
 
+std::string GetConfigValueOrDie(
+    const std::unordered_map<std::string, std::string>& config_map,
+    const std::string& key) {
+
+  const auto config_map_iterator = config_map.find(key);
+  CHECK(config_map_iterator != config_map.end())
+      << "The given map does not have a value for key '" << key << "'.";
+  return config_map_iterator->second;
+}
+
 }  // namespace util
 }  // namespace super_resolution

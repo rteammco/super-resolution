@@ -129,9 +129,65 @@ void HyperspectralDataLoader::LoadDataFromTextFile() {
 void HyperspectralDataLoader::LoadDataFromBinaryFile() {
   // TODO: Implement.
   //
-  // 1. Read config file and make sure all the parameters are set up correctly.
   // 2. Attempt to load the binary data based on the specified interleave.
   // 3. Keep track of the HSI metadata somehow for writing out later.
+  const std::unordered_map<std::string, std::string> config_file_map =
+      util::ReadConfigurationFile(file_path_, ' ');
+
+  // Get the path of the binary data file.
+  const std::string hsi_file_path =
+      util::GetConfigValueOrDie(config_file_map, "file");
+
+  // Get all of the necessary HSI file metadata.
+  HSIBinaryDataParameters parameters;
+  // Interleave format:
+  const std::string interleave =
+      util::GetConfigValueOrDie(config_file_map, "interleave");
+  if (interleave == "bsq") {
+    parameters.interleave_format = HSI_BINARY_INTERLEAVE_BSQ;
+  } else {
+    LOG(FATAL) << "Unsupported interleave format: '" << interleave << "'.";
+  }
+  // Data type:
+  const std::string data_type =
+      util::GetConfigValueOrDie(config_file_map, "data_type");
+  if (data_type == "float") {
+    parameters.data_type = HSI_DATA_TYPE_FLOAT;
+  } else {
+    LOG(FATAL) << "Unsupported data type: '" << data_type << "'.";
+  }
+  // Endian:
+  const std::string big_endian =
+      util::GetConfigValueOrDie(config_file_map, "big_endian");
+  if (big_endian == "true") {
+    parameters.big_endian = true;
+  } else {
+    parameters.big_endian = false;
+  }
+  // Header offset:
+  const std::string header_offset =
+      util::GetConfigValueOrDie(config_file_map, "header_offset");
+  parameters.header_offset = std::atoi(header_offset.c_str());
+  CHECK_GE(parameters.header_offset, 0)
+      << "Header offset must be non-negative.";
+  // Number of rows:
+  const std::string num_data_rows =
+      util::GetConfigValueOrDie(config_file_map, "num_data_rows");
+  parameters.num_data_rows = std::atoi(num_data_rows.c_str());
+  CHECK_GT(parameters.num_data_rows, 0)
+      << "Number of data rows must be positive.";
+  // Number of columns:
+  const std::string num_data_cols =
+      util::GetConfigValueOrDie(config_file_map, "num_data_cols");
+  parameters.num_data_cols = std::atoi(num_data_cols.c_str());
+  CHECK_GT(parameters.num_data_cols, 0)
+      << "Number of data cols must be positive.";
+  // Number of spectral bands:
+  const std::string num_data_bands =
+      util::GetConfigValueOrDie(config_file_map, "num_data_bands");
+  parameters.num_data_bands = std::atoi(num_data_bands.c_str());
+  CHECK_GT(parameters.num_data_bands, 0)
+      << "Number of data bands must be positive.";
 }
 
 ImageData HyperspectralDataLoader::GetImage() const {

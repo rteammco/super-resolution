@@ -22,6 +22,13 @@ namespace util {
 std::unordered_map<std::string, std::string> ReadConfigurationFile(
     const std::string& config_file_path, const char key_value_delimiter = ' ');
 
+// Returns the value in the given configuration map (as returned by
+// ReadConfigurationFile). If the given key is not found in the given map, this
+// will cause an error terminating the program.
+std::string GetConfigValueOrDie(
+    const std::unordered_map<std::string, std::string>& config_map,
+    const std::string& key);
+
 }  // namespace util
 }  // namespace super_resolution
 
