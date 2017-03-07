@@ -11,7 +11,10 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-static const std::string kTestImagePath = "../test_data/dallas.jpg";
+using super_resolution::util::GetAbsoluteCodePath;
+
+static const std::string kTestImagePath =
+    GetAbsoluteCodePath("test_data/dallas.jpg");
 constexpr double kReconstructionErrorTolerance = 1.0 / 255.0;
 
 TEST(WaveletTransform, WaveletTransform) {

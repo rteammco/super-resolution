@@ -8,13 +8,14 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+using super_resolution::util::GetAbsoluteCodePath;
 using testing::ElementsAre;
 using testing::UnorderedElementsAreArray;
 using testing::Pair;
 
 // Path to a test config file (to test ReadConfigurationFile).
 static const std::string kTestConfigFilePath =
-    "../test_data/test_hs_config.txt";
+    GetAbsoluteCodePath("test_data/test_hs_config.txt");
 
 TEST(Util, SplitString) {
   EXPECT_THAT(

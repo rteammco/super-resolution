@@ -22,6 +22,8 @@ ENDIF()
 # Require C++ 11.
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+add_definitions(-DROOT_CODE_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}")
+
 # Libraries will be stored in the "lib" directory, and binaries in "bin".
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

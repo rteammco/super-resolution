@@ -33,6 +33,20 @@ void InitApp(int argc, char** argv, const std::string& usage_message) {
   FLAGS_logtostderr = true;
 }
 
+std::string GetRootCodeDirectory() {
+#ifdef ROOT_CODE_DIRECTORY
+  return std::string(ROOT_CODE_DIRECTORY);
+#else
+  LOG(WARNING) << "ROOT_CODE_DIRECTORY is not defined. "
+               << "Returning local Unix directory ('.')";
+  return ".";
+#endif
+}
+
+std::string GetAbsoluteCodePath(const std::string& relative_path) {
+  return GetRootCodeDirectory() + "/" + relative_path;
+}
+
 std::vector<std::string> ListFilesInDirectory(const std::string& directory) {
   std::vector<std::string> list_of_files;
 

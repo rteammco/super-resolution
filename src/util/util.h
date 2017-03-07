@@ -19,6 +19,20 @@ const char kCodeVersion[] = "0.1";
 // and initializes logging with glog. Sets the usage message and app version.
 void InitApp(int argc, char** argv, const std::string& usage_message = "");
 
+// Returns the root directory where this project was compiled. This uses the
+// root path preprocessor macro specified by CMake. If for some reason this
+// flag isn't defined, a warning will be logged and the local directory (".")
+// will be returned instead.
+std::string GetRootCodeDirectory();
+
+// Returns the absolute path on the computer this code was compiled on of given
+// relative path within the root code directory. For example,
+//   GetAbsoluteCodePath("src/super_resolution.cpp")
+// would return, for example,
+//   "/Users/richard/Code/SuperResolution/src/super_resolution.cpp".
+// Requires compilation using the provided CMake file.
+std::string GetAbsoluteCodePath(const std::string& relative_path);
+
 // Returns a list of all files in the given directory. If no files are present,
 // returns an empty list. Subdirectories and hidden files are not included in
 // the listing.

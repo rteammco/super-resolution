@@ -3,6 +3,7 @@
 
 #include "hyperspectral/hyperspectral_data_loader.h"
 #include "image/image_data.h"
+#include "util/util.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -10,12 +11,15 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+using super_resolution::util::GetAbsoluteCodePath;
+
 // Data is 128 x 128 x 5 (width, height, number of bands).
-static const std::string kTestDataPath = "../test_data/ftir_test.txt";
+static const std::string kTestDataPath =
+    GetAbsoluteCodePath("/test_data/ftir_test.txt");
 
 // An ENVI header for testing the header reading method.
 static const std::string kTestHeaderPath =
-    "../test_data/example_envi_header.hdr";
+    GetAbsoluteCodePath("test_data/example_envi_header.hdr");
 
 // This test verifies that the HSIBinaryDataParameters::ReadHeaderFromFile
 // method works correctly.
@@ -35,6 +39,7 @@ TEST(HyperspectralDataLoader, ReadHSIHeaderFromFile) {
   EXPECT_EQ(parameters.num_data_bands, 1506);
 }
 
+// Test reading in hyperspectral image data.
 TEST(HyperspectralDataLoader, DataLoaderTest) {
   super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader(
       kTestDataPath);

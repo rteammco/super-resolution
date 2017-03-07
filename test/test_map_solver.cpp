@@ -15,6 +15,7 @@
 #include "optimization/irls_map_solver.h"
 #include "optimization/tv_regularizer.h"
 #include "util/test_util.h"
+#include "util/util.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -28,6 +29,7 @@ using super_resolution::DownsamplingModule;
 using super_resolution::ImageData;
 using super_resolution::MotionModule;
 using super_resolution::test::AreMatricesEqual;
+using super_resolution::util::GetAbsoluteCodePath;
 
 using testing::_;
 using testing::ContainerEq;
@@ -47,10 +49,12 @@ static const super_resolution::IrlsMapSolverOptions kDefaultSolverOptions;
 // Small image (icon size):
 // NOTE: this image cannot exceed 30x30 because of limitations with computing
 // the degradation matrices.
-static const std::string kTestIconPath = "../test_data/fb.png";
+static const std::string kTestIconPath =
+    GetAbsoluteCodePath("test_data/fb.png");
 
 // Bigger image for testing:
-static const std::string kTestImagePath = "../test_data/goat.jpg";
+static const std::string kTestImagePath =
+    GetAbsoluteCodePath("test_data/goat.jpg");
 
 class MockRegularizer : public super_resolution::Regularizer {
  public:
