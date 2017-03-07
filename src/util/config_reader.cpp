@@ -13,7 +13,7 @@ namespace super_resolution {
 namespace util {
 
 std::unordered_map<std::string, std::string> ReadConfigurationFile(
-    const std::string& config_file_path) {
+    const std::string& config_file_path, const char key_value_delimiter) {
 
   std::ifstream fin(config_file_path);
   CHECK(fin.is_open()) << "Could not open file '" << config_file_path << "'.";
@@ -24,7 +24,8 @@ std::unordered_map<std::string, std::string> ReadConfigurationFile(
     if (line.find("#") == 0) {  // If string starts with a "#" it's a comment.
       continue;
     }
-    const std::vector<std::string> parts = SplitString(line, ' ', true);
+    const std::vector<std::string> parts =
+        SplitString(line, key_value_delimiter, true);
     if (parts.size() != 2) {
       continue;
     }

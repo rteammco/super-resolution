@@ -4,9 +4,11 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "image/image_data.h"
+#include "util/config_reader.h"
 #include "util/matrix_util.h"
 
 #include "opencv2/core/core.hpp"
@@ -16,7 +18,48 @@
 namespace super_resolution {
 namespace hyperspectral {
 
-constexpr char kDataDelimiter = ',';
+constexpr char kMatlabTextDataDelimiter = ',';
+
+void HSIBinaryDataParameters::ReadHeaderFromFile(
+    const std::string& header_file_path) {
+
+  const std::unordered_map<std::string, std::string> key_value_map =
+      util::ReadConfigurationFile(header_file_path, '=');
+  for (const auto& key_value : key_value_map) {
+    if (key_value.first == "interleave") {
+      if (key_value.second == "bsq") {
+        interleave_format = HSI_BINARY_INTERLEAVE_BSQ;
+      } else {
+        LOG(WARNING) << "Unknown/unsupported interleave format: "
+                     << key_value.second << ". Using BSQ by default.";
+      }
+    } else if (key_value.first == "data type") {
+      if (key_value.second == "4") {
+        data_type = HSI_DATA_TYPE_FLOAT;
+      } else {
+        LOG(WARNING) << "Unknown/unsupported data type: "
+                     << key_value.second << ". Using float by default.";
+      }
+    } else if (key_value.first == "byte order") {
+      if (key_value.second == "1") {
+        big_endian = true;
+      } else {
+        big_endian = false;
+      }
+    } else if (key_value.first == "header offset") {
+      header_offset = std::atoi(key_value.second.c_str());
+    } else if (key_value.first == "samples") {
+      num_data_rows = std::atoi(key_value.second.c_str());
+    } else if (key_value.first == "lines") {
+      num_data_cols = std::atoi(key_value.second.c_str());
+    } else if (key_value.first == "bands") {
+      num_data_bands = std::atoi(key_value.second.c_str());
+    } else {
+      LOG(WARNING) << "Ignored header configuration entry: '"
+                   << key_value.first << "'.";
+    }
+  }
+}
 
 // TODO: Currently, this only loads a single hyperspectral image from text
 // format exported from Matlab using dlmwrite.
@@ -58,7 +101,7 @@ void HyperspectralDataLoader::LoadData() {
     std::istringstream token_stream(line);
     std::string token;
     int token_number = 0;
-    while (std::getline(token_stream, token, kDataDelimiter)) {
+    while (std::getline(token_stream, token, kMatlabTextDataDelimiter)) {
       const double value = std::stof(token);
       const int col = token_number % num_cols;
       data_cube[row][col].push_back(value);
