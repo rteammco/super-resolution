@@ -20,6 +20,20 @@ namespace hyperspectral {
 
 constexpr char kMatlabTextDataDelimiter = ',';
 
+ImageData ReadBinaryFile(
+    const std::string& file_path,
+    const HSIBinaryDataParameters& parameters,
+    const int start_row,
+    const int end_row,
+    const int start_col,
+    const int end_col,
+    const int start_band,
+    const int end_band) {
+
+  // TODO: implement.
+  return ImageData();
+}
+
 void HSIBinaryDataParameters::ReadHeaderFromFile(
     const std::string& header_file_path) {
 
@@ -188,6 +202,64 @@ void HyperspectralDataLoader::LoadDataFromBinaryFile() {
   parameters.num_data_bands = std::atoi(num_data_bands.c_str());
   CHECK_GT(parameters.num_data_bands, 0)
       << "Number of data bands must be positive.";
+
+  // Now get the data range parameters.
+  // Start row:
+  const std::string start_row_string =
+      util::GetConfigValueOrDie(config_file_map, "start_row");
+  const int start_row = std::atoi(start_row_string.c_str());
+  CHECK_GE(start_row, 0) << "Start row index cannot be negative.";
+  CHECK_LT(start_row, parameters.num_data_rows)
+      << "Start row index is out of bounds.";
+  // End row:
+  const std::string end_row_string =
+      util::GetConfigValueOrDie(config_file_map, "end_row");
+  const int end_row = std::atoi(end_row_string.c_str());
+  CHECK_GT(end_row, 0) << "End row index must be positive.";
+  CHECK_LE(end_row, parameters.num_data_rows)
+      << "End row index is out of bounds.";
+  CHECK_GT(end_row - start_row, 0) << "Row range must be positive.";
+  // Start column:
+  const std::string start_col_string =
+      util::GetConfigValueOrDie(config_file_map, "start_col");
+  const int start_col = std::atoi(start_col_string.c_str());
+  CHECK_GE(start_col, 0) << "Start column index cannot be negative.";
+  CHECK_LT(start_col, parameters.num_data_cols)
+      << "Start column index is out of bounds.";
+  // End column:
+  const std::string end_col_string =
+      util::GetConfigValueOrDie(config_file_map, "end_col");
+  const int end_col = std::atoi(end_col_string.c_str());
+  CHECK_GT(end_col, 0) << "End column index must be positive.";
+  CHECK_LE(end_col, parameters.num_data_cols)
+      << "End column index is out of bounds.";
+  CHECK_GT(end_col - start_col, 0) << "Column range must be positive.";
+  // Start band:
+  const std::string start_band_string =
+      util::GetConfigValueOrDie(config_file_map, "start_band");
+  const int start_band = std::atoi(start_band_string.c_str());
+  CHECK_GE(start_band, 0) << "Start band index cannot be negative.";
+  CHECK_LT(start_band, parameters.num_data_bands)
+      << "Start band index is out of bounds.";
+  // End band:
+  const std::string end_band_string =
+      util::GetConfigValueOrDie(config_file_map, "end_band");
+  const int end_band = std::atoi(end_band_string.c_str());
+  CHECK_GT(end_band, 0) << "End band index must be positive.";
+  CHECK_LE(end_band, parameters.num_data_bands)
+      << "End band index is out of bounds.";
+  CHECK_GT(end_band - start_band, 0) << "Band range must be positive.";
+
+  // And finally, read the data according to the parameters and range.
+  ReadBinaryFile(
+      hsi_file_path,
+      parameters,
+      start_row,
+      end_row,
+      start_col,
+      end_col,
+      start_band,
+      end_band);
 }
 
 ImageData HyperspectralDataLoader::GetImage() const {
