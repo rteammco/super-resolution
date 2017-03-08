@@ -60,18 +60,18 @@ TEST(Util, ReadConfigurationFile) {
   const std::unordered_map<std::string, std::string> config_map =
       super_resolution::util::ReadConfigurationFile(kTestConfigFilePath);
   EXPECT_THAT(config_map, UnorderedElementsAreArray({
-      Pair("file", "/path/to/file"),
+      Pair("file", "../test_data/example_envi_data"),
       Pair("interleave", "bsq"),
       Pair("data_type", "float"),
       Pair("big_endian", "false"),
       Pair("header_offset", "0"),
-      Pair("num_data_rows", "11620"),
-      Pair("num_data_cols", "11620"),
-      Pair("num_data_bands", "1506"),
-      Pair("start_row", "3380"),
-      Pair("end_row", "3383"),
-      Pair("start_col", "7030"),
-      Pair("end_col", "7038"),
-      Pair("start_band", "1000"),
-      Pair("end_band", "1506")}));
+      Pair("num_data_rows", "9"),
+      Pair("num_data_cols", "5"),
+      Pair("num_data_bands", "10"),
+      Pair("start_row", "2"),
+      Pair("end_row", "8"),
+      Pair("start_col", "0"),
+      Pair("end_col", "3"),
+      Pair("start_band", "5"),
+      Pair("end_band", "10")}));
 }

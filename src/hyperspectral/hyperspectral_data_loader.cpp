@@ -63,12 +63,13 @@ ImageData ReadBinaryFileBSQ(
   input_file.seekg(current_index * data_point_size);
 
   ImageData hsi_image;
-  const cv::Size image_size(num_data_cols, num_data_rows);
+  const cv::Size image_size(
+      data_range.end_col - data_range.start_col,
+      data_range.end_row - data_range.start_row);
   const long num_pixels = num_data_rows * num_data_cols;
   for (int band = data_range.start_band; band < data_range.end_band; ++band) {
     const long band_index = band * num_pixels;
-    cv::Mat channel_image(
-        num_data_cols, num_data_rows, util::kOpenCvMatrixType);
+    cv::Mat channel_image(image_size, util::kOpenCvMatrixType);
     for (int row = data_range.start_row; row < data_range.end_row; ++row) {
       const int channel_row = row - data_range.start_row;
       for (int col = data_range.start_col; col < data_range.end_col; ++col) {
@@ -89,7 +90,7 @@ ImageData ReadBinaryFileBSQ(
         current_index = next_index;
       }
     }
-    hsi_image.AddChannel(channel_image);
+    hsi_image.AddChannel(channel_image, DO_NOT_NORMALIZE_IMAGE);
   }
   input_file.close();
   return hsi_image;
@@ -347,7 +348,7 @@ void HyperspectralDataLoader::LoadDataFromBinaryFile() {
       << "Band range must be positive.";
 
   // And finally, read the data according to the parameters and range.
-  ReadBinaryFile(hsi_file_path, parameters, data_range);
+  hyperspectral_image_ = ReadBinaryFile(hsi_file_path, parameters, data_range);
 }
 
 ImageData HyperspectralDataLoader::GetImage() const {

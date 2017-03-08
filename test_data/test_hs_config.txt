@@ -4,18 +4,18 @@
 # THIS IS AN EXAMPLE TEST FILE. Do not remove or modify - it is used by a unit
 # test.
 
-file             /path/to/file
+file             ../test_data/example_envi_data
 interleave       bsq
 data_type        float
 big_endian       false
 header_offset    0
-num_data_rows    11620
-num_data_cols    11620
-num_data_bands   1506
+num_data_rows    9
+num_data_cols    5
+num_data_bands   10
 
-start_row        3380
-end_row          3383
-start_col        7030
-end_col          7038
-start_band       1000
-end_band         1506
+start_row        2
+end_row          8
+start_col        0
+end_col          3
+start_band       5
+end_band         10
