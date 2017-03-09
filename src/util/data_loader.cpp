@@ -33,16 +33,6 @@ static const std::unordered_set<std::string> kSupportedImageExtensions({
     "ppm"
 });
 
-// Supported text-based hyperspectral data file extensions.
-static const std::unordered_set<std::string> kSupportedTextHSIExtensions({
-    "txt"
-});
-
-// Supported binary hyperspectral data file extensions.
-static const std::unordered_set<std::string> kSupportedBinaryHSIExtensions({
-    ""  // No extension at all.
-});
-
 // Returns true if the given set contains the given value.
 bool DoesSetContain(
     const std::unordered_set<std::string> set, const std::string& key) {
@@ -82,22 +72,16 @@ ImageData LoadImage(const std::string& file_path) {
   std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
   std::transform(
       extension.begin(), extension.end(), extension.begin(), tolower);
+  // If the extension is a standard image type, try reading it.
   if (DoesSetContain(kSupportedImageExtensions, extension)) {
     const cv::Mat image = cv::imread(file_path, cv::IMREAD_UNCHANGED);
     CHECK(!image.empty()) << "Could not load image '" << file_path << "'.";
     return ImageData(image);
   } else {
+    // Otherwise, try loading it as a hyperspectral image (assuming the given
+    // path was a configuration file).
     hyperspectral::HyperspectralDataLoader hs_data_loader(file_path);
-    if (DoesSetContain(kSupportedTextHSIExtensions, extension)) {
-      hs_data_loader.LoadDataFromTextFile();
-      return hs_data_loader.GetImage();
-    } else if (DoesSetContain(kSupportedBinaryHSIExtensions, extension)) {
-      hs_data_loader.LoadDataFromBinaryFile();
-    } else {
-      // Unsupported/unknown extension, so return empty image.
-      LOG(WARNING) << "Could not load image " << file_path
-                   << ": extension is not recognized. Returning empty image.";
-    }
+    hs_data_loader.LoadDataFromBinaryFile();
     return hs_data_loader.GetImage();
   }
 }
