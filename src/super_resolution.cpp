@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "evaluation/peak_signal_to_noise_ratio.h"
+#include "hyperspectral/spectral_pca.h"
 #include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
 #include "image_model/blur_module.h"
@@ -62,6 +63,8 @@ DEFINE_int32(optimization_iterations, 20,
     "Max number of optimization iterations (e.g. number of IRLS iterations).");
 DEFINE_bool(interpolate_color, false,
     "Run SR only on the luminance channel and interpolate colors later.");
+DEFINE_bool(solve_in_pca_space, false,
+    "Run SR on PCA space of the spectra domain (HS images only).");
 DEFINE_bool(solve_in_wavelet_domain, false,
     "Run super-resolution in the wavelet domain (experimental).");
 
@@ -287,6 +290,11 @@ int main(int argc, char** argv) {
   CHECK_GT(input_data.low_res_images.size(), 0)
       << "At least one low-resolution image is required for super-resolution.";
 
+  // Create an interpolated (bilinear upsampled) image as a reference.
+  ImageData upsampled_image = input_data.low_res_images[0];
+  upsampled_image.ResizeImage(
+      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+
   // If the interpolate_color flag is set, only run super-resolution on the
   // luminance channel and interpolate color information after. This will only
   // work on color images and will not work for grayscale or hyperspectral
@@ -301,9 +309,26 @@ int main(int argc, char** argv) {
     }
   }
 
-  // Create an interpolated (bilinear upsampled) image as a reference.
-  ImageData upsampled_image = input_data.low_res_images[0];
-  upsampled_image.ResizeImage(
+  // If solve_in_pca_space flag was set, convert the image(s) to the spectral
+  // PCA domain and solve. Then convert them back after the solver finishes.
+  // Cannot use this option if using the color interpolation scheme.
+  std::unique_ptr<super_resolution::SpectralPca> spectral_pca;
+  if (FLAGS_solve_in_pca_space && !FLAGS_interpolate_color) {
+    // TODO: Get the sampling options and number of PCA bands from user args!
+    LOG(INFO) << "Super-resolving in PCA space.";
+    spectral_pca = std::unique_ptr<super_resolution::SpectralPca>(
+        new super_resolution::SpectralPca(input_data.low_res_images, 5));
+    for (int i = 0; i < input_data.low_res_images.size(); ++i) {
+      input_data.low_res_images[i] =
+          spectral_pca->GetPcaImage(input_data.low_res_images[i]);
+    }
+  }
+
+  // Use an interpolated (bilinear upsampled) image the initial estimate. This
+  // is done after any other conversions to keep it in the same spectral space
+  // that the solver will operate in.
+  ImageData initial_estimate = input_data.low_res_images[0];
+  initial_estimate .ResizeImage(
       FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
 
   // Run super-resolution in the selected domain.
@@ -313,16 +338,24 @@ int main(int argc, char** argv) {
   } else {
     // Solving is handled in the SetupAndRunSolver function above.
     result = SetupAndRunSolver(
-        image_model, input_data.low_res_images, upsampled_image);
+        image_model, input_data.low_res_images, initial_estimate);
   }
 
   // If SR was only done on the luminance channel, interpolate the colors now
   // and change the color space back to BGR.
+  //
+  // Note that the colors we're interpolating are in the luminance-dominant
+  // color space (not BGR), and so we must interpolate the initial estimate,
+  // which is in the same color space as the solved image, rather than the
+  // reference upsampled image which was never converted from BGR.
   if (FLAGS_interpolate_color) {
-    result.InterpolateColorFrom(upsampled_image);
+    result.InterpolateColorFrom(initial_estimate);
     result.ChangeColorSpace(super_resolution::SPECTRAL_MODE_COLOR_BGR);
-    upsampled_image.ChangeColorSpace(
-        super_resolution::SPECTRAL_MODE_COLOR_BGR);
+  }
+
+  // If SR was done in PCA space, convert back to regular space.
+  if (FLAGS_solve_in_pca_space && !FLAGS_interpolate_color) {
+    result = spectral_pca->ReconstructImage(result);
   }
 
   // If an evaluation criteria is passed in and the high-resolution image is
