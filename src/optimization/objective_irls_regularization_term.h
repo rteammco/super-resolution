@@ -15,9 +15,9 @@
 
 namespace super_resolution {
 
-class ObjectiveIrlsRegularizationTerm : public ObjectiveTerm {
+class ObjectiveIRLSRegularizationTerm : public ObjectiveTerm {
  public:
-  ObjectiveIrlsRegularizationTerm(
+  ObjectiveIRLSRegularizationTerm(
       const std::shared_ptr<Regularizer> regularizer,
       const double regularization_parameter,
       const std::vector<double>& irls_weights,

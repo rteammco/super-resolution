@@ -11,8 +11,8 @@
 
 namespace super_resolution {
 
-struct IrlsMapSolverOptions : public MapSolverOptions {
-  IrlsMapSolverOptions() {}  // Required for making a const instance.
+struct IRLSMapSolverOptions : public MapSolverOptions {
+  IRLSMapSolverOptions() {}  // Required for making a const instance.
 
   // Augments the adjustment to also include the irls cost difference.
   virtual void AdjustThresholdsAdaptively(
@@ -41,10 +41,10 @@ struct IrlsMapSolverOptions : public MapSolverOptions {
   double irls_cost_difference_threshold = 1.0e-5;
 };
 
-class IrlsMapSolver : public MapSolver {
+class IRLSMapSolver : public MapSolver {
  public:
-  IrlsMapSolver(
-      const IrlsMapSolverOptions& solver_options,
+  IRLSMapSolver(
+      const IRLSMapSolverOptions& solver_options,
       const ImageModel& image_model,
       const std::vector<ImageData>& low_res_images,
       const bool print_solver_output = true);
@@ -55,7 +55,7 @@ class IrlsMapSolver : public MapSolver {
 
  private:
   // Passed in through the constructor.
-  const IrlsMapSolverOptions solver_options_;
+  const IRLSMapSolverOptions solver_options_;
 };
 
 }  // namespace super_resolution

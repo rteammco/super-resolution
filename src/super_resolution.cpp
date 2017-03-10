@@ -115,7 +115,7 @@ ImageData SetupAndRunSolver(
 
   // Set up the solver.
   // TODO: let the user choose the solver (once more solvers are supported).
-  super_resolution::IrlsMapSolverOptions solver_options;
+  super_resolution::IRLSMapSolverOptions solver_options;
   if (FLAGS_solver == "cg") {
     solver_options.least_squares_solver = super_resolution::CG_SOLVER;
     LOG(INFO) << "Using conjugate gradient solver.";
@@ -129,7 +129,7 @@ ImageData SetupAndRunSolver(
   solver_options.max_num_solver_iterations = FLAGS_solver_iterations;
   solver_options.use_numerical_differentiation =
       FLAGS_use_numerical_differentiation;
-  super_resolution::IrlsMapSolver solver(
+  super_resolution::IRLSMapSolver solver(
       solver_options, image_model, input_images);
   if (!FLAGS_verbose) {
     solver.Stfu();

@@ -44,7 +44,7 @@ static const cv::Size kDisplayImageSize(840, 840);
 constexpr bool kPrintSolverOutput = true;
 constexpr double kSolverResultErrorTolerance = 0.001;
 constexpr double kDerivativeErrorTolerance = 0.000001;
-static const super_resolution::IrlsMapSolverOptions kDefaultSolverOptions;
+static const super_resolution::IRLSMapSolverOptions kDefaultSolverOptions;
 
 // Small image (icon size):
 // NOTE: this image cannot exceed 30x30 because of limitations with computing
@@ -127,7 +127,7 @@ TEST(MapSolver, SmallDataTest) {
   const ImageData initial_estimate(initial_estimate_matrix);
 
   // Create the solver for the model and low-res images.
-  super_resolution::IrlsMapSolver solver(
+  super_resolution::IRLSMapSolver solver(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   const ImageData result = solver.Solve(initial_estimate);
 
@@ -158,7 +158,7 @@ TEST(MapSolver, SmallDataTest) {
   }
 
   // Create the multichannel solver.
-  super_resolution::IrlsMapSolver solver_multichannel(
+  super_resolution::IRLSMapSolver solver_multichannel(
       kDefaultSolverOptions,
       image_model,
       low_res_images_multichannel,
@@ -224,7 +224,7 @@ TEST(MapSolver, RealIconDataTest) {
   initial_estimate.ResizeImage(2, super_resolution::INTERPOLATE_LINEAR);
 
   // Create the solver and attempt to solve.
-  super_resolution::IrlsMapSolver solver(
+  super_resolution::IRLSMapSolver solver(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
 
@@ -329,7 +329,7 @@ TEST(MapSolver, RealBigImageTest) {
   initial_estimate.ResizeImage(2, super_resolution::INTERPOLATE_LINEAR);
 
   // Create the solver and attempt to solve.
-  super_resolution::IrlsMapSolver solver(
+  super_resolution::IRLSMapSolver solver(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result = solver.Solve(initial_estimate);
 
@@ -412,7 +412,7 @@ TEST(MapSolver, RegularizationTest) {
       downsampling_scale, super_resolution::INTERPOLATE_LINEAR);
 
   // Create the solver and attempt to solve with TV regularization.
-  super_resolution::IrlsMapSolver solver_with_tv_regularization(
+  super_resolution::IRLSMapSolver solver_with_tv_regularization(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   // Add regularizer.
   const std::shared_ptr<super_resolution::Regularizer> tv_regularizer(
@@ -424,7 +424,7 @@ TEST(MapSolver, RegularizationTest) {
       solver_with_tv_regularization.Solve(initial_estimate);
 
   // Create a solver with BTV regularization.
-  super_resolution::IrlsMapSolver solver_with_btv_regularization(
+  super_resolution::IRLSMapSolver solver_with_btv_regularization(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   const std::shared_ptr<super_resolution::Regularizer> btv_regularizer(
       new super_resolution::BilateralTotalVariationRegularizer(
@@ -434,7 +434,7 @@ TEST(MapSolver, RegularizationTest) {
       solver_with_btv_regularization.Solve(initial_estimate);
 
   // Create the solver without regularization.
-  super_resolution::IrlsMapSolver solver_unregularized(
+  super_resolution::IRLSMapSolver solver_unregularized(
       kDefaultSolverOptions, image_model, low_res_images, kPrintSolverOutput);
   const ImageData solver_result_unregularized =
       solver_unregularized.Solve(initial_estimate);

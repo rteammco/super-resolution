@@ -25,15 +25,15 @@ namespace super_resolution {
 // zero.
 constexpr double kMinResidualValue = 0.00001;
 
-IrlsMapSolver::IrlsMapSolver(
-    const IrlsMapSolverOptions& solver_options,
+IRLSMapSolver::IRLSMapSolver(
+    const IRLSMapSolverOptions& solver_options,
     const ImageModel& image_model,
     const std::vector<ImageData>& low_res_images,
     const bool print_solver_output)
     : MapSolver(image_model, low_res_images, print_solver_output),
       solver_options_(solver_options) {}
 
-ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
+ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
   const int num_pixels = GetNumPixels();
   const int num_channels = GetNumChannels();
   CHECK_EQ(initial_estimate.GetNumPixels(), GetNumPixels());
@@ -76,7 +76,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
 
   // Scale the option stop criteria parameters based on the number of parameters
   // and strength of the regularizers.
-  IrlsMapSolverOptions solver_options_scaled = solver_options_;
+  IRLSMapSolverOptions solver_options_scaled = solver_options_;
   solver_options_scaled.AdjustThresholdsAdaptively(
       GetNumDataPoints(), GetRegularizationParameterSum());
 
@@ -94,7 +94,7 @@ ImageData IrlsMapSolver::Solve(const ImageData& initial_estimate) {
     for (int reg_index = 0; reg_index < num_regularizers; ++reg_index) {
       const auto& regularizer_and_parameter = regularizers_[reg_index];
       std::shared_ptr<ObjectiveTerm> regularization_term(
-          new ObjectiveIrlsRegularizationTerm(
+          new ObjectiveIRLSRegularizationTerm(
               regularizer_and_parameter.first,
               regularizer_and_parameter.second,
               irls_weights[reg_index],

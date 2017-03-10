@@ -7,7 +7,7 @@
 
 namespace super_resolution {
 
-double ObjectiveIrlsRegularizationTerm::Compute(
+double ObjectiveIRLSRegularizationTerm::Compute(
     const double* estimated_image_data, double* gradient) const {
 
   CHECK_NOTNULL(estimated_image_data);
