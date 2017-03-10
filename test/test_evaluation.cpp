@@ -2,6 +2,7 @@
 #include <limits>
 
 #include "evaluation/peak_signal_to_noise_ratio.h"
+#include "evaluation/structural_similarity.h"
 #include "image/image_data.h"
 
 #include "gtest/gtest.h"
@@ -91,4 +92,35 @@ TEST(Evaluation, PSNR) {
   const double expected_psnr_4 = 10.0 * log10(1.0 / expected_mse_4);
   const double psnr_result_4 = psnr_evaluator_2.Evaluate(test_image_4);
   EXPECT_DOUBLE_EQ(psnr_result_4, expected_psnr_4);
+}
+
+TEST(Evaluation, SSIM) {
+  const cv::Mat ground_truth_matrix_1 = (cv::Mat_<double>(2, 2)
+      << 0.5,  0.25,
+         0.75, 1.0);
+  const super_resolution::ImageData ground_truth_1(ground_truth_matrix_1);
+
+  const cv::Mat test_image_1_matrix = (cv::Mat_<double>(2, 2)
+      << 0.55, 0.25,
+         0.7,  1.0);
+  const super_resolution::ImageData test_image_1(test_image_1_matrix);
+
+  const super_resolution::StructuralSimilarityEvaluator ssim_evaluator_1(
+      ground_truth_1);
+  const double ssim_1 = ssim_evaluator_1.Evaluate(test_image_1);
+
+  // Let X be ground truth and Y be the test image. Then:
+  //   mean of X = 0.625
+  //   var of X = 0.078125
+  //   mean of Y = 0.625
+  //   var of Y = 0.073125
+  //   covariance of X and Y = 0.075
+  // Assuming k1 = 0.01 and k2 = 0.03, then c1 = 0.0001 and c2 = 0.0009. Then:
+  //
+  // SSIM = (2 * 0.625 * 0.625 + 0.0001) * (2 * 0.075 + 0.0009) /
+  //        (0.390625 + 0.390625 + 0.0001) * (0.078125 + 0.073125 + 0.0009)
+  //      = (0.78135 * 0.1509) / (0.78135 * 0.15215)
+  //      = 0.117905715 / 0.1188824025
+  //      = 0.991784423266513
+  EXPECT_DOUBLE_EQ(ssim_1, 0.991784423266513);
 }
