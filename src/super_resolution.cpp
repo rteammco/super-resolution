@@ -62,12 +62,16 @@ DEFINE_string(motion_sequence_path, "",
 // TODO: Add support for different solver strategies (e.g. ADMM).
 DEFINE_int32(optimization_iterations, 20,
     "Max number of optimization iterations (e.g. number of IRLS iterations).");
+DEFINE_bool(solve_in_wavelet_domain, false,
+    "Run super-resolution in the wavelet domain (experimental).");
 DEFINE_bool(interpolate_color, false,
     "Run SR only on the luminance channel and interpolate colors later.");
 DEFINE_bool(solve_in_pca_space, false,
     "Run SR on PCA space of the spectra domain (HS images only).");
-DEFINE_bool(solve_in_wavelet_domain, false,
-    "Run super-resolution in the wavelet domain (experimental).");
+DEFINE_int32(num_pca_components, 0,
+    "Number of PCA components to use (0 = all) if solve_in_pca_space is set.");
+DEFINE_double(pca_retained_variance, 0.0,
+    "Retained variance for PCA (1.0 = all, 0.0 = use num_pca_components).");
 
 // Regularization options:
 // TODO: Add support for multiple regularizers simultaneously.
@@ -316,13 +320,22 @@ int main(int argc, char** argv) {
   std::unique_ptr<super_resolution::SpectralPCA> spectral_pca;
   if (FLAGS_solve_in_pca_space && !FLAGS_interpolate_color) {
     // TODO: Get the sampling options and number of PCA bands from user args!
-    LOG(INFO) << "Super-resolving in PCA space.";
-    spectral_pca = std::unique_ptr<super_resolution::SpectralPCA>(
-        new super_resolution::SpectralPCA(input_data.low_res_images, 5));
+    if (FLAGS_pca_retained_variance > 0.0) {
+      spectral_pca = std::unique_ptr<super_resolution::SpectralPCA>(
+          new super_resolution::SpectralPCA(
+              input_data.low_res_images, FLAGS_pca_retained_variance));
+    } else {
+      spectral_pca = std::unique_ptr<super_resolution::SpectralPCA>(
+          new super_resolution::SpectralPCA(
+              input_data.low_res_images, FLAGS_num_pca_components));
+    }
     for (int i = 0; i < input_data.low_res_images.size(); ++i) {
       input_data.low_res_images[i] =
           spectral_pca->GetPCAImage(input_data.low_res_images[i]);
     }
+    LOG(INFO) << "Super-resolving in PCA space with "
+              << input_data.low_res_images[0].GetNumChannels()
+              << " PCA components.";
   }
 
   // Use an interpolated (bilinear upsampled) image the initial estimate. This
