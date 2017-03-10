@@ -312,15 +312,15 @@ int main(int argc, char** argv) {
   // If solve_in_pca_space flag was set, convert the image(s) to the spectral
   // PCA domain and solve. Then convert them back after the solver finishes.
   // Cannot use this option if using the color interpolation scheme.
-  std::unique_ptr<super_resolution::SpectralPca> spectral_pca;
+  std::unique_ptr<super_resolution::SpectralPCA> spectral_pca;
   if (FLAGS_solve_in_pca_space && !FLAGS_interpolate_color) {
     // TODO: Get the sampling options and number of PCA bands from user args!
     LOG(INFO) << "Super-resolving in PCA space.";
-    spectral_pca = std::unique_ptr<super_resolution::SpectralPca>(
-        new super_resolution::SpectralPca(input_data.low_res_images, 5));
+    spectral_pca = std::unique_ptr<super_resolution::SpectralPCA>(
+        new super_resolution::SpectralPCA(input_data.low_res_images, 5));
     for (int i = 0; i < input_data.low_res_images.size(); ++i) {
       input_data.low_res_images[i] =
-          spectral_pca->GetPcaImage(input_data.low_res_images[i]);
+          spectral_pca->GetPCAImage(input_data.low_res_images[i]);
     }
   }
 

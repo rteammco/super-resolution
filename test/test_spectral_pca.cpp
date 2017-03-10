@@ -16,7 +16,7 @@ using super_resolution::test::AreMatricesEqual;
 
 constexpr double kReconstructionErrorTolerance = 0.00001;
 
-TEST(SpectralPca, Decomposition) {
+TEST(SpectralPCA, Decomposition) {
   // Run on a small controlled data test. Example and known truths are from:
   //   https://www.youtube.com/watch?v=VzPpJXISz-E
   const cv::Mat small_channel_1 = (cv::Mat_<double>(10, 1)
@@ -34,7 +34,7 @@ TEST(SpectralPca, Decomposition) {
   const std::vector<ImageData> small_images({
     small_image
   });
-  const super_resolution::SpectralPca spectral_pca_small({small_image});
+  const super_resolution::SpectralPCA spectral_pca_small({small_image});
 
   // Convert the image into PCA space and compare to known ground truth.
   const cv::Mat small_pca_known_channel_1 = (cv::Mat_<double>(10, 1)
@@ -44,7 +44,7 @@ TEST(SpectralPca, Decomposition) {
       << 0.0538, 0.00622, 0.01545, 0.01729, 0.12995,
          -0.05886, -0.10306, 0.06669, 0.03664, -0.16411);
   const ImageData small_pca_image =
-      spectral_pca_small.GetPcaImage(small_image);
+      spectral_pca_small.GetPCAImage(small_image);
   EXPECT_EQ(small_pca_image.GetNumChannels(), 2);
   EXPECT_TRUE(AreMatricesEqual(
       small_pca_image.GetChannelImage(0),
@@ -82,9 +82,9 @@ TEST(SpectralPca, Decomposition) {
 
   // Test PCA decomposition with no approximations. The reconstruction should
   // be (almost) exact.
-  const super_resolution::SpectralPca spectral_pca_full({hyperspectral_image});
+  const super_resolution::SpectralPCA spectral_pca_full({hyperspectral_image});
   const ImageData hyperspectral_pca_image_full =
-      spectral_pca_full.GetPcaImage(hyperspectral_image);
+      spectral_pca_full.GetPCAImage(hyperspectral_image);
   const ImageData reconstructed_hyperspectral_image_full =
       spectral_pca_full.ReconstructImage(hyperspectral_pca_image_full);
   EXPECT_TRUE(AreImagesEqual(
@@ -94,10 +94,10 @@ TEST(SpectralPca, Decomposition) {
 
   // Test PCA decomposition using only a subset of bands and check that the
   // reconstruction is a close-enough approximation.
-  const super_resolution::SpectralPca spectral_pca_approx_count(
+  const super_resolution::SpectralPCA spectral_pca_approx_count(
       {hyperspectral_image}, 250);
   const ImageData hyperspectral_pca_image_approx_count =
-      spectral_pca_approx_count.GetPcaImage(hyperspectral_image);
+      spectral_pca_approx_count.GetPCAImage(hyperspectral_image);
   const ImageData reconstructed_hyperspectral_image_approx_count =
       spectral_pca_approx_count.ReconstructImage(
           hyperspectral_pca_image_approx_count);
@@ -109,10 +109,10 @@ TEST(SpectralPca, Decomposition) {
   // Finally test using a required retained variance amount (99%). This should
   // limit the number of PCA bands but still yield a close approximation in the
   // reconstruction.
-  const super_resolution::SpectralPca spectral_pca_approx_var(
+  const super_resolution::SpectralPCA spectral_pca_approx_var(
       {hyperspectral_image}, 0.999);
   const ImageData hyperspectral_pca_image_approx_var =
-      spectral_pca_approx_var.GetPcaImage(hyperspectral_image);
+      spectral_pca_approx_var.GetPCAImage(hyperspectral_image);
   EXPECT_LT(
       hyperspectral_pca_image_approx_var.GetNumChannels(),
       hyperspectral_image.GetNumChannels());

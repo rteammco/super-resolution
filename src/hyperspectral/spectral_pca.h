@@ -28,8 +28,8 @@
 // eigenvalues typically contain almost all of the information (e.g. 99%).
 //
 // This object does everything automatically. Use as follows:
-//   SpectralPca spectral_pca(low_res_images);
-//   pca_images[0] = spectral_pca.GetPcaImage(low_res_images[0]);
+//   SpectralPCA spectral_pca(low_res_images);
+//   pca_images[0] = spectral_pca.GetPCAImage(low_res_images[0]);
 //   hr_estimate = spectral_pca.ReconstructImage(high_res_pca_estimate);
 
 #ifndef SRC_HYPERSPECTRAL_SPECTRAL_PCA_H_
@@ -43,7 +43,7 @@
 
 namespace super_resolution {
 
-class SpectralPca {
+class SpectralPCA {
  public:
   // Uses the given set of images to generate the PCA decomposition and finds
   // the top PCA bands.
@@ -52,7 +52,7 @@ class SpectralPca {
   // PCA bands (capped by the total number of spectral bands available). The
   // reconstructed images will be approximations if the number of PCA bands is
   // less than the total number of spectral bands (see the description above).
-  SpectralPca(
+  SpectralPCA(
       const std::vector<ImageData>& hyperspectral_images,
       const int num_pca_bands = 0);
 
@@ -61,18 +61,18 @@ class SpectralPca {
   // that v_1 + v_2 + ... + v_k >= retained_variance. This will use the minimum
   // number of eigenvectors for the PCA basis such that the approximation
   // preserves that much of the original data (see description above). The PCA
-  // decomposition will be the same as SpectralPca(image_data, k).
-  SpectralPca(
+  // decomposition will be the same as SpectralPCA(image_data, k).
+  SpectralPCA(
       const std::vector<ImageData>& hyperspectral_images,
       const double retained_variance);
 
   // Returns an image with PCA spectral channels (each pixel is converted into
   // the precomputed PCA space).
-  ImageData GetPcaImage(const ImageData& image_data) const;
+  ImageData GetPCAImage(const ImageData& image_data) const;
 
   // Reconstructs the original hyperspectral image by inverting the PCA
   // operation. It is assumed that the given image was obtained from the same
-  // SpectralPca object using GetPcaImage() for a valid reconstruction.
+  // SpectralPCA object using GetPCAImage() for a valid reconstruction.
   ImageData ReconstructImage(const ImageData& pca_image_data) const;
 
  private:

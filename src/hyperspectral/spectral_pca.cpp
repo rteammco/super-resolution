@@ -23,7 +23,7 @@ constexpr bool kBackProjectionFlag = false;
 //
 // TODO: This will probably result in way-too-big images, so sum-sampling the
 // pixels might be a good idea.
-cv::Mat GetPcaInputData(const std::vector<ImageData>& hyperspectral_images) {
+cv::Mat GetPCAInputData(const std::vector<ImageData>& hyperspectral_images) {
   CHECK(!hyperspectral_images.empty())
       << "At least one image is required to compute the PCA basis.";
 
@@ -141,11 +141,11 @@ ImageData ConvertImage(
   return output_image;
 }
 
-SpectralPca::SpectralPca(
+SpectralPCA::SpectralPCA(
     const std::vector<ImageData>& hyperspectral_images,
     const int num_pca_bands) {
 
-  const cv::Mat input_data = GetPcaInputData(hyperspectral_images);
+  const cv::Mat input_data = GetPCAInputData(hyperspectral_images);
   pca_ = cv::PCA(input_data, cv::Mat(), CV_PCA_DATA_AS_ROW, num_pca_bands);
 
   // Set the number of spectral in the original and PCA spaces.
@@ -154,11 +154,11 @@ SpectralPca::SpectralPca(
   num_pca_bands_ = eigenvector_matrix_size.height;
 }
 
-SpectralPca::SpectralPca(
+SpectralPCA::SpectralPCA(
     const std::vector<ImageData>& hyperspectral_images,
     const double retained_variance) {
 
-  const cv::Mat input_data = GetPcaInputData(hyperspectral_images);
+  const cv::Mat input_data = GetPCAInputData(hyperspectral_images);
   pca_ = cv::PCA(input_data, cv::Mat(), CV_PCA_DATA_AS_ROW, retained_variance);
 
   // Set the number of spectral in the original and PCA spaces.
@@ -167,7 +167,7 @@ SpectralPca::SpectralPca(
   num_pca_bands_ = eigenvector_matrix_size.height;
 }
 
-ImageData SpectralPca::GetPcaImage(const ImageData& image_data) const {
+ImageData SpectralPCA::GetPCAImage(const ImageData& image_data) const {
   // Forward projection (hyperspectral to PCA).
   return ConvertImage(
       image_data,
@@ -177,7 +177,7 @@ ImageData SpectralPca::GetPcaImage(const ImageData& image_data) const {
       kForwardProjectionFlag);
 }
 
-ImageData SpectralPca::ReconstructImage(const ImageData& pca_image_data) const {
+ImageData SpectralPCA::ReconstructImage(const ImageData& pca_image_data) const {
   // Backwards projection (PCA to hyperspectral).
   return ConvertImage(
       pca_image_data,
