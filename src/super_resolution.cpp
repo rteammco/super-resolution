@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "evaluation/peak_signal_to_noise_ratio.h"
+#include "evaluation/structural_similarity.h"
 #include "hyperspectral/spectral_pca.h"
 #include "image/image_data.h"
 #include "image_model/additive_noise_module.h"
@@ -90,8 +91,8 @@ DEFINE_bool(use_numerical_differentiation, false,
 // Evaluation and testing:
 DEFINE_bool(verbose, false,
     "Setting this will cause the solver to log progress.");
-DEFINE_string(evaluator, "",  // TODO: add support for more evaluators.
-    "Optionally print an evaluation metric value ('psnr').");
+DEFINE_string(evaluators, "",
+    "Comma-delimited evaluation metrics to test against (e.g. 'psnr,ssim').");
 
 // What to do with the results (optional):
 DEFINE_string(display_mode, "",
@@ -360,14 +361,29 @@ int main(int argc, char** argv) {
 
   // If an evaluation criteria is passed in and the high-resolution image is
   // available, display the evaluation results.
-  if (FLAGS_generate_lr_images && !FLAGS_evaluator.empty()) {
-    if (FLAGS_evaluator == "psnr") {
-      super_resolution::PeakSignalToNoiseRatioEvaluator psnr_evaluator(
-          input_data.high_res_image);
-      const double upsampled_psnr = psnr_evaluator.Evaluate(upsampled_image);
-      const double result_psnr = psnr_evaluator.Evaluate(result);
-      LOG(INFO) << "PSNR score on upsampled: " << upsampled_psnr;
-      LOG(INFO) << "PSNR score on result:    " << result_psnr;
+  if (FLAGS_generate_lr_images && !FLAGS_evaluators.empty()) {
+    std::vector<std::string> evaluators =
+        super_resolution::util::SplitString(FLAGS_evaluators, ',');
+    for (const std::string& evaluator_arg : evaluators) {
+      const std::string evaluator =
+          super_resolution::util::TrimString(evaluator_arg);
+      if (evaluator == "psnr") {
+        super_resolution::PeakSignalToNoiseRatioEvaluator psnr_evaluator(
+            input_data.high_res_image);
+        const double upsampled_psnr = psnr_evaluator.Evaluate(upsampled_image);
+        const double result_psnr = psnr_evaluator.Evaluate(result);
+        LOG(INFO) << "PSNR score on upsampled: " << upsampled_psnr;
+        LOG(INFO) << "PSNR score on result:    " << result_psnr;
+      } else if (evaluator == "ssim") {
+        super_resolution::StructuralSimilarityEvaluator ssim_evaluator(
+            input_data.high_res_image);
+        const double upsampled_ssim = ssim_evaluator.Evaluate(upsampled_image);
+        const double result_ssim = ssim_evaluator.Evaluate(result);
+        LOG(INFO) << "SSIM score on upsampled: " << upsampled_ssim;
+        LOG(INFO) << "SSIM score on result:    " << result_ssim;
+      } else {
+        LOG(ERROR) << "Unknown/unsupported evaluator '" << evaluator << "'.";
+      }
     }
   }
   result.GetImageDataReport().Print();

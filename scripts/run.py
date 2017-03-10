@@ -14,12 +14,12 @@ configuration = {
 #  'hr_image_path': '../test_data/fb.png',
   'hr_image_path': '../test_data/dallas_half.jpg',
   'lr_image_dir': '../test_data/OUT',
-  'number_of_frames': 9,
-  'motion_sequence_path': '../test_data/test_motion_sequence_9.txt',
+  'number_of_frames': 4,
+  'motion_sequence_path': '../test_data/test_motion_sequence_4.txt',
   # Solver-only options:
   'interpolate_color': True,
   'solve_in_wavelet_domain': False,
-  'regularizer': 'btv',
+  'regularizer': 'tv',
   'regularization_parameter': 0.01,
   'btv_scale_range': 3,
   'btv_spatial_decay': 0.5,
@@ -30,7 +30,7 @@ configuration = {
   'display_mode': 'compare',
   'generate_lr_images': True,  # for SR binary testing
   'verbose_solver': True,  # for SR binary testing
-  'evaluator': 'psnr'
+  'evaluators': 'psnr,ssim'
 }
 
 def run_generate_data(binary_path, config):
@@ -81,7 +81,7 @@ def run_super_resolution(binary_path, config):
     command += ' --number_of_frames={}'.format(config['number_of_frames'])
     command += ' --noise_sigma={}'.format(config['noise_sigma'])
     command += ' --data_path={}'.format(config['hr_image_path'])
-    command += ' --evaluator={}'.format(config['evaluator'])
+    command += ' --evaluators={}'.format(config['evaluators'])
   else:
     command += ' --data_path={}'.format(config['lr_image_dir'])
   if config['interpolate_color']:
