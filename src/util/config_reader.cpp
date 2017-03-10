@@ -25,7 +25,7 @@ std::unordered_map<std::string, std::string> ReadConfigurationFile(
       continue;
     }
     const std::vector<std::string> parts =
-        SplitString(line, key_value_delimiter, true);
+        SplitString(line, key_value_delimiter, true, 2);
     if (parts.size() != 2) {
       continue;
     }

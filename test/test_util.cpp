@@ -31,6 +31,12 @@ TEST(Util, SplitString) {
       super_resolution::util::SplitString("  hi how are  u? ", ' ', true),
       ElementsAre("hi", "how", "are", "u?"));
   EXPECT_THAT(
+      super_resolution::util::SplitString("  hi how are  u? ", ' ', true, 3),
+      ElementsAre("hi", "how", "are  u? "));
+  EXPECT_THAT(
+      super_resolution::util::SplitString("  hi how are  u? ", ' ', false, 4),
+      ElementsAre("", "", "hi", "how are  u? "));
+  EXPECT_THAT(
       super_resolution::util::SplitString(""),
       ElementsAre(""));
 }
