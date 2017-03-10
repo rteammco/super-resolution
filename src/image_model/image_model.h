@@ -61,8 +61,8 @@ class ImageModel {
   // should be M, B, D, n.
   // Note that additive operators come last due to the order of operations.
   //
-  // Because the DegradationOperator is pure virtual, add the operator using
-  // std::move. For example,
+  // Because the DegradationOperator is an abstract class, add the operator
+  // using a smart pointer. For example,
   //   std::shared_ptr<DownsamplingModule> downsampling_module(
   //       new DownsamplingModule(parameters.scale));
   //   image_model.AddDegradationOperator(downsampling_module);
@@ -111,7 +111,7 @@ class ImageModel {
 
  private:
   // An ordered list of degradation operators, to be applied in this order. We
-  // keep pointers because the DegradationOperator class is pure virtual.
+  // keep pointers because the DegradationOperator class is abstract.
   std::vector<std::shared_ptr<DegradationOperator>> degradation_operators_;
 
   // The ImageModel keeps track of the downsampling scale factor.

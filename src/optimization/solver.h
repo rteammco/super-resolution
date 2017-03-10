@@ -1,6 +1,5 @@
-// Defines an abstract (pure virtual) solver object that should be implemented
-// with one or more specific super-resolution optimization methods (e.g. MAP or
-// POCS).
+// Defines an abstract solver object that should be implemented with one or
+// more specific super-resolution optimization methods (e.g. MAP or POCS).
 
 #ifndef SRC_OPTIMIZATION_SOLVER_H_
 #define SRC_OPTIMIZATION_SOLVER_H_

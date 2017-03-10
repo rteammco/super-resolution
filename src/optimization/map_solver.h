@@ -1,5 +1,5 @@
 // The MapSolver is an implementation framework for the maximum a posteriori
-// formulation. This is a pure virtual class, since the MAP formulation can be
+// formulation. This is an abstract class, since the MAP formulation can be
 // solved by different strategies, such as IRLS (iteratively reweighted least
 // squares). See subclasses for the specific solver strategy implementations.
 
