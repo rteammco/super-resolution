@@ -27,9 +27,6 @@ double ComputePixelIntensityCovariance(
 
   const int num_channels = image1.GetNumChannels();
   const int num_pixels = image1.GetNumPixels();
-  CHECK_EQ(image2.GetNumChannels(), num_channels);
-  CHECK_EQ(image2.GetNumPixels(), num_pixels);
-
   double covariance = 0.0;
   for (int channel = 0; channel < num_channels; ++channel) {
     for (int pixel = 0; pixel < num_pixels; ++pixel) {
@@ -67,11 +64,21 @@ StructuralSimilarityEvaluator::StructuralSimilarityEvaluator(
 }
 
 double StructuralSimilarityEvaluator::Evaluate(const ImageData& image) const {
-  const double image_mean = ComputeAveragePixelIntensity(image);
+  CHECK_EQ(image.GetNumChannels(), ground_truth_.GetNumChannels());
+  ImageData evaluation_image = image;
+  if (image.GetImageSize() != ground_truth_.GetImageSize()) {
+    LOG(WARNING) << "Image size is different from ground truth: "
+                 << image.GetImageSize() << " vs. "
+                 << ground_truth_.GetImageSize() << ". "
+                 << "Resizing image to run evaluation.";
+    evaluation_image.ResizeImage(image.GetImageSize(), INTERPOLATE_LINEAR);
+  }
+
+  const double image_mean = ComputeAveragePixelIntensity(evaluation_image);
   const double image_variance =
-      ComputePixelIntensityVariance(image, image_mean);
+      ComputePixelIntensityVariance(evaluation_image, image_mean);
   const double covariance = ComputePixelIntensityCovariance(
-      image, image_mean, ground_truth_, ground_truth_mean_);
+      evaluation_image, image_mean, ground_truth_, ground_truth_mean_);
 
   const double numerator_1 = 2 * ground_truth_mean_ * image_mean + c1_;
   const double numerator_2 = 2 * covariance + c2_;
