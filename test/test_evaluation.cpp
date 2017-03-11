@@ -97,11 +97,11 @@ TEST(Evaluation, PSNR) {
 
 // Test that the structural similarity evaluator gives the correct scores.
 TEST(Evaluation, SSIM) {
-  // Reference ground truth image:
+  // Reference ground truth image with single channel:
   const cv::Mat ground_truth_matrix_1 = (cv::Mat_<double>(2, 2)
       << 0.5,  0.25,
          0.75, 1.0);
-  super_resolution::ImageData ground_truth_1(ground_truth_matrix_1);
+  const super_resolution::ImageData ground_truth_1(ground_truth_matrix_1);
   const super_resolution::StructuralSimilarityEvaluator ssim_evaluator_1(
       ground_truth_1);
 
@@ -124,17 +124,44 @@ TEST(Evaluation, SSIM) {
   //      = (0.78135 * 0.1509) / (0.78135 * 0.15215)
   //      = 0.117905715 / 0.1188824025
   //      = 0.991784423266513
-  EXPECT_DOUBLE_EQ(ssim_evaluator_1.Evaluate(test_image_1), 0.991784423266513);
+  const double expected_ssim_1 = 0.991784423266513;
+  EXPECT_DOUBLE_EQ(ssim_evaluator_1.Evaluate(test_image_1), expected_ssim_1);
 
   // Repeat the test again, this time with a multichannel image (just adding
   // copies of the same channel). The SSIM should be the same.
-  ground_truth_1.AddChannel(
+  super_resolution::ImageData ground_truth_1_multi = ground_truth_1;
+  ground_truth_1_multi.AddChannel(
       ground_truth_matrix_1, super_resolution::DO_NOT_NORMALIZE_IMAGE);
+  const super_resolution::StructuralSimilarityEvaluator ssim_evaluator_1_multi(
+      ground_truth_1_multi);
   test_image_1.AddChannel(
       test_image_matrix_1, super_resolution::DO_NOT_NORMALIZE_IMAGE);
-  const super_resolution::StructuralSimilarityEvaluator ssim_evaluator_2(
-      ground_truth_1);
-  EXPECT_DOUBLE_EQ(ssim_evaluator_2.Evaluate(test_image_1), 0.991784423266513);
+  EXPECT_DOUBLE_EQ(
+      ssim_evaluator_1_multi.Evaluate(test_image_1), expected_ssim_1);
+
+  // Add another channel with a different SSIM and verify that the SSIM is the
+  // avarege of the three channel SSIMs. That is:
+  //   (ssim(ch1) + ssim(ch2) + ssim(ch3)) / 3 == ssim(Image(ch1,ch2,ch3))
+  const cv::Mat test_image_matrix_1_ch3 = (cv::Mat_<double>(2, 2)
+      << 0.1, 0.2,
+         0.3, 0.7);
+  ground_truth_1_multi.AddChannel(
+      ground_truth_matrix_1, super_resolution::DO_NOT_NORMALIZE_IMAGE);
+  test_image_1.AddChannel(
+      test_image_matrix_1_ch3, super_resolution::DO_NOT_NORMALIZE_IMAGE);
+  // Use ssim_evaluator_1_multi because we updated the ground truth image it
+  // uses so it will work for comparing all 3 channels now.
+  const double ssim_3_channels = ssim_evaluator_1_multi.Evaluate(test_image_1);
+  // Run ssim_evaluator_1 on the third channel alone to get the score for that.
+  const super_resolution::ImageData test_image_1_ch3(test_image_matrix_1_ch3);
+  const double ssim_ch3 = ssim_evaluator_1.Evaluate(test_image_1_ch3);
+  // The first two channels both have the same SSIM (expected_ssim_1) so get
+  // the average for all 3 channels:
+  const double average_ssim_1 =
+      (expected_ssim_1 + expected_ssim_1 + ssim_ch3) / 3.0;
+  // TODO: EXPECT_DOUBLE_EQ(ssim_3_channels, average_ssim_1);
+
+  /* Verify SSIM is symmetric and SSIM between two identical images is 1. */
 
   const cv::Mat ground_truth_matrix_2 = (cv::Mat_<double>(4, 4)
       << 0.0, 0.1, 0.2, 0.3,
@@ -142,11 +169,11 @@ TEST(Evaluation, SSIM) {
          0.8, 0.9, 1.0, 0.5,
          0.4, 0.6, 0.0, 1.0);
   const super_resolution::ImageData ground_truth_2(ground_truth_matrix_2);
-  const super_resolution::StructuralSimilarityEvaluator ssim_evaluator_3(
+  const super_resolution::StructuralSimilarityEvaluator ssim_evaluator_2(
       ground_truth_2);
 
   // SSIM index should be 1.0 for identical images.
-  EXPECT_DOUBLE_EQ(ssim_evaluator_3.Evaluate(ground_truth_2), 1.0);
+  EXPECT_DOUBLE_EQ(ssim_evaluator_2.Evaluate(ground_truth_2), 1.0);
 
   // SSIM index score should be symmetric.
   const cv::Mat test_image_matrix_2 = (cv::Mat_<double>(4, 4)
@@ -155,9 +182,9 @@ TEST(Evaluation, SSIM) {
          0.8, 0.9, 1.0, 0.5,
          0.3, 0.8, 0.3, 0.8);
   const super_resolution::ImageData test_image_2(test_image_matrix_2);
-  const super_resolution::StructuralSimilarityEvaluator ssim_evaluator_4(
+  const super_resolution::StructuralSimilarityEvaluator ssim_evaluator_3(
       test_image_2);
   EXPECT_DOUBLE_EQ(
-      ssim_evaluator_3.Evaluate(test_image_2),
-      ssim_evaluator_4.Evaluate(ground_truth_2));
+      ssim_evaluator_2.Evaluate(test_image_2),
+      ssim_evaluator_3.Evaluate(ground_truth_2));
 }
