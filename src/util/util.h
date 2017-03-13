@@ -13,7 +13,7 @@
 namespace super_resolution {
 namespace util {
 
-const char kCodeVersion[] = "0.1";
+constexpr char kCodeVersion[] = "0.1 (dev)";
 
 // Initializes the app. Processes all of the command line arguments with gflags
 // and initializes logging with glog. Sets the usage message and app version.

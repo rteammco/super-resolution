@@ -23,10 +23,14 @@ namespace util {
 // set to true.
 constexpr int kDisplaySizePixels = 850;
 
+// If true, gflags::ParseCommandLineFlags will remove all flags that it
+// processed from the argv list. Any other misc input parameters will remain.
+constexpr bool kRemoveFlagsAfterParsing = true;
+
 void InitApp(int argc, char** argv, const std::string& usage_message) {
   google::SetUsageMessage(usage_message);
   google::SetVersionString(kCodeVersion);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  gflags::ParseCommandLineFlags(&argc, &argv, kRemoveFlagsAfterParsing);
   google::InitGoogleLogging(argv[0]);
 
   // TODO: remove this or put it under a debug guard.
