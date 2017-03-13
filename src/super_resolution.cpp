@@ -94,7 +94,7 @@ DEFINE_bool(use_numerical_differentiation, false,
 
 // Evaluation and testing:
 DEFINE_bool(verbose, false,
-    "Setting this will cause the solver to log progress.");
+    "Solver will log progress and image stats will be printed.");
 DEFINE_string(evaluators, "",
     "Comma-delimited evaluation metrics to test against (e.g. 'psnr,ssim').");
 
@@ -342,7 +342,7 @@ int main(int argc, char** argv) {
   // is done after any other conversions to keep it in the same spectral space
   // that the solver will operate in.
   ImageData initial_estimate = input_data.low_res_images[0];
-  initial_estimate .ResizeImage(
+  initial_estimate.ResizeImage(
       FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
 
   // Run super-resolution in the selected domain.
@@ -399,7 +399,9 @@ int main(int argc, char** argv) {
       }
     }
   }
-  result.GetImageDataReport().Print();
+  if (FLAGS_verbose) {
+    result.GetImageDataReport().Print();
+  }
 
   if (FLAGS_display_mode == "result") {
     super_resolution::util::DisplayImage(result, "Result");
