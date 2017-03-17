@@ -84,6 +84,19 @@ target_link_libraries(
 )
 
 
+# Add the VisualizeImage binary.
+add_executable(
+  VisualizeImage
+  src/visualize_image.cpp
+)
+target_link_libraries(
+  VisualizeImage
+  LibSuperResolution
+  glog
+  gflags
+  ${OpenCV_LIBS}
+)
+
 # Add the GenerateData binary.
 add_executable(
   GenerateData
