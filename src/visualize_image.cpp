@@ -24,6 +24,13 @@ DEFINE_string(image_path, "",
 DEFINE_bool(rescale_image, false,
     "If true, rescales the image to fit on the screen.");
 
+// Optionally, this parameter will enable printing out statistics about the
+// image for the user to get more information. Statistics include the image
+// dimensions (as loaded into memory), the number of negative pixel values, the
+// min/max pixel values, etc.
+DEFINE_bool(print_image_info, false,
+    "If true, the image data report will be printed to standard output.");
+
 int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Image visualization.");
 
@@ -31,6 +38,9 @@ int main(int argc, char** argv) {
 
   super_resolution::ImageData image =
       super_resolution::util::LoadImage(FLAGS_image_path);
+  if (FLAGS_print_image_info) {
+    image.GetImageDataReport().Print();
+  }
   super_resolution::util::DisplayImage(
       image, "Image Visualization", FLAGS_rescale_image);
 
