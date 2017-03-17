@@ -11,11 +11,16 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
-// The only argument is the path the the image. This can either be a regular
-// image file or a hyperspectral configuration file which specifies information
-// about a binary ENVI image file that can be loaded at the specified range.
+// The only required argument is the path the the image. This can either be a
+// regular image file or a hyperspectral configuration file which specifies
+// information about a binary ENVI image file that can be loaded at the
+// specified range.
 DEFINE_string(image_path, "",
     "The path to an input image file (regular or hyperspectral config).");
+
+// Optionally, set this flag to enable automatic image resizing. This will
+// scale smaller images up and scale larger images down to visualize them more
+// uniformly on the screen.
 DEFINE_bool(rescale_image, false,
     "If true, rescales the image to fit on the screen.");
 
