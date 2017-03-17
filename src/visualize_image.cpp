@@ -16,6 +16,8 @@
 // about a binary ENVI image file that can be loaded at the specified range.
 DEFINE_string(image_path, "",
     "The path to an input image file (regular or hyperspectral config).");
+DEFINE_bool(rescale_image, false,
+    "If true, rescales the image to fit on the screen.");
 
 int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv, "Image visualization.");
@@ -24,7 +26,8 @@ int main(int argc, char** argv) {
 
   super_resolution::ImageData image =
       super_resolution::util::LoadImage(FLAGS_image_path);
-  super_resolution::util::DisplayImage(image, "Image Visualization");
+  super_resolution::util::DisplayImage(
+      image, "Image Visualization", FLAGS_rescale_image);
 
   return EXIT_SUCCESS;
 }

@@ -21,7 +21,8 @@ namespace util {
 
 // The size of a displayed image for the DisplayImage function if rescale is
 // set to true.
-constexpr int kDisplaySizePixels = 850;
+constexpr int kDisplayWidthPixels = 1250;
+constexpr int kDisplayHeightPixels = 850;
 
 // If true, gflags::ParseCommandLineFlags will remove all flags that it
 // processed from the argv list. Any other misc input parameters will remain.
@@ -141,13 +142,14 @@ void DisplayImage(
   ImageData display_image = image;
   const cv::Size image_size = display_image.GetImageSize();
   if (rescale) {
-    const int smaller_dimension = std::min(image_size.width, image_size.height);
-    const double scale =
-        static_cast<double>(kDisplaySizePixels) /
-        static_cast<double>(smaller_dimension);
-    if (scale > 1.0) {
-      display_image.ResizeImage(scale);
-    }
+    const double scale_x =
+        static_cast<double>(kDisplayWidthPixels) /
+        static_cast<double>(image_size.width);
+    const double scale_y =
+        static_cast<double>(kDisplayHeightPixels) /
+        static_cast<double>(image_size.height);
+    const double scale = std::min(scale_x, scale_y);
+    display_image.ResizeImage(scale);
   }
 
   cv::namedWindow(window_name, CV_WINDOW_AUTOSIZE);
