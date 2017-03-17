@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -154,6 +155,7 @@ void DisplayImage(
 
   cv::namedWindow(window_name, CV_WINDOW_AUTOSIZE);
   cv::imshow(window_name, display_image.GetVisualizationImage());
+  std::cout << "Displaying image. Press any key to continue." << std::endl;
   cv::waitKey(0);
   cv::destroyWindow(window_name);
 }

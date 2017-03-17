@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     image.GetImageDataReport().Print();
   }
   super_resolution::util::DisplayImage(
-      image, "Image Visualization", FLAGS_rescale_image);
+      image, "Image: " + FLAGS_image_path, FLAGS_rescale_image);
 
   return EXIT_SUCCESS;
 }
