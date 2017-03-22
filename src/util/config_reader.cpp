@@ -12,40 +12,57 @@
 namespace super_resolution {
 namespace util {
 
-std::unordered_map<std::string, std::string> ReadConfigurationFile(
-    const std::string& config_file_path, const char key_value_delimiter) {
+void ConfigurationFileIO::ReadFromFile(const std::string& file_path) {
+  std::ifstream fin(file_path);
+  CHECK(fin.is_open()) << "Could not open file '" << file_path << "'.";
 
-  std::ifstream fin(config_file_path);
-  CHECK(fin.is_open()) << "Could not open file '" << config_file_path << "'.";
-
-  std::unordered_map<std::string, std::string> config_map;
   std::string line;
   while (std::getline(fin, line)) {
     if (line.find("#") == 0) {  // If string starts with a "#" it's a comment.
       continue;
     }
     const std::vector<std::string> parts =
-        SplitString(line, key_value_delimiter, true, 2);
+        SplitString(line, key_value_delimiter_, true, 2);
     if (parts.size() != 2) {
       continue;
     }
     const std::string key = TrimString(parts[0]);
     const std::string value = TrimString(parts[1]);
-    config_map[key] = value;
+    config_map_[key] = value;
   }
   fin.close();
-
-  return config_map;
 }
 
-std::string GetConfigValueOrDie(
-    const std::unordered_map<std::string, std::string>& config_map,
-    const std::string& key) {
+void ConfigurationFileIO::WriteToFile(const std::string& file_path) const {
+  // TODO: implement.
+}
 
-  const auto config_map_iterator = config_map.find(key);
-  CHECK(config_map_iterator != config_map.end())
-      << "The given map does not have a value for key '" << key << "'.";
-  return config_map_iterator->second;
+bool ConfigurationFileIO::HasValue(const std::string& key) const {
+  return config_map_.find(key) != config_map_.end();
+}
+
+std::string ConfigurationFileIO::GetValue(const std::string& key) const {
+  const auto iterator = config_map_.find(key);
+  if (iterator != config_map_.end()) {
+    return iterator->second;
+  }
+  return "";
+}
+
+int ConfigurationFileIO::GetValueAsInt(const std::string& key) const {
+  if (!HasValue(key)) {
+    LOG(WARNING)
+        << "Value for key '" << key << "' does not exist. Returning 0.";
+    return 0;
+  }
+  const std::string value = GetValueOrDie(key);
+  return std::atoi(value.c_str());  // atoi returns 0 if invalid.
+}
+
+std::string ConfigurationFileIO::GetValueOrDie(const std::string& key) const {
+  CHECK(HasValue(key))
+      << "The map does not have a value for key '" << key << "'.";
+  return GetValue(key);
 }
 
 }  // namespace util

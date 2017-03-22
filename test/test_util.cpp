@@ -63,21 +63,20 @@ TEST(Util, TrimString) {
 }
 
 TEST(Util, ReadConfigurationFile) {
-  const std::unordered_map<std::string, std::string> config_map =
-      super_resolution::util::ReadConfigurationFile(kTestConfigFilePath);
-  EXPECT_THAT(config_map, UnorderedElementsAreArray({
-      Pair("file", "../test_data/example_envi_data"),
-      Pair("interleave", "bsq"),
-      Pair("data_type", "float"),
-      Pair("big_endian", "false"),
-      Pair("header_offset", "0"),
-      Pair("num_data_rows", "9"),
-      Pair("num_data_cols", "5"),
-      Pair("num_data_bands", "10"),
-      Pair("start_row", "2"),
-      Pair("end_row", "8"),
-      Pair("start_col", "0"),
-      Pair("end_col", "3"),
-      Pair("start_band", "5"),
-      Pair("end_band", "10")}));
+  super_resolution::util::ConfigurationFileIO config_reader;
+  config_reader.ReadFromFile(kTestConfigFilePath);
+  EXPECT_EQ(config_reader.GetValue("file"), "../test_data/example_envi_data");
+  EXPECT_EQ(config_reader.GetValue("interleave"), "bsq");
+  EXPECT_EQ(config_reader.GetValue("data_type"), "float");
+  EXPECT_EQ(config_reader.GetValue("big_endian"), "false");
+  EXPECT_EQ(config_reader.GetValue("header_offset"), "0");
+  EXPECT_EQ(config_reader.GetValue("num_data_rows"), "9");
+  EXPECT_EQ(config_reader.GetValueAsInt("num_data_cols"), 5);
+  EXPECT_EQ(config_reader.GetValue("num_data_bands"), "10");
+  EXPECT_EQ(config_reader.GetValueAsInt("start_row"), 2);
+  EXPECT_EQ(config_reader.GetValueAsInt("end_row"), 8);
+  EXPECT_EQ(config_reader.GetValue("start_col"), "0");
+  EXPECT_EQ(config_reader.GetValue("end_col"), "3");
+  EXPECT_EQ(config_reader.GetValue("start_band"), "5");
+  EXPECT_EQ(config_reader.GetValue("end_band"), "10");
 }

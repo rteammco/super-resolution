@@ -216,41 +216,46 @@ ImageData ReadBinaryFile(
 void HSIBinaryDataParameters::ReadHeaderFromFile(
     const std::string& header_file_path) {
 
-  const std::unordered_map<std::string, std::string> key_value_map =
-      util::ReadConfigurationFile(header_file_path, '=');
-  for (const auto& key_value : key_value_map) {
-    if (key_value.first == "interleave") {
-      if (key_value.second == "bsq") {
-        data_format.interleave = HSI_BINARY_INTERLEAVE_BSQ;
-      } else {
-        LOG(WARNING) << "Unknown/unsupported interleave format: "
-                     << key_value.second << ". Using BSQ by default.";
-      }
-    } else if (key_value.first == "data type") {
-      if (key_value.second == "4") {
-        data_format.data_type = HSI_DATA_TYPE_FLOAT;
-      } else {
-        LOG(WARNING) << "Unknown/unsupported data type: "
-                     << key_value.second << ". Using float by default.";
-      }
-    } else if (key_value.first == "byte order") {
-      if (key_value.second == "1") {
-        data_format.big_endian = true;
-      } else {
-        data_format.big_endian = false;
-      }
-    } else if (key_value.first == "header offset") {
-      header_offset = std::atoi(key_value.second.c_str());
-    } else if (key_value.first == "samples") {
-      num_data_rows = std::atoi(key_value.second.c_str());
-    } else if (key_value.first == "lines") {
-      num_data_cols = std::atoi(key_value.second.c_str());
-    } else if (key_value.first == "bands") {
-      num_data_bands = std::atoi(key_value.second.c_str());
+  util::ConfigurationFileIO config_reader;
+  config_reader.SetDelimiter('=');
+  config_reader.ReadFromFile(header_file_path);
+  if (config_reader.HasValue("interleave")) {
+    const std::string interleave = config_reader.GetValue("interleave");
+    if (interleave == "bsq") {
+      data_format.interleave = HSI_BINARY_INTERLEAVE_BSQ;
     } else {
-      LOG(WARNING) << "Ignored header configuration entry: '"
-                   << key_value.first << "'.";
+      LOG(WARNING) << "Unknown/unsupported interleave format: "
+                   << interleave << ". Using BSQ by default.";
     }
+  }
+  if (config_reader.HasValue("data type")) {
+    const std::string data_type = config_reader.GetValue("data type");
+    if (data_type == "4") {
+      data_format.data_type = HSI_DATA_TYPE_FLOAT;
+    } else {
+      LOG(WARNING) << "Unknown/unsupported data type: "
+                   << data_type << ". Using float by default.";
+    }
+  }
+  if (config_reader.HasValue("byte order")) {
+    const std::string byte_order = config_reader.GetValue("byte order");
+    if (byte_order == "1") {
+      data_format.big_endian = true;
+    } else {
+      data_format.big_endian = false;
+    }
+  }
+  if (config_reader.HasValue("header offset")) {
+    header_offset = config_reader.GetValueAsInt("header offset");
+  }
+  if (config_reader.HasValue("samples")) {
+    num_data_rows = config_reader.GetValueAsInt("samples");
+  }
+  if (config_reader.HasValue("lines")) {
+    num_data_cols = config_reader.GetValueAsInt("lines");
+  }
+  if (config_reader.HasValue("bands")) {
+    num_data_bands = config_reader.GetValueAsInt("bands");
   }
 }
 
@@ -259,34 +264,31 @@ void HSIBinaryDataParameters::ReadHeaderFromFile(
 //       data size and format parameters) if the "header" key is given. Right
 //       now config file has to contain all of the information directly.
 void HyperspectralDataLoader::LoadImageFromENVIFile() {
-  const std::unordered_map<std::string, std::string> config_file_map =
-      util::ReadConfigurationFile(file_path_, ' ');
+  util::ConfigurationFileIO config_reader;
+  config_reader.SetDelimiter(' ');
+  config_reader.ReadFromFile(file_path_);
 
   // Get the path of the binary data file.
-  const std::string hsi_file_path =
-      util::GetConfigValueOrDie(config_file_map, "file");
+  const std::string hsi_file_path = config_reader.GetValueOrDie("file");
 
   // Get all of the necessary HSI file metadata.
   HSIBinaryDataParameters parameters;
   // Interleave format:
-  const std::string interleave =
-      util::GetConfigValueOrDie(config_file_map, "interleave");
+  const std::string interleave = config_reader.GetValueOrDie("interleave");
   if (interleave == "bsq") {
     parameters.data_format.interleave = HSI_BINARY_INTERLEAVE_BSQ;
   } else {
     LOG(FATAL) << "Unsupported interleave format: '" << interleave << "'.";
   }
   // Data type:
-  const std::string data_type =
-      util::GetConfigValueOrDie(config_file_map, "data_type");
+  const std::string data_type = config_reader.GetValueOrDie("data_type");
   if (data_type == "float") {
     parameters.data_format.data_type = HSI_DATA_TYPE_FLOAT;
   } else {
     LOG(FATAL) << "Unsupported data type: '" << data_type << "'.";
   }
   // Endian:
-  const std::string big_endian =
-      util::GetConfigValueOrDie(config_file_map, "big_endian");
+  const std::string big_endian = config_reader.GetValueOrDie("big_endian");
   if (big_endian == "true") {
     parameters.data_format.big_endian = true;
   } else {
@@ -294,25 +296,25 @@ void HyperspectralDataLoader::LoadImageFromENVIFile() {
   }
   // Header offset:
   const std::string header_offset =
-      util::GetConfigValueOrDie(config_file_map, "header_offset");
+      config_reader.GetValueOrDie("header_offset");
   parameters.header_offset = std::atoi(header_offset.c_str());
   CHECK_GE(parameters.header_offset, 0)
       << "Header offset must be non-negative.";
   // Number of rows:
   const std::string num_data_rows =
-      util::GetConfigValueOrDie(config_file_map, "num_data_rows");
+      config_reader.GetValueOrDie("num_data_rows");
   parameters.num_data_rows = std::atoi(num_data_rows.c_str());
   CHECK_GT(parameters.num_data_rows, 0)
       << "Number of data rows must be positive.";
   // Number of columns:
   const std::string num_data_cols =
-      util::GetConfigValueOrDie(config_file_map, "num_data_cols");
+      config_reader.GetValueOrDie("num_data_cols");
   parameters.num_data_cols = std::atoi(num_data_cols.c_str());
   CHECK_GT(parameters.num_data_cols, 0)
       << "Number of data cols must be positive.";
   // Number of spectral bands:
   const std::string num_data_bands =
-      util::GetConfigValueOrDie(config_file_map, "num_data_bands");
+      config_reader.GetValueOrDie("num_data_bands");
   parameters.num_data_bands = std::atoi(num_data_bands.c_str());
   CHECK_GT(parameters.num_data_bands, 0)
       << "Number of data bands must be positive.";
@@ -320,15 +322,13 @@ void HyperspectralDataLoader::LoadImageFromENVIFile() {
   // Now get the data range parameters.
   HSIDataRange data_range;
   // Start row:
-  const std::string start_row_string =
-      util::GetConfigValueOrDie(config_file_map, "start_row");
+  const std::string start_row_string = config_reader.GetValueOrDie("start_row");
   data_range.start_row = std::atoi(start_row_string.c_str());
   CHECK_GE(data_range.start_row, 0) << "Start row index cannot be negative.";
   CHECK_LT(data_range.start_row, parameters.num_data_rows)
       << "Start row index is out of bounds.";
   // End row:
-  const std::string end_row_string =
-      util::GetConfigValueOrDie(config_file_map, "end_row");
+  const std::string end_row_string = config_reader.GetValueOrDie("end_row");
   data_range.end_row = std::atoi(end_row_string.c_str());
   CHECK_GT(data_range.end_row, 0) << "End row index must be positive.";
   CHECK_LE(data_range.end_row, parameters.num_data_rows)
@@ -336,15 +336,13 @@ void HyperspectralDataLoader::LoadImageFromENVIFile() {
   CHECK_GT(data_range.end_row - data_range.start_row, 0)
       << "Row range must be positive.";
   // Start column:
-  const std::string start_col_string =
-      util::GetConfigValueOrDie(config_file_map, "start_col");
+  const std::string start_col_string = config_reader.GetValueOrDie("start_col");
   data_range.start_col = std::atoi(start_col_string.c_str());
   CHECK_GE(data_range.start_col, 0) << "Start column index cannot be negative.";
   CHECK_LT(data_range.start_col, parameters.num_data_cols)
       << "Start column index is out of bounds.";
   // End column:
-  const std::string end_col_string =
-      util::GetConfigValueOrDie(config_file_map, "end_col");
+  const std::string end_col_string = config_reader.GetValueOrDie("end_col");
   data_range.end_col = std::atoi(end_col_string.c_str());
   CHECK_GT(data_range.end_col, 0) << "End column index must be positive.";
   CHECK_LE(data_range.end_col, parameters.num_data_cols)
@@ -353,14 +351,13 @@ void HyperspectralDataLoader::LoadImageFromENVIFile() {
       << "Column range must be positive.";
   // Start band:
   const std::string start_band_string =
-      util::GetConfigValueOrDie(config_file_map, "start_band");
+      config_reader.GetValueOrDie("start_band");
   data_range.start_band = std::atoi(start_band_string.c_str());
   CHECK_GE(data_range.start_band, 0) << "Start band index cannot be negative.";
   CHECK_LT(data_range.start_band, parameters.num_data_bands)
       << "Start band index is out of bounds.";
   // End band:
-  const std::string end_band_string =
-      util::GetConfigValueOrDie(config_file_map, "end_band");
+  const std::string end_band_string = config_reader.GetValueOrDie("end_band");
   data_range.end_band = std::atoi(end_band_string.c_str());
   CHECK_GT(data_range.end_band, 0) << "End band index must be positive.";
   CHECK_LE(data_range.end_band, parameters.num_data_bands)
