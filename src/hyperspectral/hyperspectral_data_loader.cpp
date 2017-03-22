@@ -216,7 +216,7 @@ ImageData ReadBinaryFile(
 void HSIBinaryDataParameters::ReadHeaderFromFile(
     const std::string& header_file_path) {
 
-  util::ConfigurationFileIO config_reader;
+  util::ConfigurationFileReader config_reader;
   config_reader.SetDelimiter('=');
   config_reader.ReadFromFile(header_file_path);
   if (config_reader.HasValue("interleave")) {
@@ -264,7 +264,7 @@ void HSIBinaryDataParameters::ReadHeaderFromFile(
 //       data size and format parameters) if the "header" key is given. Right
 //       now config file has to contain all of the information directly.
 void HyperspectralDataLoader::LoadImageFromENVIFile() {
-  util::ConfigurationFileIO config_reader;
+  util::ConfigurationFileReader config_reader;
   config_reader.SetDelimiter(' ');
   config_reader.ReadFromFile(file_path_);
 

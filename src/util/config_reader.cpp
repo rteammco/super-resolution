@@ -12,9 +12,10 @@
 namespace super_resolution {
 namespace util {
 
-void ConfigurationFileIO::ReadFromFile(const std::string& file_path) {
+void ConfigurationFileReader::ReadFromFile(const std::string& file_path) {
   std::ifstream fin(file_path);
-  CHECK(fin.is_open()) << "Could not open file '" << file_path << "'.";
+  CHECK(fin.is_open())
+      << "Could not open file '" << file_path << "' for reading.";
 
   std::string line;
   while (std::getline(fin, line)) {
@@ -33,15 +34,11 @@ void ConfigurationFileIO::ReadFromFile(const std::string& file_path) {
   fin.close();
 }
 
-void ConfigurationFileIO::WriteToFile(const std::string& file_path) const {
-  // TODO: implement.
-}
-
-bool ConfigurationFileIO::HasValue(const std::string& key) const {
+bool ConfigurationFileReader::HasValue(const std::string& key) const {
   return config_map_.find(key) != config_map_.end();
 }
 
-std::string ConfigurationFileIO::GetValue(const std::string& key) const {
+std::string ConfigurationFileReader::GetValue(const std::string& key) const {
   const auto iterator = config_map_.find(key);
   if (iterator != config_map_.end()) {
     return iterator->second;
@@ -49,7 +46,7 @@ std::string ConfigurationFileIO::GetValue(const std::string& key) const {
   return "";
 }
 
-int ConfigurationFileIO::GetValueAsInt(const std::string& key) const {
+int ConfigurationFileReader::GetValueAsInt(const std::string& key) const {
   if (!HasValue(key)) {
     LOG(WARNING)
         << "Value for key '" << key << "' does not exist. Returning 0.";
@@ -59,7 +56,9 @@ int ConfigurationFileIO::GetValueAsInt(const std::string& key) const {
   return std::atoi(value.c_str());  // atoi returns 0 if invalid.
 }
 
-std::string ConfigurationFileIO::GetValueOrDie(const std::string& key) const {
+std::string ConfigurationFileReader::GetValueOrDie(
+    const std::string& key) const {
+
   CHECK(HasValue(key))
       << "The map does not have a value for key '" << key << "'.";
   return GetValue(key);

@@ -10,15 +10,14 @@
 namespace super_resolution {
 namespace util {
 
-class ConfigurationFileIO {
+class ConfigurationFileReader {
  public:
   // Reads the configuration data from the given file. An error will occur if
   // the given file does not exist or cannot be read.
+  //
+  // This method assumes one key-value pair is defined per line, separated by
+  // the delimiter (use SetDelimiter() to change this).
   void ReadFromFile(const std::string& file_path);
-
-  // Writes the configuration data to the given file. An error will occur if
-  // the given file cannot be written to.
-  void WriteToFile(const std::string& file_path) const;
 
   // Set the delimiter for file reading or writing. This delimiter will
   // determine how key-value pairs are separated on each line of the data. If

@@ -63,7 +63,7 @@ TEST(Util, TrimString) {
 }
 
 TEST(Util, ReadConfigurationFile) {
-  super_resolution::util::ConfigurationFileIO config_reader;
+  super_resolution::util::ConfigurationFileReader config_reader;
   config_reader.ReadFromFile(kTestConfigFilePath);
   EXPECT_EQ(config_reader.GetValue("file"), "../test_data/example_envi_data");
   EXPECT_EQ(config_reader.GetValue("interleave"), "bsq");
