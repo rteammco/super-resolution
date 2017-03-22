@@ -81,7 +81,7 @@ ImageData LoadImage(const std::string& file_path) {
     // Otherwise, try loading it as a hyperspectral image (assuming the given
     // path was a configuration file).
     hyperspectral::HyperspectralDataLoader hs_data_loader(file_path);
-    hs_data_loader.LoadDataFromBinaryFile();
+    hs_data_loader.LoadImageFromENVIFile();
     return hs_data_loader.GetImage();
   }
 }
@@ -94,7 +94,8 @@ void SaveImage(const ImageData& image, const std::string& data_path) {
   } else if (num_channels > 0) {
     // 2 or 4+ channel images are saved as hyperspectral images.
     const hyperspectral::HyperspectralDataLoader hs_data_loader(data_path);
-    hs_data_loader.WriteImage(image);
+    hyperspectral::HSIBinaryDataFormat binary_data_format;  // Default format.
+    hs_data_loader.SaveImage(image, binary_data_format);
   } else {
     // Can't save an empty image.
     LOG(WARNING) << "Cannot save an empty image. Nothing was saved.";

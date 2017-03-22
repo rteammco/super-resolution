@@ -18,10 +18,6 @@ using super_resolution::util::GetAbsoluteCodePath;
 // double precision during the data reading process.
 constexpr double kPrecisionErrorTolerance = 1e-6;
 
-// Data is 128 x 128 x 5 (width, height, number of bands).
-static const std::string kTestDataPath =
-    GetAbsoluteCodePath("/test_data/ftir_test.txt");
-
 // An ENVI header for testing the header reading method.
 static const std::string kTestHeaderPath =
     GetAbsoluteCodePath("test_data/example_envi_header.hdr");
@@ -36,35 +32,23 @@ TEST(HyperspectralDataLoader, ReadHSIHeaderFromFile) {
   super_resolution::hyperspectral::HSIBinaryDataParameters parameters;
   parameters.ReadHeaderFromFile(kTestHeaderPath);
   EXPECT_EQ(
-      parameters.interleave_format,
+      parameters.data_format.interleave,
       super_resolution::hyperspectral::HSI_BINARY_INTERLEAVE_BSQ);
   EXPECT_EQ(
-      parameters.data_type,
+      parameters.data_format.data_type,
       super_resolution::hyperspectral::HSI_DATA_TYPE_FLOAT);
-  EXPECT_EQ(parameters.big_endian, false);
+  EXPECT_EQ(parameters.data_format.big_endian, false);
   EXPECT_EQ(parameters.header_offset, 0);
   EXPECT_EQ(parameters.num_data_rows, 11620);
   EXPECT_EQ(parameters.num_data_cols, 11620);
   EXPECT_EQ(parameters.num_data_bands, 1506);
 }
 
-// Test reading in text-based hyperspectral image data.
-TEST(HyperspectralDataLoader, LoadTextData) {
-  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader(
-      kTestDataPath);
-  hs_data_loader.LoadDataFromTextFile();
-  const super_resolution::ImageData& hs_image = hs_data_loader.GetImage();
-
-  const int num_pixels = 128 * 128;  // Test image is 128 x 128 x 5.
-  EXPECT_EQ(hs_image.GetNumPixels(), num_pixels);
-  EXPECT_EQ(hs_image.GetNumChannels(), 5);
-}
-
 // Test reading in binary hyperspectral image data.
 TEST(HyperspectralDataLoader, LoadBinaryData) {
   super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader(
       kTestConfigFilePath);
-  hs_data_loader.LoadDataFromBinaryFile();
+  hs_data_loader.LoadImageFromENVIFile();
   const super_resolution::ImageData image = hs_data_loader.GetImage();
   EXPECT_EQ(image.GetImageSize(), cv::Size(3, 6));
   EXPECT_EQ(image.GetNumChannels(), 5);
