@@ -151,7 +151,7 @@ ImageData SetupAndRunSolver(
                   initial_estimate.GetImageSize(),
                   initial_estimate.GetNumChannels()));
       if (FLAGS_regularizer == "3dtv") {
-        reinterpret_cast<super_resolution::TotalVariationRegularizer*>(
+        dynamic_cast<super_resolution::TotalVariationRegularizer*>(
             regularizer.get())->SetUse3dTotalVariation(true);
       }
     } else if (FLAGS_regularizer == "btv") {
