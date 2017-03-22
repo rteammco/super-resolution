@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+using super_resolution::test::AreImagesEqual;
 using super_resolution::test::AreMatricesEqual;
 using super_resolution::util::GetAbsoluteCodePath;
 
@@ -25,6 +26,9 @@ static const std::string kTestHeaderPath =
 // The path the the HS configuration file.
 static const std::string kTestConfigFilePath =
     GetAbsoluteCodePath("test_data/test_hs_config.txt");
+
+static const std::string kTestOutputFilePath =
+    GetAbsoluteCodePath("test_data/test_tmp_dir/hs_data_loader_envi_out");
 
 // This test verifies that the HSIBinaryDataParameters::ReadHeaderFromFile
 // method works correctly.
@@ -77,4 +81,31 @@ TEST(HyperspectralDataLoader, LoadBinaryData) {
          9.70, 9.71, 9.72);
   EXPECT_TRUE(AreMatricesEqual(
       image.GetChannelImage(4), expected_channel_4, kPrecisionErrorTolerance));
+}
+
+// This tests that the binary data is saved correctly by verifying that it can
+// be read back without any errors in the new file.
+TEST(HyperspectralDataLoader, SaveBinaryData) {
+  // Read the original ENVI test file.
+  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader_1(
+      kTestConfigFilePath);
+  hs_data_loader_1.LoadImageFromENVIFile();
+  const super_resolution::ImageData original_image =
+      hs_data_loader_1.GetImage();
+
+  // Now write the file to a temp directory, using the default supported format.
+  // TODO: Once more data formats are supported, test those too.
+  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader_2(
+      kTestOutputFilePath);
+  super_resolution::hyperspectral::HSIBinaryDataFormat data_format;
+  hs_data_loader_2.SaveImage(original_image, data_format);
+
+  // Now try reading the file again. First, generate the config file so we can
+  // read it.
+  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader_3(
+      kTestOutputFilePath + ".config");  // The config file was generated.
+  hs_data_loader_3.LoadImageFromENVIFile();
+  const super_resolution::ImageData saved_image = hs_data_loader_3.GetImage();
+  EXPECT_TRUE(AreImagesEqual(
+      original_image, saved_image, kPrecisionErrorTolerance));
 }

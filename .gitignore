@@ -7,3 +7,4 @@ Testing/
 Makefile
 CTestTestfile.cmake
 cmake_install.cmake
+test_data/test_tmp_dir

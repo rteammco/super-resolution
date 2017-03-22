@@ -101,6 +101,11 @@ class HyperspectralDataLoader {
   // be saved to file_path_ as given in the constructor. This will also
   // generate a .hdr (header) file in the same directory that will contain
   // header information about the data (i.e. data formatting, data size, etc.).
+  // Finally, a .config file will also be generated to set up reading the file
+  // again using the HyperspectralDataLoader's configuration file system.
+  //
+  // The configuration file may need to be modified with an absolute path if
+  // the given file_path_ is a relative path.
   //
   // The file formatting is dictated by the given HSIBinaryDataFormat.
   void SaveImage(
