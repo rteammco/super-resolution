@@ -11,7 +11,6 @@
 #include "opencv2/core/core.hpp"
 
 namespace super_resolution {
-namespace video {
 
 class VideoLoader {
  public:
@@ -41,7 +40,6 @@ class VideoLoader {
   std::vector<cv::Mat> video_frames_;
 };
 
-}  // namespace video
 }  // namespace super_resolution
 
 #endif  // SRC_VIDEO_VIDEO_LOADER_H_

@@ -16,7 +16,6 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
-namespace hyperspectral {
 namespace {
 
 constexpr char kMatlabTextDataDelimiter = ',';
@@ -392,5 +391,4 @@ void HyperspectralDataLoader::SaveImage(
   WriteBinaryFileBSQ<float>(image, file_path_, reverse_bytes);
 }
 
-}  // namespace hyperspectral
 }  // namespace super_resolution

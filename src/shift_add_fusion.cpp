@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
   REQUIRE_ARG(FLAGS_input_image_dir);
   REQUIRE_ARG(FLAGS_input_motion_sequence);
 
-  super_resolution::video::VideoLoader video_loader;
+  super_resolution::VideoLoader video_loader;
   video_loader.LoadFramesFromDirectory(FLAGS_input_image_dir);
 
   // Create an empty HR image.

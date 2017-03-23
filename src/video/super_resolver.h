@@ -9,7 +9,6 @@
 #include "video/video_loader.h"
 
 namespace super_resolution {
-namespace video {
 
 // All possible options for the super resolution algorithm.
 struct SuperResolutionOptions {
@@ -46,7 +45,6 @@ class SuperResolver {
   const SuperResolutionOptions& options_;
 };
 
-}  // namespace video
 }  // namespace super_resolution
 
 #endif  // SRC_VIDEO_SUPER_RESOLVER_H_

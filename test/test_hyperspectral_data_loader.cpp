@@ -33,14 +33,14 @@ static const std::string kTestOutputFilePath =
 // This test verifies that the HSIBinaryDataParameters::ReadHeaderFromFile
 // method works correctly.
 TEST(HyperspectralDataLoader, ReadHSIHeaderFromFile) {
-  super_resolution::hyperspectral::HSIBinaryDataParameters parameters;
+  super_resolution::HSIBinaryDataParameters parameters;
   parameters.ReadHeaderFromFile(kTestHeaderPath);
   EXPECT_EQ(
       parameters.data_format.interleave,
-      super_resolution::hyperspectral::HSI_BINARY_INTERLEAVE_BSQ);
+      super_resolution::HSI_BINARY_INTERLEAVE_BSQ);
   EXPECT_EQ(
       parameters.data_format.data_type,
-      super_resolution::hyperspectral::HSI_DATA_TYPE_FLOAT);
+      super_resolution::HSI_DATA_TYPE_FLOAT);
   EXPECT_EQ(parameters.data_format.big_endian, false);
   EXPECT_EQ(parameters.header_offset, 0);
   EXPECT_EQ(parameters.num_data_rows, 11620);
@@ -50,7 +50,7 @@ TEST(HyperspectralDataLoader, ReadHSIHeaderFromFile) {
 
 // Test reading in binary hyperspectral image data.
 TEST(HyperspectralDataLoader, LoadBinaryData) {
-  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader(
+  super_resolution::HyperspectralDataLoader hs_data_loader(
       kTestConfigFilePath);
   hs_data_loader.LoadImageFromENVIFile();
   const super_resolution::ImageData image = hs_data_loader.GetImage();
@@ -87,7 +87,7 @@ TEST(HyperspectralDataLoader, LoadBinaryData) {
 // be read back without any errors in the new file.
 TEST(HyperspectralDataLoader, SaveBinaryData) {
   // Read the original ENVI test file.
-  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader_1(
+  super_resolution::HyperspectralDataLoader hs_data_loader_1(
       kTestConfigFilePath);
   hs_data_loader_1.LoadImageFromENVIFile();
   const super_resolution::ImageData original_image =
@@ -95,14 +95,14 @@ TEST(HyperspectralDataLoader, SaveBinaryData) {
 
   // Now write the file to a temp directory, using the default supported format.
   // TODO: Once more data formats are supported, test those too.
-  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader_2(
+  super_resolution::HyperspectralDataLoader hs_data_loader_2(
       kTestOutputFilePath);
-  super_resolution::hyperspectral::HSIBinaryDataFormat data_format;
+  super_resolution::HSIBinaryDataFormat data_format;
   hs_data_loader_2.SaveImage(original_image, data_format);
 
   // Now try reading the file again. First, generate the config file so we can
   // read it.
-  super_resolution::hyperspectral::HyperspectralDataLoader hs_data_loader_3(
+  super_resolution::HyperspectralDataLoader hs_data_loader_3(
       kTestOutputFilePath + ".config");  // The config file was generated.
   hs_data_loader_3.LoadImageFromENVIFile();
   const super_resolution::ImageData saved_image = hs_data_loader_3.GetImage();

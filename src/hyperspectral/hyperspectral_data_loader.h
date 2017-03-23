@@ -9,7 +9,6 @@
 #include "image/image_data.h"
 
 namespace super_resolution {
-namespace hyperspectral {
 
 // The possible formats of the hyperspectral image data to be loaded. Binary
 // formats do not specify any information other than the data itself, so header
@@ -120,7 +119,6 @@ class HyperspectralDataLoader {
   ImageData hyperspectral_image_;
 };
 
-}  // namespace hyperspectral
 }  // namespace super_resolution
 
 #endif  // SRC_HYPERSPECTRAL_HYPERSPECTRAL_DATA_LOADER_H_
