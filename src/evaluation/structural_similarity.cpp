@@ -3,6 +3,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 // Computes the average pixel intensity of an image.
 double ComputeAveragePixelIntensity(const ImageData& image) {
@@ -45,6 +46,8 @@ double ComputePixelIntensityVariance(
   // The variance is just the covariance of the image with itself.
   return ComputePixelIntensityCovariance(image, mean, image, mean);
 }
+
+}  // namespace
 
 // Constructor: pre-compute values for ground truth image.
 StructuralSimilarityEvaluator::StructuralSimilarityEvaluator(

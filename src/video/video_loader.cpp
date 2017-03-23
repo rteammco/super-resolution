@@ -13,10 +13,13 @@
 
 namespace super_resolution {
 namespace video {
+namespace {
 
 // The size of a video frame that gets displayed.
 // TODO: Move this to an optional parameter somewhere.
 static const cv::Size kDisplayFrameSize(1000, 600);
+
+}  // namespace
 
 void VideoLoader::LoadFramesFromVideo(const std::string& video_path) {
   cv::VideoCapture video_capture(video_path);

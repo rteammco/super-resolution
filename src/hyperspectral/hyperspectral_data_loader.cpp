@@ -17,6 +17,7 @@
 
 namespace super_resolution {
 namespace hyperspectral {
+namespace {
 
 constexpr char kMatlabTextDataDelimiter = ',';
 
@@ -212,6 +213,8 @@ ImageData ReadBinaryFile(
       reverse_bytes,
       data_range);
 }
+
+}  // namespace
 
 void HSIBinaryDataParameters::ReadHeaderFromFile(
     const std::string& header_file_path) {

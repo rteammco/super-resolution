@@ -10,6 +10,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 double ComputeTermForObservation(
     const ImageData& observation,
@@ -70,6 +71,8 @@ double ComputeTermForObservation(
 
   return residual_sum;
 }
+
+}  // namespace
 
 double ObjectiveDataTerm::Compute(
     const double* estimated_image_data, double* gradient) const {

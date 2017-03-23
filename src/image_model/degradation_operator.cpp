@@ -10,10 +10,13 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 // Size limitations for the ConvertKernelToOperator method.
 constexpr int kMaxConvolutionImageSize = 30;
 constexpr int kMaxConvolutionKernelSize = 10;
+
+}  // namespace
 
 cv::Mat DegradationOperator::ConvertKernelToOperatorMatrix(
     const cv::Mat& kernel, const cv::Size& image_size) {

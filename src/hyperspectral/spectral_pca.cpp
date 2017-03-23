@@ -11,6 +11,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 constexpr bool kForwardProjectionFlag = true;
 constexpr bool kBackProjectionFlag = false;
@@ -140,6 +141,8 @@ ImageData ConvertImage(
   }
   return output_image;
 }
+
+}  // namespace
 
 SpectralPCA::SpectralPCA(
     const std::vector<ImageData>& hyperspectral_images,

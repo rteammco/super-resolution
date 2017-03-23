@@ -13,6 +13,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 void ApplyWarpKernel(const cv::Mat& warp_kernel, ImageData* image_data) {
   const cv::Size image_size = image_data->GetImageSize();
@@ -22,6 +23,8 @@ void ApplyWarpKernel(const cv::Mat& warp_kernel, ImageData* image_data) {
     cv::warpAffine(channel_image, channel_image, warp_kernel, image_size);
   }
 }
+
+}  // namespace
 
 void MotionModule::ApplyToImage(ImageData* image_data, const int index) const {
   CHECK_NOTNULL(image_data);

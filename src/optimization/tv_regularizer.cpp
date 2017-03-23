@@ -12,6 +12,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 // For a given image row and col, returns the value of (x_{r,c+1} - x_{r,c}) if
 // c+1 is a valid column position, or 0 otherwise. That is, the X-direction
@@ -103,6 +104,8 @@ double GetTotalVariation3d(
   }
   return total_variation;
 }
+
+}  // namespace
 
 std::vector<double> TotalVariationRegularizer::ApplyToImage(
     const double* image_data) const {

@@ -20,10 +20,13 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 // Minimum residual value for computing IRLS weights, used to avoid division by
 // zero.
 constexpr double kMinResidualValue = 0.00001;
+
+}  // namespace
 
 IRLSMapSolver::IRLSMapSolver(
     const IRLSMapSolverOptions& solver_options,

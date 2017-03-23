@@ -12,6 +12,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 // Returns the bilateral total variation value for the pixel at the given row
 // and col. Returned value will be 0 for invalid row and col values.
@@ -43,6 +44,8 @@ double GetBilateralTotalVariation(
   }
   return total_variation;
 }
+
+}  // namespace
 
 BilateralTotalVariationRegularizer::BilateralTotalVariationRegularizer(
     const cv::Size& image_size,

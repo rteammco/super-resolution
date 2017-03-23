@@ -18,6 +18,7 @@
 
 namespace super_resolution {
 namespace util {
+namespace {
 
 // The size of a displayed image for the DisplayImage function if rescale is
 // set to true.
@@ -27,6 +28,8 @@ constexpr int kDisplayHeightPixels = 850;
 // If true, gflags::ParseCommandLineFlags will remove all flags that it
 // processed from the argv list. Any other misc input parameters will remain.
 constexpr bool kRemoveFlagsAfterParsing = true;
+
+}  // namespace
 
 void InitApp(int argc, char** argv, const std::string& usage_message) {
   google::SetUsageMessage(usage_message);

@@ -13,6 +13,7 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+namespace {
 
 // Returns true if the given ImageSpectralMode represents a 3-channel color
 // image.
@@ -165,6 +166,8 @@ void InterpolateColor(
     (*output_channels)[i] = color_channel;
   }
 }
+
+}  // namespace
 
 // ImageDataReport Print() method.
 void ImageDataReport::Print() const {

@@ -12,10 +12,13 @@
 
 namespace super_resolution {
 namespace test {
+namespace {
 
 // Maximum matrix size (either width or height) to print. Otherwise, it will be
 // considered too big to display.
 constexpr int kMaxMatrixSizeToPrint = 15;
+
+}  // namespace
 
 bool AreMatricesEqual(
     const cv::Mat& mat1, const cv::Mat& mat2, const double diff_tolerance) {

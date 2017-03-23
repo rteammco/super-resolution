@@ -20,6 +20,7 @@
 
 namespace super_resolution {
 namespace util {
+namespace {
 
 // Supported standard image file extensions (color or grayscale).
 static const std::unordered_set<std::string> kSupportedImageExtensions({
@@ -40,15 +41,17 @@ bool DoesSetContain(
   return set.find(key) != set.end();
 }
 
-bool IsSupportedImageExtension(const std::string& extension) {
-  return DoesSetContain(kSupportedImageExtensions, extension);
-}
+}  // namespace
 
 bool IsDirectory(const std::string& path) {
   struct stat path_stat;
   CHECK(stat(path.c_str(), &path_stat) == 0)
       << "The given file or directory path '" << path << "' cannot be opened.";
   return S_ISDIR(path_stat.st_mode);
+}
+
+bool IsSupportedImageExtension(const std::string& extension) {
+  return DoesSetContain(kSupportedImageExtensions, extension);
 }
 
 std::vector<ImageData> LoadImages(const std::string& data_path) {
