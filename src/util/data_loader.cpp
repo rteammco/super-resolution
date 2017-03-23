@@ -40,6 +40,10 @@ bool DoesSetContain(
   return set.find(key) != set.end();
 }
 
+bool IsSupportedImageExtension(const std::string& extension) {
+  return DoesSetContain(kSupportedImageExtensions, extension);
+}
+
 bool IsDirectory(const std::string& path) {
   struct stat path_stat;
   CHECK(stat(path.c_str(), &path_stat) == 0)
@@ -73,7 +77,7 @@ ImageData LoadImage(const std::string& file_path) {
   std::transform(
       extension.begin(), extension.end(), extension.begin(), tolower);
   // If the extension is a standard image type, try reading it.
-  if (DoesSetContain(kSupportedImageExtensions, extension)) {
+  if (IsSupportedImageExtension(extension)) {
     const cv::Mat image = cv::imread(file_path, cv::IMREAD_UNCHANGED);
     CHECK(!image.empty()) << "Could not load image '" << file_path << "'.";
     return ImageData(image);

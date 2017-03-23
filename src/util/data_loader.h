@@ -16,6 +16,10 @@ namespace util {
 // given path is not valid or cannot be accessed, this will cause an error.
 bool IsDirectory(const std::string& path);
 
+// Returns true if the given extension is a supported standard image extension
+// that can be read or written with OpenCV.
+bool IsSupportedImageExtension(const std::string& extension);
+
 // Returns a list of images loaded from the given data_path. If the data_path
 // points to a directory, the list will contain images loaded from all files in
 // that directory. If it is the name of a file, the returned list will contain
