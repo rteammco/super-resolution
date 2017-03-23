@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "util/config_reader.h"
+#include "util/string_util.h"
 #include "util/util.h"
 
 #include "gtest/gtest.h"

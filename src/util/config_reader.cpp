@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "util/string_util.h"
 #include "util/util.h"
 
 #include "glog/logging.h"

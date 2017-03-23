@@ -23,6 +23,7 @@
 #include "optimization/tv_regularizer.h"
 #include "util/data_loader.h"
 #include "util/macros.h"
+#include "util/string_util.h"
 #include "util/util.h"
 #include "wavelet/wavelet_transform.h"
 
