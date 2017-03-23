@@ -39,6 +39,8 @@ void InitApp(int argc, char** argv, const std::string& usage_message) {
 
   // TODO: remove this or put it under a debug guard.
   FLAGS_logtostderr = true;
+
+  LOG(INFO) << "Running with OpenCV version " << CV_VERSION << ".";
 }
 
 std::string GetRootCodeDirectory() {
