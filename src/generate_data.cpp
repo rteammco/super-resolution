@@ -17,6 +17,7 @@
 #include "motion/motion_shift.h"
 #include "util/data_loader.h"
 #include "util/macros.h"
+#include "util/string_util.h"
 #include "util/util.h"
 
 #include "opencv2/core/core.hpp"
@@ -56,8 +57,8 @@ int main(int argc, char** argv) {
   REQUIRE_ARG(FLAGS_input_image);
   REQUIRE_ARG(FLAGS_output_image_dir);
 
-  const cv::Mat image = cv::imread(FLAGS_input_image, cv::IMREAD_UNCHANGED);
-  const ImageData image_data(image);
+  const ImageData image_data =
+      super_resolution::util::LoadImage(FLAGS_input_image);
 
   // Set up the ImageModel with all the parameters specified by the user. This
   // model will be used to generate the degradated images.
@@ -71,11 +72,23 @@ int main(int argc, char** argv) {
   super_resolution::ImageModel image_model =
       super_resolution::ImageModel::CreateImageModel(model_parameters);
 
+  // Determine the extension. If the original image is a supported standard
+  // (OpenCV-supported) extension, keep the same extension. Otherwise, it will
+  // be saved as a binary file with no extension.
+  std::string extension =
+      super_resolution::util::GetFileExtension(FLAGS_input_image);
+  if (super_resolution::util::IsSupportedImageExtension(extension)) {
+    extension = "." + extension;
+  } else {
+    extension = "";
+  }
+
+  // Save the generated images as files.
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {
     const ImageData low_res_frame = image_model.ApplyToImage(image_data, i);
     // Write the file.
     std::string image_path =
-        FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + ".jpg";
+        FLAGS_output_image_dir + "/low_res_" + std::to_string(i) + extension;
     super_resolution::util::SaveImage(low_res_frame, image_path);
     LOG(INFO) << "Generated output image " << image_path;
   }
