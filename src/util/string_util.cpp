@@ -1,5 +1,6 @@
 #include "util/string_util.h"
 
+#include <algorithm>
 #include <functional>
 #include <string>
 #include <vector>
