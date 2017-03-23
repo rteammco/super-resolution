@@ -60,5 +60,13 @@ std::string TrimString(const std::string& untrimmed_string) {
   return trimmed_string;
 }
 
+std::string GetFileExtension(const std::string& file_path) {
+  std::string::size_type pos = file_path.rfind(".");
+  if (pos == std::string::npos) {
+    return "";
+  }
+  return file_path.substr(pos + 1);
+}
+
 }  // namespace util
 }  // namespace super_resolution

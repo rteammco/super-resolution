@@ -81,3 +81,12 @@ TEST(Util, ReadConfigurationFile) {
   EXPECT_EQ(config_reader.GetValue("start_band"), "5");
   EXPECT_EQ(config_reader.GetValue("end_band"), "10");
 }
+
+TEST(Util, GetFileExtension) {
+  EXPECT_EQ(super_resolution::util::GetFileExtension("file.txt"), "txt");
+  EXPECT_EQ(super_resolution::util::GetFileExtension("path/to/cat.jpg"), "jpg");
+  EXPECT_EQ(super_resolution::util::GetFileExtension("file."), "");
+  EXPECT_EQ(super_resolution::util::GetFileExtension("file"), "");
+  EXPECT_EQ(super_resolution::util::GetFileExtension("one.two.three"), "three");
+  EXPECT_EQ(super_resolution::util::GetFileExtension("........dots"), "dots");
+}

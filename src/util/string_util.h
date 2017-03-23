@@ -37,6 +37,11 @@ std::vector<std::string> SplitString(
 //   TrimString("lol") => "lol"
 std::string TrimString(const std::string& untrimmed_string);
 
+// Returns the extension of the given file path (assuming the given string ends
+// with a .*). If the given string does not end in a ".*" pattern, an empty
+// string will be returned instead.
+std::string GetFileExtension(const std::string& file_path);
+
 }  // namespace util
 }  // namespace super_resolution
 
