@@ -33,6 +33,8 @@ DEFINE_string(input_image, "",
     "Path to the HR image that will be used to generate the LR images.");
 DEFINE_string(output_image_dir, "",
     "Path to a directory that will contain all of the generated LR images.");
+DEFINE_string(output_image_extension, "",
+    "The file extension of the generated images. Same as input by default.");
 
 // Motion estimate file I/O parameters.
 DEFINE_string(motion_sequence_path, "",
@@ -49,6 +51,26 @@ DEFINE_int32(downsampling_scale, 2,
     "The scale by which the HR image will be downsampled.");
 DEFINE_int32(number_of_frames, 4,
     "The number of LR images that will be generated.");
+
+// Returns the extension of the output file based on the user's arguments.
+std::string GetOutputFileExtension() {
+  // Default extension if user didn't specify one.
+  if (FLAGS_output_image_extension.empty()) {
+    std::string extension =
+        super_resolution::util::GetFileExtension(FLAGS_input_image);
+    // If the original image is a supported standard (OpenCV-supported)
+    // extension, keep the same extension. Otherwise, it will be saved as a
+    // binary file with no extension.
+    if (super_resolution::util::IsSupportedImageExtension(extension)) {
+      extension = "." + extension;
+    } else {
+      extension = "";
+    }
+    return extension;
+  }
+  // Otherwise return ".ext" where "ext" is the user-specified extension.
+  return "." + FLAGS_output_image_extension;
+}
 
 int main(int argc, char** argv) {
   super_resolution::util::InitApp(argc, argv,
@@ -72,18 +94,8 @@ int main(int argc, char** argv) {
   super_resolution::ImageModel image_model =
       super_resolution::ImageModel::CreateImageModel(model_parameters);
 
-  // Determine the extension. If the original image is a supported standard
-  // (OpenCV-supported) extension, keep the same extension. Otherwise, it will
-  // be saved as a binary file with no extension.
-  std::string extension =
-      super_resolution::util::GetFileExtension(FLAGS_input_image);
-  if (super_resolution::util::IsSupportedImageExtension(extension)) {
-    extension = "." + extension;
-  } else {
-    extension = "";
-  }
-
   // Save the generated images as files.
+  const std::string extension = GetOutputFileExtension();
   for (int i = 0; i < FLAGS_number_of_frames; ++i) {
     const ImageData low_res_frame = image_model.ApplyToImage(image_data, i);
     // Write the file.
