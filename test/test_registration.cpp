@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <string>
 #include <vector>
 
 #include "image/image_data.h"
@@ -14,10 +15,13 @@ using super_resolution::ImageData;
 using super_resolution::MotionShift;
 using super_resolution::MotionShiftSequence;
 
+// The maximum number error allowed for the registration algorithm (distance in
+// number of pixels).
 constexpr double kTranslationEstimateErrorTolerance = 0.01;
 
+// Path to the test image for testing registration.
 static const std::string kTestImagePath =
-    super_resolution::util::GetAbsoluteCodePath("test_data/goat.jpg");
+    super_resolution::util::GetAbsoluteCodePath("test_data/dallas_half.jpg");
 
 // Tests that the peak signal to noise ratio evaluator gives the correct scores.
 TEST(Registration, TranslationalRegistration) {
@@ -58,9 +62,5 @@ TEST(Registration, TranslationalRegistration) {
         ground_truth_shift.dy,
         estimated_shift.dy,
         kTranslationEstimateErrorTolerance);
-
-    std::cout << ground_truth_shift.dx << ", " << ground_truth_shift.dy
-              << " vs. "
-              << estimated_shift.dx << ", " << estimated_shift.dy << std::endl;
   }
 }

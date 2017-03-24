@@ -11,7 +11,6 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/video/tracking.hpp"
-#include "opencv2/highgui/highgui.hpp"  // TODO: Remove!
 
 #include "glog/logging.h"
 
@@ -19,10 +18,14 @@ namespace super_resolution {
 namespace registration {
 namespace {
 
+// TODO: Adjust these parameters as needed. Right now, the system may throw
+// an error if these parameters do not yield a sufficient number of keypoint
+// matches between two images.
 constexpr double kFlannDistanceScalingFactor = 5.0;
 constexpr double kFlannDistanceThreshold = 0.04;
 constexpr double kRansacReprojectionThreshold = 0.1;
 
+// A parallel array (two vectors) for storing keypoint match pairs.
 using KeypointPairing =
     std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f>>;
 
@@ -37,9 +40,9 @@ struct KeypointsAndDescriptors {
 // TODO: Add a parameter for choosing the feature detection algorithm.
 KeypointsAndDescriptors DetectKeypoints(const ImageData& image) {
   // TODO: Don't use channel 0. Instead implement a method in ImageData that
-  //       returns a "structure" image (perhaps the average, max, or median
-  //       pixel intensities across all channels). It should work for
-  //       hyperspectral images as well.
+  // returns a "structure" image (perhaps the average, max, or median pixel
+  // intensities across all channels). It should work for hyperspectral images
+  // as well.
   cv::Mat detection_image;
   image.GetChannelImage(0).convertTo(detection_image, CV_8U, 255);
 
@@ -56,37 +59,6 @@ KeypointsAndDescriptors DetectKeypoints(const ImageData& image) {
   }
 
   return keypoints_and_descriptors;
-}
-
-KeypointPairing ApplyRANSAC(const KeypointPairing& unfiltered_matches) {
-  if (unfiltered_matches.first.size() < 3) {
-    LOG(WARNING) << "Cannot apply RANSAC with less than 3 keypoint matches ("
-                 << unfiltered_matches.first.size() << " given).";
-    return unfiltered_matches;
-  }
-
-  CHECK_EQ(unfiltered_matches.first.size(), unfiltered_matches.second.size())
-      << "Imbalanced keypoint pairs. "
-      << "Number of matched keypoints must be the same across both images.";
-
-  std::vector<unsigned char> inliers_mask;
-  cv::findHomography(
-      unfiltered_matches.first,
-      unfiltered_matches.second,
-      CV_RANSAC,
-      kRansacReprojectionThreshold,
-      inliers_mask);
-
-  KeypointPairing filtered_matches;
-	for (int i = 0; i < inliers_mask.size(); ++i) {
-    if (inliers_mask[i] != static_cast<unsigned char>(0)) {
-      filtered_matches.first.push_back(unfiltered_matches.first[i]);
-      filtered_matches.second.push_back(unfiltered_matches.second[i]);
-    }
-  }
-  LOG(INFO) << "Filtered from " << unfiltered_matches.first.size()
-            << " to " << filtered_matches.first.size() << " matches.";
-  return filtered_matches;
 }
 
 // Computes pairwise keypoint matches between the two given feature descriptor
@@ -131,13 +103,13 @@ KeypointPairing FindMatchingFeatures(
   const double distance_threshold = std::max(
       kFlannDistanceScalingFactor * smallest_feature_distance,
       kFlannDistanceThreshold);
-  for(const cv::DMatch& match : feature_matches) {
+  for (const cv::DMatch& match : feature_matches) {
     if (match.distance <= distance_threshold) {
       good_feature_matches.push_back(match);
     }
   }
 
-  // Build a list of keypoint match pairs.
+  // Build a parallel list of keypoint match pairs.
   for (const cv::DMatch& match : good_feature_matches) {
     cv::Point2f pixel_loc_1 =
         keypoints_and_descriptors_1.keypoints[match.queryIdx].pt;
@@ -148,6 +120,40 @@ KeypointPairing FindMatchingFeatures(
   }
 
   return keypoint_matches;
+}
+
+// Applies RANSAC to the given matches in an attempt to remove outliers. This
+// should make motion estimates more accurate. At least three matches are
+// required to successfully perform RANSAC.
+KeypointPairing ApplyRANSAC(const KeypointPairing& unfiltered_matches) {
+  if (unfiltered_matches.first.size() < 3) {
+    LOG(WARNING) << "Cannot apply RANSAC with less than 3 keypoint matches ("
+                 << unfiltered_matches.first.size() << " given).";
+    return unfiltered_matches;
+  }
+
+  CHECK_EQ(unfiltered_matches.first.size(), unfiltered_matches.second.size())
+      << "Imbalanced keypoint pairs. "
+      << "Number of matched keypoints must be the same across both images.";
+
+  // Apply RANSAC by computing the homography. The homography is not used.
+  std::vector<unsigned char> inliers_mask;
+  cv::findHomography(
+      unfiltered_matches.first,
+      unfiltered_matches.second,
+      CV_RANSAC,
+      kRansacReprojectionThreshold,
+      inliers_mask);
+
+  // Keep the inliers, and do not include the outliers.
+  KeypointPairing filtered_matches;
+  for (int i = 0; i < inliers_mask.size(); ++i) {
+    if (inliers_mask[i] != static_cast<unsigned char>(0)) {
+      filtered_matches.first.push_back(unfiltered_matches.first[i]);
+      filtered_matches.second.push_back(unfiltered_matches.second[i]);
+    }
+  }
+  return filtered_matches;
 }
 
 }  // namespace
@@ -172,59 +178,24 @@ MotionShiftSequence TranslationalRegistration(
   for (int i = 1; i < num_images; ++i) {
     const KeypointsAndDescriptors& image_i_keypoints =
         DetectKeypoints(images[i]);
+
+    // Get keypoint matches between images 0 and i, and apply RANSAC to remove
+    // bad matches.
     const KeypointPairing& keypoint_matches =
         FindMatchingFeatures(image_0_keypoints, image_i_keypoints);
     const KeypointPairing& good_matches = ApplyRANSAC(keypoint_matches);
-    //const cv::Mat homography = ComputeHomography(keypoint_matches);
-    //LOG(INFO) << "\n" << homography;
-    //cv::Mat intrinsics = cv::Mat::ones(cv::Size(3, 3), CV_32F);
-    //std::vector<cv::Mat> ignored_rotations, ignored_normals;
-    //std::vector<cv::Mat> translations;
-    //cv::decomposeHomographyMat(
-    //    homography,
-    //    intrinsics,
-    //    ignored_rotations,
-    //    translations,
-    //    ignored_normals);
-    //LOG(INFO) << "-----";
-    //for (const cv::Mat t : translations) {
-    //  const double x = t.at<float>(0) / t.at<float>(2);
-    //  const double y = t.at<float>(1) / t.at<float>(2);
-    //  LOG(INFO) << "T: " << x << ", " << y;
-    //}
-    //LOG(INFO) << "\n\n";
 
-    //const cv::Mat affine_transform = cv::estimateRigidTransform(
-    //    keypoint_matches.first, keypoint_matches.second, true);
+    // Compute the affine transformation between the matched keypoints.
+    // Last parameter:
+    //   false = translation, rotation, scaling only (5 degrees of freedom).
+    //   true = finds full affine transformation (6 degrees of freedom).
     const cv::Mat affine_transform = cv::estimateRigidTransform(
-        good_matches.first, good_matches.second, true);
+        good_matches.first, good_matches.second, false);
     CHECK(!affine_transform.empty())
         << "Could not determine motion shift between images.";
     const double dx = affine_transform.at<double>(0, 2);
     const double dy = affine_transform.at<double>(1, 2);
-    LOG(INFO) << "\n" << affine_transform;
-    LOG(INFO) << "T(x, y) = " << dx << ", " << dy;
     motion_shifts.push_back(MotionShift(dx, dy));
-
-//    // TODO: Remove! Replace this with the motion computation (homography).
-//    cv::Mat vis;
-//    cv::hconcat(
-//        images[0].GetVisualizationImage(),
-//        images[i].GetVisualizationImage(),
-//        vis);
-//    const cv::Scalar vis_line_color(0, 255, 0);
-//    for (int i = 0; i < good_matches.first.size(); ++i) {
-//      cv::line(
-//        vis,
-//        good_matches.first[i],
-//        good_matches.second[i] + cv::Point2f(images[i].GetImageSize().width, 0),
-//        vis_line_color,
-//        1,  // Line thickness.
-//        CV_AA);
-//    }
-//    cv::imshow("Keypoint Matches", vis);
-//    cv::waitKey(0);
-//    // ----
   }
   return MotionShiftSequence(motion_shifts);
 }
