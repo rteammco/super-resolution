@@ -404,6 +404,7 @@ int main(int argc, char** argv) {
     result.GetImageDataReport().Print();
   }
 
+  // Display results.
   if (FLAGS_display_mode == "result") {
     super_resolution::util::DisplayImage(result, "Result");
   } else if (FLAGS_display_mode == "compare") {
@@ -415,6 +416,11 @@ int main(int argc, char** argv) {
     }
     super_resolution::util::DisplayImagesSideBySide(
         display_images, display_title);
+  }
+
+  // Save file.
+  if (!FLAGS_result_path.empty()) {
+    super_resolution::util::SaveImage(result, FLAGS_result_path);
   }
 
   return EXIT_SUCCESS;
