@@ -49,6 +49,12 @@ DEFINE_double(noise_sigma, 0.0,
 DEFINE_int32(number_of_frames, 4,
     "The number of frames to generate (only if --generate_lr_images is set).");
 
+// Optionally, set a ground truth data path. This option is mutually exclusive
+// from the generate_lr_images option (in that case the given data_path image
+// is assumed to be the ground truth).
+DEFINE_string(ground_truth_image, "",
+    "Ground truth for evaluation (only if --generate_lr_images is NOT set).");
+
 // Image model parameters:
 DEFINE_int32(upsampling_scale, 2,
     "The amount by which to super-resolve the image(s).");
@@ -277,6 +283,8 @@ int main(int argc, char** argv) {
   // Load in or generate the low-resolution images.
   InputData input_data;
   if (FLAGS_generate_lr_images) {
+    // If generating low-res images, use the specified data_path as the ground
+    // truth file.
     LOG(INFO) << "Generating low-resolution images from ground truth.";
     input_data.high_res_image =
         super_resolution::util::LoadImage(FLAGS_data_path);
@@ -290,8 +298,15 @@ int main(int argc, char** argv) {
       input_data.low_res_images.push_back(low_res_frame);
     }
   } else {
+    // Otherwise, assume the given data_path is a directory containing the LR
+    // images.
     input_data.low_res_images =
         super_resolution::util::LoadImages(FLAGS_data_path);
+    // We can also load in a ground truth file for comparison, if available.
+    if (!FLAGS_ground_truth_image.empty()) {
+      input_data.high_res_image =
+          super_resolution::util::LoadImage(FLAGS_ground_truth_image);
+    }
   }
   CHECK_GT(input_data.low_res_images.size(), 0)
       << "At least one low-resolution image is required for super-resolution.";
@@ -375,7 +390,9 @@ int main(int argc, char** argv) {
 
   // If an evaluation criteria is passed in and the high-resolution image is
   // available, display the evaluation results.
-  if (FLAGS_generate_lr_images && !FLAGS_evaluators.empty()) {
+  const bool has_ground_truth =
+      !FLAGS_ground_truth_image.empty() || FLAGS_generate_lr_images;
+  if (has_ground_truth && !FLAGS_evaluators.empty()) {
     std::vector<std::string> evaluators =
         super_resolution::util::SplitString(FLAGS_evaluators, ',');
     for (const std::string& evaluator_arg : evaluators) {
@@ -410,7 +427,7 @@ int main(int argc, char** argv) {
   } else if (FLAGS_display_mode == "compare") {
     std::vector<ImageData> display_images = {result, upsampled_image};
     std::string display_title = "Super-Resolution vs. Linear Interpolation";
-    if (FLAGS_generate_lr_images) {
+    if (has_ground_truth) {
       display_images.insert(display_images.begin(), input_data.high_res_image);
       display_title = "Ground Truth vs. " + display_title;
     }

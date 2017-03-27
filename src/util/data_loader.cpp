@@ -50,11 +50,22 @@ bool IsDirectory(const std::string& path) {
   return S_ISDIR(path_stat.st_mode);
 }
 
-bool IsFile(const std::string& path) {
+bool IsFile(const std::string& path, const bool include_hidden_files) {
   struct stat path_stat;
   CHECK(stat(path.c_str(), &path_stat) == 0)
       << "The given file or directory path '" << path << "' cannot be opened.";
-  return S_ISREG(path_stat.st_mode);
+  // Extract the file name by itself.
+  std::string file_name = path;
+  const size_t found = path.rfind("/");
+  int file_name_index = 0;
+  if (found != std::string::npos) {
+    file_name_index = found + 1;
+    file_name = path.substr(file_name_index);
+  }
+  if (S_ISREG(path_stat.st_mode) && !file_name.empty()) {
+    return file_name.at(0) != '.';  // Name is non-empty, so index 0 must exist.
+  }
+  return false;
 }
 
 bool IsSupportedImageExtension(const std::string& extension) {
@@ -70,7 +81,7 @@ std::vector<ImageData> LoadImages(const std::string& data_path) {
       while ((ent = readdir(dir)) != NULL) {
         const std::string file_name(ent->d_name);
         const std::string file_path = data_path + "/" + file_name;
-        if (!IsDirectory(file_path)) {
+        if (IsFile(file_path)) {
           images.push_back(LoadImage(file_path));
         }
       }

@@ -20,7 +20,10 @@ bool IsDirectory(const std::string& path);
 // Regular files are standard files (binary or text), and they do not include
 // directories, pipes, symlinks, etc. If the given path is not valid or cannot
 // be accessed, this will cause an error.
-bool IsFile(const std::string& path);
+//
+// If include_hidden_files is false, any hidden files will NOT be considered as
+// valid files, returning false.
+bool IsFile(const std::string& path, const bool include_hidden_files = false);
 
 // Returns true if the given extension is a supported standard image extension
 // that can be read or written with OpenCV.
