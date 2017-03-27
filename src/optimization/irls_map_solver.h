@@ -16,16 +16,10 @@ struct IRLSMapSolverOptions : public MapSolverOptions {
 
   // Augments the adjustment to also include the irls cost difference.
   virtual void AdjustThresholdsAdaptively(
-      const int num_parameters, const double regularization_parameter_sum) {
-    const double threshold_scale =
-        num_parameters * regularization_parameter_sum;
-    if (threshold_scale < 1.0) {
-      return;  // Only scale up if needed, not down.
-    }
-    MapSolverOptions::AdjustThresholdsAdaptively(
-        num_parameters, regularization_parameter_sum);
-    irls_cost_difference_threshold *= threshold_scale;
-  }
+      const int num_parameters, const double regularization_parameter_sum);
+
+  // Print also includes specific IRLS parameters.
+  virtual void PrintSolverOptions() const;
 
   // Maximum number of outer loop iterations. Each outer loop runs Conjugate
   // Gradient which has its own max number of iterations

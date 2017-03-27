@@ -25,8 +25,8 @@ void MotionShiftSequence::LoadSequenceFromFile(const std::string& file_path) {
   }
   fin.close();
 
-  LOG(INFO) << "Loaded all " << motion_shifts_.size() << " motion shifts from "
-            << file_path;
+  LOG(INFO) << "Loaded " << motion_shifts_.size() << " motion shifts from '"
+            << file_path << "'.";
 }
 
 void MotionShiftSequence::SaveSequenceToFile(

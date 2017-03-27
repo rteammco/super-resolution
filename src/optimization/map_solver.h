@@ -36,16 +36,10 @@ struct MapSolverOptions {
   // NOTE: The base thresholds must be set appropriately beforehand for this
   // adjustment to work.
   virtual void AdjustThresholdsAdaptively(
-      const int num_parameters, const double regularization_parameter_sum) {
-    const double threshold_scale =
-        num_parameters * regularization_parameter_sum;
-    if (threshold_scale < 1.0) {
-      return;  // Only scale up if needed, not down.
-    }
-    gradient_norm_threshold *= threshold_scale;
-    cost_decrease_threshold *= threshold_scale;
-    parameter_variation_threshold *= threshold_scale;
-  }
+      const int num_parameters, const double regularization_parameter_sum);
+
+  // Neatly prints out all options used for the user.
+  virtual void PrintSolverOptions() const;
 
   // Which solver to use.
   LeastSquaresSolver least_squares_solver = CG_SOLVER;

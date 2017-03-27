@@ -1,6 +1,7 @@
 #include "optimization/irls_map_solver.h"
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -27,6 +28,29 @@ namespace {
 constexpr double kMinResidualValue = 0.00001;
 
 }  // namespace
+
+void IRLSMapSolverOptions::AdjustThresholdsAdaptively(
+    const int num_parameters, const double regularization_parameter_sum) {
+
+  const double threshold_scale = num_parameters * regularization_parameter_sum;
+  if (threshold_scale < 1.0) {
+    return;  // Only scale up if needed, not down.
+  }
+  MapSolverOptions::AdjustThresholdsAdaptively(
+      num_parameters, regularization_parameter_sum);
+  irls_cost_difference_threshold *= threshold_scale;
+}
+
+void IRLSMapSolverOptions::PrintSolverOptions() const {
+  std::cout << "IRLSMapSolver Options" << std::endl;
+  std::cout << "  Objective:                           "
+            << "maximum a posteriori" << std::endl;
+  std::cout << "  Optimization strategy:               "
+            << "iteratively reweighted least squares" << std::endl;
+  MapSolverOptions::PrintSolverOptions();
+  std::cout << "  IRLS cost difference threshold:      "
+            << irls_cost_difference_threshold << std::endl;
+}
 
 IRLSMapSolver::IRLSMapSolver(
     const IRLSMapSolverOptions& solver_options,
@@ -82,6 +106,9 @@ ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
   IRLSMapSolverOptions solver_options_scaled = solver_options_;
   solver_options_scaled.AdjustThresholdsAdaptively(
       GetNumDataPoints(), GetRegularizationParameterSum());
+  if (IsVerbose()) {
+    solver_options_scaled.PrintSolverOptions();
+  }
 
   // Do the IRLS loop. After every iteration, update the IRLS weights and solve
   // again until the change in residual sum is sufficiently low.

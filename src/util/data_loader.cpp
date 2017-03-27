@@ -83,6 +83,8 @@ std::vector<ImageData> LoadImages(const std::string& data_path) {
 }
 
 ImageData LoadImage(const std::string& file_path) {
+  CHECK(IsFile(file_path))
+      << "The given path '" << file_path << "' is not a file.";
   std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
   std::transform(
       extension.begin(), extension.end(), extension.begin(), tolower);

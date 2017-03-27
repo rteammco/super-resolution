@@ -13,11 +13,8 @@ namespace super_resolution {
 
 class Solver {
  public:
-  Solver(
-      const ImageModel& image_model,
-      const bool print_solver_output = true) :
-    image_model_(image_model),
-    print_solver_output_(print_solver_output) {}
+  explicit Solver(const ImageModel& image_model, const bool verbose = true)
+      : image_model_(image_model), is_verbose_(verbose) {}
 
   // Solves the super-resolution optimization and returns the super-resolved
   // image. The given initial estimate is used as a starting point for
@@ -27,13 +24,13 @@ class Solver {
   // Sets the output flag to false. If the derived class respects this
   // property, this will make the solver run silently.
   virtual void Stfu() {
-    print_solver_output_ = false;
+    is_verbose_ = false;
   }
 
   // Returns true if the solver should print or log progress output. Use Stfu()
   // to silence the solver.
   virtual bool IsVerbose() const {
-    return print_solver_output_;
+    return is_verbose_;
   }
 
  protected:
@@ -42,7 +39,7 @@ class Solver {
   // If set to false (true is the default), the solver should not print any
   // output (after or even during iterations) so that it runs silently. This
   // feature must be implemented by all derived classes to work.
-  bool print_solver_output_ = true;
+  bool is_verbose_ = true;
 };
 
 }  // namespace super_resolution

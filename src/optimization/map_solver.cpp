@@ -1,6 +1,8 @@
 #include "optimization/map_solver.h"
 
+#include <iostream>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -9,6 +11,39 @@
 #include "glog/logging.h"
 
 namespace super_resolution {
+
+void MapSolverOptions::AdjustThresholdsAdaptively(
+    const int num_parameters, const double regularization_parameter_sum) {
+
+  const double threshold_scale = num_parameters * regularization_parameter_sum;
+  if (threshold_scale < 1.0) {
+    return;  // Only scale up if needed, not down.
+  }
+  gradient_norm_threshold *= threshold_scale;
+  cost_decrease_threshold *= threshold_scale;
+  parameter_variation_threshold *= threshold_scale;
+}
+
+void MapSolverOptions::PrintSolverOptions() const {
+  std::string solver_name = "conjugate gradient";
+  if (least_squares_solver == LBFGS_SOLVER) {
+    solver_name = "LBFGS";
+  }
+  std::cout << "  Least squares solver:                "
+            << solver_name;
+  if (use_numerical_differentiation) {
+    std::cout << " (numerical differentiation [step = "
+              << numerical_differentiation_step << "])" << std::endl;
+  } else {
+    std::cout << " (analytical differentiation)" << std::endl;
+  }
+  std::cout << "  Threshold 1 (gradient norm):         "
+            << gradient_norm_threshold << std::endl;
+  std::cout << "  Threshold 2 (cost decrease):         "
+            << cost_decrease_threshold << std::endl;
+  std::cout << "  Threshold 3 (parameter variation):   "
+            << parameter_variation_threshold << std::endl;
+}
 
 MapSolver::MapSolver(
     const ImageModel& image_model,
