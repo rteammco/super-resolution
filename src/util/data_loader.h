@@ -16,6 +16,12 @@ namespace util {
 // given path is not valid or cannot be accessed, this will cause an error.
 bool IsDirectory(const std::string& path);
 
+// Returns true if the given path is a regular file, and false otherwise.
+// Regular files are standard files (binary or text), and they do not include
+// directories, pipes, symlinks, etc. If the given path is not valid or cannot
+// be accessed, this will cause an error.
+bool IsFile(const std::string& path);
+
 // Returns true if the given extension is a supported standard image extension
 // that can be read or written with OpenCV.
 bool IsSupportedImageExtension(const std::string& extension);

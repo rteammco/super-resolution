@@ -50,6 +50,13 @@ bool IsDirectory(const std::string& path) {
   return S_ISDIR(path_stat.st_mode);
 }
 
+bool IsFile(const std::string& path) {
+  struct stat path_stat;
+  CHECK(stat(path.c_str(), &path_stat) == 0)
+      << "The given file or directory path '" << path << "' cannot be opened.";
+  return S_ISREG(path_stat.st_mode);
+}
+
 bool IsSupportedImageExtension(const std::string& extension) {
   return DoesSetContain(kSupportedImageExtensions, extension);
 }

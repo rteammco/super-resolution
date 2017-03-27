@@ -9,6 +9,7 @@
 
 #include "image/image_data.h"
 #include "util/config_reader.h"
+#include "util/data_loader.h"
 #include "util/matrix_util.h"
 
 #include "opencv2/core/core.hpp"
@@ -272,6 +273,10 @@ void HyperspectralDataLoader::LoadImageFromENVIFile() {
 
   // Get the path of the binary data file.
   const std::string hsi_file_path = config_reader.GetValueOrDie("file");
+  CHECK(util::IsFile(hsi_file_path))
+      << "The HSI file path '" << hsi_file_path
+      << "' specified in configuration file '" << file_path_
+      << "' is not a valid ENVI file.";
 
   // Get all of the necessary HSI file metadata.
   HSIBinaryDataParameters parameters;
