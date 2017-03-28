@@ -36,6 +36,14 @@ DEFINE_string(output_image_dir, "",
 DEFINE_string(output_image_extension, "",
     "The file extension of the generated images. Same as input by default.");
 
+// Instead of generating data, just loads a the image file (for hyperspectral
+// data, the range can be defined in the config file) and saves it as a new
+// file. For non-hyperspectral images, this can be used to save the file in a
+// different supported format (e.g. jpg to png). No degradation is applied in
+// this case, and only a single output file is produced (in the save_as path).
+DEFINE_string(save_as, "",
+    "Load and save a file as is. For HSI files this can be a cropped chunk.");
+
 // Motion estimate file I/O parameters.
 DEFINE_string(motion_sequence_path, "",
     "Path to a text file containing a simulated motion sequence.");
@@ -77,10 +85,20 @@ int main(int argc, char** argv) {
       "Generate low-resolution frames from a high-resolution image.");
 
   REQUIRE_ARG(FLAGS_input_image);
-  REQUIRE_ARG(FLAGS_output_image_dir);
 
   const ImageData image_data =
       super_resolution::util::LoadImage(FLAGS_input_image);
+
+  // If just saving the file as a copy just save it as is and exit. This is
+  // intended for saving cropped versions of hyperspectral images or saving
+  // images in a different format.
+  if (!FLAGS_save_as.empty()) {
+    super_resolution::util::SaveImage(image_data, FLAGS_save_as);
+    return EXIT_SUCCESS;
+  }
+
+  // Otherwise, proceed with the data generation.
+  REQUIRE_ARG(FLAGS_output_image_dir);
 
   // Set up the ImageModel with all the parameters specified by the user. This
   // model will be used to generate the degradated images.
