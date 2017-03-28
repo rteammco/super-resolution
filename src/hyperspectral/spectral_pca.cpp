@@ -13,17 +13,20 @@
 namespace super_resolution {
 namespace {
 
+// These are just boolean flags with more descriptive names.
 constexpr bool kForwardProjectionFlag = true;
 constexpr bool kBackProjectionFlag = false;
+
+// The multiplication factor for the number of PCA samples to train on. If
+// there there are N dimensions in the data, PCA will be trained on 10*N
+// samples, or as many as are available.
+constexpr int kPCASamplesMultiplicationFactor = 10;
 
 // Returns the data from the given images (one or more required) in
 // pixel-vector form. That is, instead of the images being organized by
 // channel, each row of the returned matrix will be a pixel, and the columns
 // span the different channels. The number of rows is the total number of
 // pixels across all images.
-//
-// TODO: This will probably result in way-too-big images, so sum-sampling the
-// pixels might be a good idea.
 cv::Mat GetPCAInputData(const std::vector<ImageData>& hyperspectral_images) {
   CHECK(!hyperspectral_images.empty())
       << "At least one image is required to compute the PCA basis.";
@@ -39,18 +42,32 @@ cv::Mat GetPCAInputData(const std::vector<ImageData>& hyperspectral_images) {
         << "(3 or fewer channels). PCA decomposition may not be "
         << "useful or applicable here.";
   }
-
   const int num_images = hyperspectral_images.size();
   const int num_pixels = hyperspectral_images[0].GetNumPixels();
-  const int num_data_points = num_images * num_pixels;
+
+  // Compute the number of samples (data points) to use per image. This is for
+  // subsampling the data, and cannot exceed the number of pixels available.
+  const int num_samples = num_channels * kPCASamplesMultiplicationFactor;
+  int num_samples_per_image = num_samples / num_images;
+  if (num_samples_per_image > num_pixels) {
+    num_samples_per_image = num_pixels;
+  }
+  const int num_data_points = num_images * num_samples_per_image;
   if (num_data_points < num_channels) {
     LOG(WARNING)
         << "The number of channels exceeds the number of data points (pixels). "
         << "PCA reconstruction quality will be limited. Use more data points.";
   }
 
+  // For subsampling, this will be the number of pixels we skip to draw samples
+  // from each image.
+  const int num_pixels_to_skip = num_pixels / num_samples_per_image;
+  if (num_pixels_to_skip > 1) {
+    LOG(INFO) << "Subsampling every " << num_pixels_to_skip
+              << " pixels per image for PCA training.";
+  }
+
   // Format the input data as pixel vectors for PCA.
-  // TODO: Probably need to do subsampling. Images can be way too big.
   cv::Mat input_data(num_data_points, num_channels, util::kOpenCvMatrixType);
   for (int image_index = 0; image_index < num_images; ++image_index) {
     const ImageData& image = hyperspectral_images[image_index];
@@ -59,8 +76,9 @@ cv::Mat GetPCAInputData(const std::vector<ImageData>& hyperspectral_images) {
         << "Cannot perform PCA.";
     // TODO: Faster to use cv::ROI and unfold the channel matrices that way.
     for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
-      for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
-        const int data_row = image_index * num_pixels + pixel_index;
+      for (int sample = 0; sample < num_samples_per_image; ++sample) {
+        const int data_row = image_index * num_samples_per_image + sample;
+        const int pixel_index = sample * num_pixels_to_skip;
         input_data.at<double>(data_row, channel_index) =
             image.GetPixelValue(channel_index, pixel_index);
       }
