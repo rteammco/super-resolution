@@ -1,6 +1,7 @@
 #include "optimization/map_solver.h"
 
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -87,6 +88,13 @@ void MapSolver::AddRegularizer(
 
   regularizers_.push_back(
       std::make_pair(regularizer, regularization_parameter));
+}
+
+int MapSolver::GetNumDataPoints() const {
+  const long num_data_points = GetNumPixels() * GetNumChannels();
+  CHECK_LE(num_data_points, std::numeric_limits<int>::max())
+      << "Number of data points exceeds maximum size.";
+  return GetNumPixels() * GetNumChannels();
 }
 
 double MapSolver::GetRegularizationParameterSum() const {

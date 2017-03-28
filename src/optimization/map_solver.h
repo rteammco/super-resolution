@@ -107,10 +107,11 @@ class MapSolver : public Solver {
   }
 
   // Returns the number of data points, which is the total number of pixels in
-  // an image across all channels.
-  int GetNumDataPoints() const {
-    return GetNumPixels() * GetNumChannels();
-  }
+  // an image across all channels. Also checks size limit, which cannot exceed
+  // the max size of an integer (approx. 2 billion). The limit of an int max
+  // value is somewhat arbitrary, but can help prevent overflow errors when
+  // dealing with data sizes as integer values.
+  int GetNumDataPoints() const;
 
   // Returns the sum of all regularization parameters.
   double GetRegularizationParameterSum() const;

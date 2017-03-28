@@ -311,10 +311,20 @@ int main(int argc, char** argv) {
   CHECK_GT(input_data.low_res_images.size(), 0)
       << "At least one low-resolution image is required for super-resolution.";
 
-  // Create an interpolated (bilinear upsampled) image as a reference.
-  ImageData upsampled_image = input_data.low_res_images[0];
-  upsampled_image.ResizeImage(
-      FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+  // Set flags for evaluation. We will evaluate if ground truth is available
+  // and if an evaluator is specified.
+  const bool has_ground_truth =
+      !FLAGS_ground_truth_image.empty() || FLAGS_generate_lr_images;
+  const bool evaluate_results = has_ground_truth && !FLAGS_evaluators.empty();
+
+  // Create an interpolated (bilinear upsampled) image as a reference. We only
+  // need this if evaluating the results or displaying a comparison.
+  ImageData upsampled_image;
+  if (evaluate_results || FLAGS_display_mode == "compare") {
+    upsampled_image = input_data.low_res_images[0];
+    upsampled_image.ResizeImage(
+        FLAGS_upsampling_scale, super_resolution::INTERPOLATE_LINEAR);
+  }
 
   // If the interpolate_color flag is set, only run super-resolution on the
   // luminance channel and interpolate color information after. This will only
@@ -390,9 +400,7 @@ int main(int argc, char** argv) {
 
   // If an evaluation criteria is passed in and the high-resolution image is
   // available, display the evaluation results.
-  const bool has_ground_truth =
-      !FLAGS_ground_truth_image.empty() || FLAGS_generate_lr_images;
-  if (has_ground_truth && !FLAGS_evaluators.empty()) {
+  if (evaluate_results) {
     std::vector<std::string> evaluators =
         super_resolution::util::SplitString(FLAGS_evaluators, ',');
     for (const std::string& evaluator_arg : evaluators) {
