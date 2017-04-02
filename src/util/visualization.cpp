@@ -21,6 +21,19 @@ namespace {
 constexpr int kDisplayWidthPixels = 1250;
 constexpr int kDisplayHeightPixels = 850;
 
+// Returns a scaling factor for the image based on the size ratio of the
+// display width and height values. This computes the scale such that the
+// resized image will always fit within the maximum size parameters.
+double GetResizeScale(const cv::Size& image_size) {
+  const double scale_x =
+      static_cast<double>(kDisplayWidthPixels) /
+      static_cast<double>(image_size.width);
+  const double scale_y =
+      static_cast<double>(kDisplayHeightPixels) /
+      static_cast<double>(image_size.height);
+  return std::min(scale_x, scale_y);
+}
+
 // A state for the OpenCV window mouse callback that allows tracking dragging
 // and rectangle position over time.
 struct WindowInteractionStatus {
@@ -33,6 +46,7 @@ struct WindowInteractionStatus {
   int drag_start_x = 0;
   int drag_start_y = 0;
   bool dragging = false;
+  bool is_zoomed_in = false;
 };
 
 // Callback function for OpenCV's window. This implements logic that allows the
@@ -47,8 +61,15 @@ void DisplayWindowMouseCallback(
   WindowInteractionStatus* status =
       reinterpret_cast<WindowInteractionStatus*>(ptr);
 
-  // If left button is pressed, start dragging.
-  if (event == CV_EVENT_LBUTTONDOWN) {
+  // If image is zoomed in and right button is pressed, zooms the image out.
+  if (event == CV_EVENT_RBUTTONDOWN && status->is_zoomed_in) {
+    cv::imshow(status->window_name, status->original_image);
+    status->is_zoomed_in = false;
+  }
+
+  // If left button is pressed and the image isn't already zoomed in, start
+  // dragging.
+  if (event == CV_EVENT_LBUTTONDOWN && !status->is_zoomed_in) {
     status->drag_start_x = x_pos;
     status->drag_start_y = y_pos;
     status->dragging = true;
@@ -64,14 +85,16 @@ void DisplayWindowMouseCallback(
 
   // If left button is released during dragging, perform the zoom.
   if (event == CV_EVENT_LBUTTONUP && status->dragging) {
-    const int top_y = std::min(y_pos, status->drag_start_y);
     const int left_x = std::min(x_pos, status->drag_start_x);
+    const int top_y = std::min(y_pos, status->drag_start_y);
     const int selection_width = std::abs(x_pos - status->drag_start_x);
     const int selection_height = std::abs(y_pos - status->drag_start_y);
-    const cv::Rect selection(top_y, left_x, selection_width, selection_height);
+    const cv::Rect selection(left_x, top_y, selection_width, selection_height);
     cv::Mat cropped_image = status->original_image(selection);
-    cv::resize(cropped_image, cropped_image, status->original_image.size());
+    const double scale = GetResizeScale(cropped_image.size());
+    cv::resize(cropped_image, cropped_image, cv::Size(), scale, scale);
     cv::imshow(status->window_name, cropped_image);
+    status->is_zoomed_in = true;
     status->dragging = false;
   } else if (status->dragging) {
     // If dragging, draw a rectangle to indicate the user's current selection.
@@ -97,20 +120,11 @@ void DisplayImage(
     const bool rescale) {
 
   ImageData display_image = ImageData(image.GetVisualizationImage());
-  const cv::Size image_size = display_image.GetImageSize();
   if (rescale) {
-    const double scale_x =
-        static_cast<double>(kDisplayWidthPixels) /
-        static_cast<double>(image_size.width);
-    const double scale_y =
-        static_cast<double>(kDisplayHeightPixels) /
-        static_cast<double>(image_size.height);
-    const double scale = std::min(scale_x, scale_y);
-    display_image.ResizeImage(scale);
+    display_image.ResizeImage(GetResizeScale(display_image.GetImageSize()));
   }
 
-  //cv::namedWindow(window_name, CV_WINDOW_AUTOSIZE);
-  cv::namedWindow(window_name, CV_WINDOW_NORMAL);
+  cv::namedWindow(window_name, CV_WINDOW_AUTOSIZE);
   WindowInteractionStatus status(
       display_image.GetVisualizationImage(), window_name);
   cv::setMouseCallback(window_name, DisplayWindowMouseCallback, &status);
