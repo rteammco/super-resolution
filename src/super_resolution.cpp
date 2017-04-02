@@ -25,6 +25,7 @@
 #include "util/macros.h"
 #include "util/string_util.h"
 #include "util/util.h"
+#include "util/visualization.h"
 #include "wavelet/wavelet_transform.h"
 
 #include "gflags/gflags.h"

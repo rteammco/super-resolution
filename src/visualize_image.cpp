@@ -7,6 +7,7 @@
 #include "util/data_loader.h"
 #include "util/macros.h"
 #include "util/util.h"
+#include "util/visualization.h"
 
 #include "gflags/gflags.h"
 #include "glog/logging.h"
