@@ -21,6 +21,10 @@ namespace {
 constexpr int kDisplayWidthPixels = 1250;
 constexpr int kDisplayHeightPixels = 850;
 
+// Appearance variables for the selection rectangle the user can draw.
+static const cv::Scalar kSelectionRectangleColor(0, 255, 255);  // yellow
+constexpr int kSelectionRectangleLineThickness = 1;
+
 // Returns a scaling factor for the image based on the size ratio of the
 // display width and height values. This computes the scale such that the
 // resized image will always fit within the maximum size parameters.
@@ -98,16 +102,13 @@ void DisplayWindowMouseCallback(
     status->dragging = false;
   } else if (status->dragging) {
     // If dragging, draw a rectangle to indicate the user's current selection.
-    // TODO: Adjust the line color and parameters with constant variables.
     cv::Mat selection_image = status->original_image.clone();
     cv::rectangle(
         selection_image,
         cv::Point(status->drag_start_x, status->drag_start_y),
         cv::Point(x_pos, y_pos),
-        cv::Scalar(0, 255, 255),  // color
-        1,  // thickness
-        8,  // lineType
-        0);  // shift
+        kSelectionRectangleColor,
+        kSelectionRectangleLineThickness);
     cv::imshow(status->window_name, selection_image);
   }
 }
