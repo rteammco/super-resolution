@@ -82,14 +82,18 @@ void RunIRLSLoop(
     ObjectiveFunction objective_function = objective_function_data_term_only;
     for (int reg_index = 0; reg_index < num_regularizers; ++reg_index) {
       const auto& regularizer_and_parameter = regularizers[reg_index];
+      // TODO: Fix (need to specify the channel range).
+      /*
       std::shared_ptr<ObjectiveTerm> regularization_term(
           new ObjectiveIRLSRegularizationTerm(
               regularizer_and_parameter.first,
               regularizer_and_parameter.second,
               irls_weights[reg_index],
-              num_channels,
+              channel_start,
+              channel_end,
               image_size));
       objective_function.AddTerm(regularization_term);
+      */
     }
 
     // Run the solver on the reweighted objective function. Solver choice and
@@ -196,46 +200,71 @@ ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
   CHECK_EQ(initial_estimate.GetNumChannels(), num_channels);
   CHECK_EQ(initial_estimate.GetImageSize(), image_size);
 
-  // TODO: If the split_channels option is set, loop over the channels here and
-  // solve them independently.
+  // If the split_channels option is set, loop over the channels here and solve
+  // them independently. Otherwise, solve all channels at once.
+  const int num_channels_per_split =
+      solver_options_.split_channels ? 1 : num_channels;
+  const int num_solver_rounds = num_channels / num_channels_per_split;
+  const int num_data_points = num_channels_per_split * num_pixels;
 
-  // Copy the initial estimate data to the solver's array.
-  const int num_data_points = GetNumDataPoints();
-  alglib::real_1d_array solver_data;
-  solver_data.setlength(num_data_points);
-  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
-    double* data_ptr = solver_data.getcontent() + (num_pixels * channel_index);
-    const double* channel_ptr = initial_estimate.GetChannelData(channel_index);
-    std::copy(channel_ptr, channel_ptr + num_pixels, data_ptr);
-  }
-
-  // Set up the base objective function, just the data term. The regularization
-  // term depends on the weights, so it gets added in the IRLS loop.
-  ObjectiveFunction objective_function_data_term_only(num_data_points);
-  std::shared_ptr<ObjectiveTerm> data_term(new ObjectiveDataTerm(
-      image_model_, observations_, num_channels, image_size));
-  objective_function_data_term_only.AddTerm(data_term);
-
-  // Scale the option stop criteria parameters based on the number of parameters
-  // and strength of the regularizers.
+  // Scale the option stop criteria parameters based on the number of
+  // parameters and strength of the regularizers.
   IRLSMapSolverOptions solver_options_scaled = solver_options_;
   solver_options_scaled.AdjustThresholdsAdaptively(
-      GetNumDataPoints(), GetRegularizationParameterSum());
+      num_data_points, GetRegularizationParameterSum());
+
   if (IsVerbose()) {
     solver_options_scaled.PrintSolverOptions();
   }
 
-  RunIRLSLoop(
-      solver_options_scaled,
-      objective_function_data_term_only,
-      regularizers_,
-      image_size,
-      0,
-      num_channels,
-      &solver_data);
+  ImageData estimated_image;
+  for (int i = 0; i < num_solver_rounds; ++i) {
+    const int channel_start = i * num_channels_per_split;
+    const int channel_end = channel_start + num_channels_per_split;
 
-  const ImageData estimated_image(
-      solver_data.getcontent(), image_size, num_channels);
+    // Copy the initial estimate data (within the appropriate channel range) to
+    // the solver's array.
+    alglib::real_1d_array solver_data;
+    solver_data.setlength(num_data_points);
+    for (int channel = 0; channel < num_channels_per_split; ++channel) {
+      double* data_ptr = solver_data.getcontent() + (num_pixels * channel);
+      const double* channel_ptr = initial_estimate.GetChannelData(
+          channel_start + channel);
+      std::copy(channel_ptr, channel_ptr + num_pixels, data_ptr);
+    }
+
+    /*
+    // TODO: Fix (need to specify the channel range).
+    // Set up the base objective function (just data term). The regularization
+    // term depends on the IRLS weights, so it gets added in the IRLS loop.
+    ObjectiveFunction objective_function_data_term_only(num_data_points);
+    std::shared_ptr<ObjectiveTerm> data_term(new ObjectiveDataTerm(
+        image_model_, observations_, channel_start, channel_end, image_size));
+    objective_function_data_term_only.AddTerm(data_term);
+    */
+
+    /*
+    // TODO: Fix (need the fixed data term above).
+    RunIRLSLoop(
+        solver_options_scaled,
+        objective_function_data_term_only,
+        regularizers_,
+        image_size,
+        channel_start,
+        channel_end,
+        &solver_data);
+    */
+
+    /*
+    // TODO: Fix (need a new AddChannel with array method in ImageData).
+    for (int channel = 0; channel < num_channels_per_split; ++channel) {
+      const double* data_ptr =
+          solver_data.getcontent() + (num_pixels * channel);
+      estimated_image.AddChannel(data_ptr, image_size);
+    }
+    */
+  }
+
   return estimated_image;
 }
 
