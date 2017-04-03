@@ -137,6 +137,38 @@ TEST(ImageData, AddAndAccessImageData) {
   // TODO: check that we can manipulate the data pointer in each channel.
 }
 
+// Checks that adding an image using the AddChannel with array method works.
+TEST(ImageData, AddChannelArray) {
+  const double pixel_values[20] = {
+       0.1,  0.2,  0.3,  0.4,  0.5,
+      0.15, 0.25, 0.35, 0.45, 0.55,
+      0.55, 0.75, 0.85, 0.95, 1.05,
+      -0.3, 0.6,  0.65, 0.7,  0.75
+  };
+  const cv::Mat expected_channel = (cv::Mat_<double>(4, 5)
+    << 0.1,  0.2,  0.3,  0.4,  0.5,
+       0.15, 0.25, 0.35, 0.45, 0.55,
+       0.55, 0.75, 0.85, 0.95, 1.05,
+       -0.3, 0.6,  0.65, 0.7,  0.75);
+  const cv::Size image_size(5, 4);
+
+  // Test that the method works if adding a channel to an empty image.
+  ImageData image_1;
+  image_1.AddChannel(pixel_values, image_size);
+  EXPECT_EQ(image_1.GetNumChannels(), 1);
+  EXPECT_EQ(image_1.GetNumPixels(), 20);
+  EXPECT_EQ(image_1.GetImageSize(), image_size);
+  EXPECT_TRUE(AreMatricesEqual(image_1.GetChannelImage(0), expected_channel));
+
+  // Test that the method works if appending a channel to a non-empty image.
+  ImageData image_2(expected_channel, super_resolution::DO_NOT_NORMALIZE_IMAGE);
+  image_2.AddChannel(pixel_values, image_size);
+  EXPECT_EQ(image_2.GetNumChannels(), 2);
+  EXPECT_EQ(image_2.GetNumPixels(), 20);
+  EXPECT_EQ(image_2.GetImageSize(), image_size);
+  EXPECT_TRUE(AreMatricesEqual(image_2.GetChannelImage(1), expected_channel));
+}
+
 // Checks that the ImageData(const double*, const cv::Size&) constructor
 // correctly builds the ImageData from the pixel value array and copies the
 // data so that modifying the ImageData won't change the original array.

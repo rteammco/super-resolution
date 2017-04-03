@@ -271,7 +271,7 @@ void ImageData::AddChannel(
   if (channels_.empty()) {
     image_size_ = channel_image.size();
   } else {
-    // Check size and type first if other channels already exist.
+    // Check size first if other channels already exist.
     CHECK(channel_image.size() == image_size_)
         << "Channel size did not match the expected size: "
         << channels_[0].size() << " size expected, "
@@ -292,6 +292,32 @@ void ImageData::AddChannel(
   channels_.push_back(converted_image);
 
   // Update color mode based on the number of channels now.
+  spectral_mode_ = GetDefaultSpectralMode(channels_.size());
+}
+
+void ImageData::AddChannel(const double* pixel_values, const cv::Size& size) {
+  CHECK_NOTNULL(pixel_values);
+
+  if (channels_.empty()) {
+    image_size_ = size;
+  } else {
+    // Check size first if other channels already exist.
+    CHECK(size == image_size_)
+        << "Channel size did not match the expected size: "
+        << channels_[0].size() << " size expected, "
+        << size << " size given.";
+  }
+
+  // Set image size and make sure the number of pixels is accurate.
+  const int num_pixels = size.width * size.height;
+  CHECK_GE(num_pixels, 1) << "Number of pixels must be positive.";
+
+  const cv::Mat channel_image(
+      size,
+      util::kOpenCvMatrixType,
+      const_cast<void*>(reinterpret_cast<const void*>(pixel_values)));
+  channels_.push_back(channel_image.clone());  // copy data
+
   spectral_mode_ = GetDefaultSpectralMode(channels_.size());
 }
 

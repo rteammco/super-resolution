@@ -154,6 +154,13 @@ class ImageData {
       const cv::Mat& channel_image,
       const ImageNormalizeMode normalize_mode = NORMALIZE_IMAGE);
 
+  // Appends a channel, but instead of using a cv::Mat uses a pixel array. This
+  // requires the image size to be specified to build the matrix appropriately.
+  //
+  // This method does not adjust the given pixel values in any way, so no
+  // normalization happens.
+  void AddChannel(const double* pixel_values, const cv::Size& size);
+
   // Resizes this image to the given Size. The given Size must be valid (i.e.
   // positive values for width and height). All channels will be resized
   // equally. Any new channels added to this image must be the same size as the

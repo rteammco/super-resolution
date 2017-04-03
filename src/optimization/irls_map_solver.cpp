@@ -255,14 +255,11 @@ ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
         &solver_data);
     */
 
-    /*
-    // TODO: Fix (need a new AddChannel with array method in ImageData).
     for (int channel = 0; channel < num_channels_per_split; ++channel) {
       const double* data_ptr =
           solver_data.getcontent() + (num_pixels * channel);
       estimated_image.AddChannel(data_ptr, image_size);
     }
-    */
   }
 
   return estimated_image;
