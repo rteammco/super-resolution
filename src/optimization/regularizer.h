@@ -21,6 +21,14 @@ class Regularizer {
   // Virtual destructor for derived classes.
   virtual ~Regularizer() = default;
 
+  // Adjust the image size and number of channels. This can be used by a Solver
+  // if it needs to use the regularizer on a different image or subset of an
+  // image.
+  void SetImageDimensions(const cv::Size& image_size, const int num_channels) {
+    image_size_ = image_size;
+    num_channels_ = num_channels;
+  }
+
   // Returns a vector of resulting values based on the regularization for each
   // pixel in the given image data array. This is NOT the final residual, but
   // contains the evaluation values at each pixel.
@@ -46,12 +54,16 @@ class Regularizer {
 
  protected:
   // The size of the image to be regularized.
-  const cv::Size image_size_;
+  //
+  // NOTE: This property can be modified.
+  cv::Size image_size_;
 
   // This is the number of channels in each image given to be regularized. The
   // total number of data points is (image_size_.width * image_size_.height *
   // num_channels_).
-  const int num_channels_;
+  //
+  // NOTE: This property can be modified.
+  int num_channels_;
 };
 
 }  // namespace super_resolution

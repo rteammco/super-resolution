@@ -17,6 +17,8 @@ namespace super_resolution {
 
 class ObjectiveIRLSRegularizationTerm : public ObjectiveTerm {
  public:
+  // Here num_channels is the number of channels in the image being optimized
+  // for.
   ObjectiveIRLSRegularizationTerm(
       const std::shared_ptr<Regularizer> regularizer,
       const double regularization_parameter,

@@ -21,6 +21,10 @@ class ObjectiveDataTerm : public ObjectiveTerm {
   // The given channel range (channel_start to channel_end; channel_end is
   // non-inclusive) defines the range of channels that this data term will be
   // applied to. Range must be valid.
+  //
+  // We only include the range here because the low-resolution images consist
+  // of all channels, and if channels are being split up and solved
+  // individually or in smaller subsets, the correct channels must be used.
   ObjectiveDataTerm(
       const ImageModel& image_model,
       const std::vector<ImageData>& observations,

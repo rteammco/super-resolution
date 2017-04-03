@@ -82,18 +82,14 @@ void RunIRLSLoop(
     ObjectiveFunction objective_function = objective_function_data_term_only;
     for (int reg_index = 0; reg_index < num_regularizers; ++reg_index) {
       const auto& regularizer_and_parameter = regularizers[reg_index];
-      // TODO: Fix (need to specify the channel range).
-      /*
       std::shared_ptr<ObjectiveTerm> regularization_term(
           new ObjectiveIRLSRegularizationTerm(
               regularizer_and_parameter.first,
               regularizer_and_parameter.second,
               irls_weights[reg_index],
-              channel_start,
-              channel_end,
+              num_channels,
               image_size));
       objective_function.AddTerm(regularization_term);
-      */
     }
 
     // Run the solver on the reweighted objective function. Solver choice and
@@ -206,6 +202,16 @@ ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
       solver_options_.split_channels ? 1 : num_channels;
   const int num_solver_rounds = num_channels / num_channels_per_split;
   const int num_data_points = num_channels_per_split * num_pixels;
+  // Adjust the number of channels the Regularizer will apply to accordingly.
+  for (const auto& regularizer_and_parameter : regularizers_) {
+    regularizer_and_parameter.first->SetImageDimensions(
+        image_size, num_channels_per_split);
+  }
+  if (num_channels_per_split != num_channels) {
+    LOG(INFO) << "Splitting up image into " << num_solver_rounds
+              << " sections with " << num_channels_per_split
+              << " channel(s) in each section.";
+  }
 
   // Scale the option stop criteria parameters based on the number of
   // parameters and strength of the regularizers.
