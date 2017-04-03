@@ -67,6 +67,10 @@ struct MapSolverOptions {
   // larger data sets.
   bool use_numerical_differentiation = false;
   double numerical_differentiation_step = 1.0e-6;
+
+  // If this is set to true, channels in the the given image will be solved
+  // independently.
+  bool split_channels = false;
 };
 
 class MapSolver : public Solver {
