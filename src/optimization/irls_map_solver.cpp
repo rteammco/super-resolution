@@ -225,6 +225,9 @@ ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
 
   ImageData estimated_image;
   for (int i = 0; i < num_solver_rounds; ++i) {
+    if (num_solver_rounds > 1) {
+      LOG(INFO) << "Starting solver on image subset #" << (i + 1) << ".";
+    }
     const int channel_start = i * num_channels_per_split;
     const int channel_end = channel_start + num_channels_per_split;
 

@@ -19,6 +19,7 @@ configuration = {
   # Solver-only options:
   'interpolate_color': True,
   'solve_in_wavelet_domain': False,
+  'split_channels': False,
   'regularizer': 'tv',
   'regularization_parameter': 0.01,
   'btv_scale_range': 3,
@@ -88,6 +89,8 @@ def run_super_resolution(binary_path, config):
     command += ' --interpolate_color'
   if config['solve_in_wavelet_domain']:
     command += ' --solve_in_wavelet_domain'
+  if config['split_channels']:
+    command += ' --split_channels'
   if config['verbose_solver']:
      command += ' --verbose'
   if config['use_numerical_differentiation']:

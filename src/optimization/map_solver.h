@@ -69,7 +69,12 @@ struct MapSolverOptions {
   double numerical_differentiation_step = 1.0e-6;
 
   // If this is set to true, channels in the the given image will be solved
-  // independently.
+  // independently. This split will occur after any other dimension reductions
+  // have been applied (such as PCA or color space interpolation).
+  //
+  // WARNING: If a regularizer uses multiple channels (such as 3D TV), this
+  // option will prevent it from seeing multiple channels. Not recommended for
+  // 3D regularizers.
   bool split_channels = false;
 };
 

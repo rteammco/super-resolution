@@ -80,6 +80,8 @@ DEFINE_int32(num_pca_components, 0,
     "Number of PCA components to use (0 = all) if solve_in_pca_space is set.");
 DEFINE_double(pca_retained_variance, 0.0,
     "Retained variance for PCA (1.0 = all, 0.0 = use num_pca_components).");
+DEFINE_bool(split_channels, false,
+    "Each channel will be solved as an independent image.");
 
 // Regularization options:
 // TODO: Add support for multiple regularizers simultaneously.
@@ -142,6 +144,7 @@ ImageData SetupAndRunSolver(
   solver_options.max_num_solver_iterations = FLAGS_solver_iterations;
   solver_options.use_numerical_differentiation =
       FLAGS_use_numerical_differentiation;
+  solver_options.split_channels = FLAGS_split_channels;
   super_resolution::IRLSMapSolver solver(
       solver_options, image_model, input_images);
   if (!FLAGS_verbose) {

@@ -38,6 +38,9 @@ void MapSolverOptions::PrintSolverOptions() const {
   } else {
     std::cout << " (analytical differentiation)" << std::endl;
   }
+  if (split_channels) {
+    std::cout << "  Channel splitting enabled." << std::endl;
+  }
   std::cout << "  Threshold 1 (gradient norm):         "
             << gradient_norm_threshold << std::endl;
   std::cout << "  Threshold 2 (cost decrease):         "
