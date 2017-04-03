@@ -233,18 +233,13 @@ ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
       std::copy(channel_ptr, channel_ptr + num_pixels, data_ptr);
     }
 
-    /*
-    // TODO: Fix (need to specify the channel range).
     // Set up the base objective function (just data term). The regularization
     // term depends on the IRLS weights, so it gets added in the IRLS loop.
     ObjectiveFunction objective_function_data_term_only(num_data_points);
     std::shared_ptr<ObjectiveTerm> data_term(new ObjectiveDataTerm(
         image_model_, observations_, channel_start, channel_end, image_size));
     objective_function_data_term_only.AddTerm(data_term);
-    */
 
-    /*
-    // TODO: Fix (need the fixed data term above).
     RunIRLSLoop(
         solver_options_scaled,
         objective_function_data_term_only,
@@ -253,7 +248,6 @@ ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
         channel_start,
         channel_end,
         &solver_data);
-    */
 
     for (int channel = 0; channel < num_channels_per_split; ++channel) {
       const double* data_ptr =

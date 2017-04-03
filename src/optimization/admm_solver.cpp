@@ -12,8 +12,9 @@ ImageData AdmmSolver::Solve(const ImageData& initial_estimate) {
   const int num_data_points = GetNumDataPoints();
 
   ObjectiveFunction data_term_objective(num_data_points);
+  // TODO: Fix the range (0 - num_channels?).
   std::shared_ptr<ObjectiveTerm> data_term(new ObjectiveDataTerm(
-      image_model_, observations_, num_channels, GetImageSize()));
+      image_model_, observations_, 0, num_channels, GetImageSize()));
   data_term_objective.AddTerm(data_term);
   // ObjectiveEqualityConstraintTerm  TODO: implement this.
 

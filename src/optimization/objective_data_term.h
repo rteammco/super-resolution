@@ -18,15 +18,15 @@ namespace super_resolution {
 
 class ObjectiveDataTerm : public ObjectiveTerm {
  public:
+  // The given channel range (channel_start to channel_end; channel_end is
+  // non-inclusive) defines the range of channels that this data term will be
+  // applied to. Range must be valid.
   ObjectiveDataTerm(
       const ImageModel& image_model,
       const std::vector<ImageData>& observations,
-      const int num_channels,
-      const cv::Size& image_size)
-    : image_model_(image_model),
-      observations_(observations),
-      num_channels_(num_channels),
-      image_size_(image_size) {}
+      const int channel_start,
+      const int channel_end,
+      const cv::Size& image_size);
 
   virtual double Compute(
       const double* estimated_image_data, double* gradient) const;
@@ -35,7 +35,8 @@ class ObjectiveDataTerm : public ObjectiveTerm {
   // The image model and observation information.
   const ImageModel& image_model_;
   const std::vector<ImageData>& observations_;
-  const int num_channels_;
+  const int channel_start_;
+  const int channel_end_;
   const cv::Size& image_size_;
 };
 

@@ -16,12 +16,14 @@ double ComputeTermForObservation(
     const ImageData& observation,
     const int image_index,
     const ImageModel& image_model,
-    const int num_channels,
+    const int channel_start,
+    const int channel_end,
     const cv::Size& image_size,
     const double* estimated_image_data,
     double* gradient) {
 
   // Degrade (and re-upsample) the HR estimate with the image model.
+  const int num_channels = channel_end - channel_start;
   ImageData degraded_hr_image(estimated_image_data, image_size, num_channels);
   image_model.ApplyToImage(&degraded_hr_image, image_index);
   degraded_hr_image.ResizeImage(image_size, INTERPOLATE_NEAREST);
@@ -33,11 +35,11 @@ double ComputeTermForObservation(
   const int num_data_points = num_pixels * num_channels;
   std::vector<double> residuals;
   residuals.reserve(num_data_points);
-  for (int channel_index = 0; channel_index < num_channels; ++channel_index) {
+  for (int channel = 0; channel < num_channels; ++channel) {
     const double* degraded_hr_channel_data =
-        degraded_hr_image.GetChannelData(channel_index);
+        degraded_hr_image.GetChannelData(channel);
     const double* observation_channel_data =
-        observation.GetChannelData(channel_index);
+        observation.GetChannelData(channel + channel_start);
     for (int pixel_index = 0; pixel_index < num_pixels; ++pixel_index) {
       const double residual =
           degraded_hr_channel_data[pixel_index] -
@@ -74,6 +76,25 @@ double ComputeTermForObservation(
 
 }  // namespace
 
+ObjectiveDataTerm::ObjectiveDataTerm(
+    const ImageModel& image_model,
+    const std::vector<ImageData>& observations,
+    const int channel_start,
+    const int channel_end,
+    const cv::Size& image_size)
+    : image_model_(image_model),
+      observations_(observations),
+      channel_start_(channel_start),
+      channel_end_(channel_end),
+      image_size_(image_size) {
+
+  CHECK_GT(observations.size(), 0) << "Cannot solve with 0 observations.";
+  CHECK_GE(channel_start, 0) << "First channel in range is out of bounds.";
+  CHECK_LE(channel_end, observations[0].GetNumChannels())
+      << "Last channel in range is out of bounds (non-inclusive).";
+  CHECK_GT(channel_end, channel_start) << "Invalid channel range.";
+}
+
 double ObjectiveDataTerm::Compute(
     const double* estimated_image_data, double* gradient) const {
 
@@ -85,7 +106,8 @@ double ObjectiveDataTerm::Compute(
         observations_[image_index],
         image_index,
         image_model_,
-        num_channels_,
+        channel_start_,
+        channel_end_,
         image_size_,
         estimated_image_data,
         gradient);
