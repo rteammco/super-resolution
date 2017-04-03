@@ -415,15 +415,15 @@ int main(int argc, char** argv) {
             input_data.high_res_image);
         const double upsampled_psnr = psnr_evaluator.Evaluate(upsampled_image);
         const double result_psnr = psnr_evaluator.Evaluate(result);
-        LOG(INFO) << "PSNR score on upsampled: " << upsampled_psnr;
-        LOG(INFO) << "PSNR score on result:    " << result_psnr;
+        std::cout << "PSNR score on upsampled: " << upsampled_psnr << std::endl;
+        std::cout << "PSNR score on result:    " << result_psnr << std::endl;
       } else if (evaluator == "ssim") {
         super_resolution::StructuralSimilarityEvaluator ssim_evaluator(
             input_data.high_res_image);
         const double upsampled_ssim = ssim_evaluator.Evaluate(upsampled_image);
         const double result_ssim = ssim_evaluator.Evaluate(result);
-        LOG(INFO) << "SSIM score on upsampled: " << upsampled_ssim;
-        LOG(INFO) << "SSIM score on result:    " << result_ssim;
+        std::cout << "SSIM score on upsampled: " << upsampled_ssim << std::endl;
+        std::cout << "SSIM score on result:    " << result_ssim << std::endl;
       } else {
         LOG(ERROR) << "Unknown/unsupported evaluator '" << evaluator << "'.";
       }
