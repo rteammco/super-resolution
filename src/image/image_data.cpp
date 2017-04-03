@@ -286,7 +286,7 @@ void ImageData::AddChannel(
   if ((normalize_mode == NORMALIZE_IMAGE) && (max_pixel_value > 1.0)) {
     converted_image.convertTo(
         converted_image, util::kOpenCvMatrixType, 1.0 / 255.0);
-  } else {
+  } else if (converted_image.type() != util::kOpenCvMatrixType) {
     converted_image.convertTo(converted_image, util::kOpenCvMatrixType);
   }
   channels_.push_back(converted_image);
@@ -298,27 +298,13 @@ void ImageData::AddChannel(
 void ImageData::AddChannel(const double* pixel_values, const cv::Size& size) {
   CHECK_NOTNULL(pixel_values);
 
-  if (channels_.empty()) {
-    image_size_ = size;
-  } else {
-    // Check size first if other channels already exist.
-    CHECK(size == image_size_)
-        << "Channel size did not match the expected size: "
-        << channels_[0].size() << " size expected, "
-        << size << " size given.";
-  }
-
-  // Set image size and make sure the number of pixels is accurate.
-  const int num_pixels = size.width * size.height;
-  CHECK_GE(num_pixels, 1) << "Number of pixels must be positive.";
+  CHECK_GT(size.width * size.height, 0) << "Invalid image size.";
 
   const cv::Mat channel_image(
       size,
       util::kOpenCvMatrixType,
       const_cast<void*>(reinterpret_cast<const void*>(pixel_values)));
-  channels_.push_back(channel_image.clone());  // copy data
-
-  spectral_mode_ = GetDefaultSpectralMode(channels_.size());
+  AddChannel(channel_image, DO_NOT_NORMALIZE_IMAGE);
 }
 
 void ImageData::ResizeImage(
