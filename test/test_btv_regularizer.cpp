@@ -20,7 +20,7 @@ const double test_image_data[25] = {
 
 TEST(BilateralTotalVariationRegularizer, ApplyToImage) {
   const super_resolution::BilateralTotalVariationRegularizer btv_regularizer(
-      test_image_size, 1, 2, 0.5);
+      test_image_size, 2, 0.5);
   // If scale_range_ is 2 and spatial_decay is 0.5, then:
   // for pixel at (0, 0):
   //   BTV = pow(0.5, 0) * |0 - 0| = 0                    <- compare to itself
@@ -34,7 +34,7 @@ TEST(BilateralTotalVariationRegularizer, ApplyToImage) {
   //       + pow(0.5, 4) * |0 - 3| = 0.0625 * 3 = 0.1875  <- two down, two right
   //  = 2.8125
   const std::vector<double> result_1 =
-      btv_regularizer.ApplyToImage(test_image_data);
+      btv_regularizer.ApplyToImage(test_image_data, 1);  // 1 channel.
   EXPECT_THAT(result_1, SizeIs(25));
   EXPECT_DOUBLE_EQ(result_1[0], 2.8125);
 
@@ -52,7 +52,7 @@ TEST(BilateralTotalVariationRegularizer, ApplyToImage) {
 
   // Set up BTV Regularizer with a range of only 1 and decay of 0.25.
   const super_resolution::BilateralTotalVariationRegularizer btv_regularizer_2(
-      test_image_size, 2, 1, 0.25);
+      test_image_size, 1, 0.25);
   // If scale_range_ is 1 and spatial_decay is 0.25, then:
   // for pixel at (1, 2) - index 7 - is:
   //   BTV = pow(0.25, 0) * |3 - 3|  = 0                    <- compare to itself
@@ -62,7 +62,7 @@ TEST(BilateralTotalVariationRegularizer, ApplyToImage) {
   //   = 0.5625
   // Since both channels are identical, expect the same value in both.
   const std::vector<double> result_2 =
-      btv_regularizer_2.ApplyToImage(test_image_data_two_channel);
+      btv_regularizer_2.ApplyToImage(test_image_data_two_channel, 2);
   EXPECT_THAT(result_2, SizeIs(50));
   EXPECT_DOUBLE_EQ(result_2[7], 0.5625);
   EXPECT_DOUBLE_EQ(result_2[25 + 7], 0.5625);
@@ -78,11 +78,11 @@ TEST(BilateralTotalVariationRegularizer, ApplyToImageWithDifferentiation) {
   std::vector<double> gradient_constants(25);
   std::fill(gradient_constants.begin(), gradient_constants.end(), 0.5);
   const super_resolution::BilateralTotalVariationRegularizer btv_regularizer(
-      test_image_size, 1, 2, 0.5);
+      test_image_size, 2, 0.5);
 
   const auto& residuals_and_gradient =
       btv_regularizer.ApplyToImageWithDifferentiation(
-          test_image_data, gradient_constants);
+          test_image_data, gradient_constants, 1);
   const std::vector<double> residuals = residuals_and_gradient.first;
   const std::vector<double> gradient = residuals_and_gradient.second;
 

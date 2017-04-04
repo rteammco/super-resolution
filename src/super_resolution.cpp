@@ -159,8 +159,7 @@ ImageData SetupAndRunSolver(
       regularizer =
           std::shared_ptr<super_resolution::Regularizer>(
               new super_resolution::TotalVariationRegularizer(
-                  initial_estimate.GetImageSize(),
-                  initial_estimate.GetNumChannels()));
+                  initial_estimate.GetImageSize()));
       if (FLAGS_regularizer == "3dtv") {
         dynamic_cast<super_resolution::TotalVariationRegularizer*>(
             regularizer.get())->SetUse3dTotalVariation(true);
@@ -170,7 +169,6 @@ ImageData SetupAndRunSolver(
           std::shared_ptr<super_resolution::Regularizer>(
               new super_resolution::BilateralTotalVariationRegularizer(
                   initial_estimate.GetImageSize(),
-                  initial_estimate.GetNumChannels(),
                   FLAGS_btv_scale_range,
                   FLAGS_btv_spatial_decay));
     } else {
@@ -180,8 +178,7 @@ ImageData SetupAndRunSolver(
       regularizer =
           std::shared_ptr<super_resolution::Regularizer>(
               new super_resolution::TotalVariationRegularizer(
-                  initial_estimate.GetImageSize(),
-                  initial_estimate.GetNumChannels()));
+                  initial_estimate.GetImageSize()));
     }
     solver.AddRegularizer(regularizer, FLAGS_regularization_parameter);
     LOG(INFO) << "Added " << FLAGS_regularizer

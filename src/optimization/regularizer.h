@@ -15,25 +15,16 @@ class Regularizer {
   // Initialize the regularization term object with the image size, which is
   // needed to compute the number of pixels, and in most implementations to
   // know the dimensions of the image.
-  Regularizer(const cv::Size& image_size, const int num_channels)
-      : image_size_(image_size), num_channels_(num_channels) {}
+  explicit Regularizer(const cv::Size& image_size) : image_size_(image_size) {}
 
   // Virtual destructor for derived classes.
   virtual ~Regularizer() = default;
-
-  // Adjust the image size and number of channels. This can be used by a Solver
-  // if it needs to use the regularizer on a different image or subset of an
-  // image.
-  void SetImageDimensions(const cv::Size& image_size, const int num_channels) {
-    image_size_ = image_size;
-    num_channels_ = num_channels;
-  }
 
   // Returns a vector of resulting values based on the regularization for each
   // pixel in the given image data array. This is NOT the final residual, but
   // contains the evaluation values at each pixel.
   virtual std::vector<double> ApplyToImage(
-      const double* image_data) const = 0;
+      const double* image_data, const int num_channels) const = 0;
 
   // Same as ApplyToImage, but the second vector returned in the pair contains
   // the gradient (assuming a single residual value) in the objective
@@ -50,20 +41,12 @@ class Regularizer {
   virtual std::pair<std::vector<double>, std::vector<double>>
   ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double>& gradient_constants) const = 0;
+      const std::vector<double>& gradient_constants,
+      const int num_channels) const = 0;
 
  protected:
   // The size of the image to be regularized.
-  //
-  // NOTE: This property can be modified.
-  cv::Size image_size_;
-
-  // This is the number of channels in each image given to be regularized. The
-  // total number of data points is (image_size_.width * image_size_.height *
-  // num_channels_).
-  //
-  // NOTE: This property can be modified.
-  int num_channels_;
+  const cv::Size image_size_;
 };
 
 }  // namespace super_resolution

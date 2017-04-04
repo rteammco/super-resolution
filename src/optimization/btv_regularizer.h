@@ -18,16 +18,17 @@ class BilateralTotalVariationRegularizer : public Regularizer {
  public:
   BilateralTotalVariationRegularizer(
       const cv::Size& image_size,
-      const int num_channels,
       const int scale_range,
       const double spatial_decay);
 
-  virtual std::vector<double> ApplyToImage(const double* image_data) const;
+  virtual std::vector<double> ApplyToImage(
+      const double* image_data, const int num_channels) const;
 
   virtual std::pair<std::vector<double>, std::vector<double>>
   ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double>& gradient_constants) const;
+      const std::vector<double>& gradient_constants,
+      const int num_channels) const;
 
  private:
   // The scale range controls the size of the patch that is checked for pixel

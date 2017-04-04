@@ -19,17 +19,18 @@ class TotalVariationRegularizer : public Regularizer {
  public:
   // Constructor for using the 1-norm (taking the absolute value of the
   // gradient at each pixel). Using the 1-norm version is recommended.
-  TotalVariationRegularizer(const cv::Size& image_size, const int num_channels)
-      : Regularizer(image_size, num_channels),
-        use_3d_total_variation_(false) {}
+  explicit TotalVariationRegularizer(const cv::Size& image_size)
+      : Regularizer(image_size), use_3d_total_variation_(false) {}
 
   // Implementation of total variation regularization.
-  virtual std::vector<double> ApplyToImage(const double* image_data) const;
+  virtual std::vector<double> ApplyToImage(
+      const double* image_data, const int num_channels) const;
 
   virtual std::pair<std::vector<double>, std::vector<double>>
   ApplyToImageWithDifferentiation(
       const double* image_data,
-      const std::vector<double>& gradient_constants) const;
+      const std::vector<double>& gradient_constants,
+      const int num_channels) const;
 
   // Turn using 3D total variation on or off. 3D TV may be preferable for
   // hyperspectral data and can be used experimentally for color images.

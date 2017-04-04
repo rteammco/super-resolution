@@ -35,7 +35,7 @@ double ObjectiveIRLSRegularizationTerm::Compute(
   // TODO: just ApplyToImage if gradient == nullptr.
   const std::pair<std::vector<double>, std::vector<double>>&
   values_and_partials = regularizer_->ApplyToImageWithDifferentiation(
-          estimated_image_data, gradient_constants);
+          estimated_image_data, gradient_constants, num_channels_);
 
   // The values are the regularizer values at each pixel and the partials are
   // the sum of partial derivatives at each pixel.

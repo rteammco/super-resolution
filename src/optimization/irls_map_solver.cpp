@@ -129,7 +129,8 @@ void RunIRLSLoop(
       const auto& regularizer_and_parameter = regularizers[reg_index];
       const double* estimated_image_data = solver_data->getcontent();
       const std::vector<double>& regularization_residuals =
-          regularizer_and_parameter.first->ApplyToImage(estimated_image_data);
+          regularizer_and_parameter.first->ApplyToImage(
+              estimated_image_data, num_channels);
       CHECK_EQ(regularization_residuals.size(), num_data_points)
           << "Number of residuals does not match number of weights.";
       for (int pixel_index = 0; pixel_index < num_data_points; ++pixel_index) {
@@ -202,11 +203,6 @@ ImageData IRLSMapSolver::Solve(const ImageData& initial_estimate) {
       solver_options_.split_channels ? 1 : num_channels;
   const int num_solver_rounds = num_channels / num_channels_per_split;
   const int num_data_points = num_channels_per_split * num_pixels;
-  // Adjust the number of channels the Regularizer will apply to accordingly.
-  for (const auto& regularizer_and_parameter : regularizers_) {
-    regularizer_and_parameter.first->SetImageDimensions(
-        image_size, num_channels_per_split);
-  }
   if (num_channels_per_split != num_channels) {
     LOG(INFO) << "Splitting up image into " << num_solver_rounds
               << " sections with " << num_channels_per_split

@@ -108,19 +108,19 @@ double GetTotalVariation3d(
 }  // namespace
 
 std::vector<double> TotalVariationRegularizer::ApplyToImage(
-    const double* image_data) const {
+    const double* image_data, const int num_channels) const {
 
   CHECK_NOTNULL(image_data);
 
   const int num_pixels = image_size_.area();
-  std::vector<double> residuals(num_pixels * num_channels_);
-  for (int channel = 0; channel < num_channels_; ++channel) {
+  std::vector<double> residuals(num_pixels * num_channels);
+  for (int channel = 0; channel < num_channels; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = util::GetPixelIndex(image_size_, channel, row, col);
         if (use_3d_total_variation_) {
           residuals[index] = GetTotalVariation3d(
-              image_data, image_size_, num_channels_, channel, row, col);
+              image_data, image_size_, num_channels, channel, row, col);
         } else {
           residuals[index] = GetTotalVariationAbs(
               image_data, image_size_, channel, row, col);
@@ -134,18 +134,19 @@ std::vector<double> TotalVariationRegularizer::ApplyToImage(
 std::pair<std::vector<double>, std::vector<double>>
 TotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const double* image_data,
-    const std::vector<double>& gradient_constants) const {
+    const std::vector<double>& gradient_constants,
+    const int num_channels) const {
 
   CHECK_NOTNULL(image_data);
 
-  const std::vector<double> residuals = ApplyToImage(image_data);
+  const std::vector<double> residuals = ApplyToImage(image_data, num_channels);
 
   // Compute the gradient.
   // TODO: add some descriptive comments about computing the gradient.
   const int num_pixels = image_size_.area();
-  const int num_parameters = num_pixels * num_channels_;
+  const int num_parameters = num_pixels * num_channels;
   std::vector<double> gradient(num_parameters);
-  for (int channel = 0; channel < num_channels_; ++channel) {
+  for (int channel = 0; channel < num_channels; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = util::GetPixelIndex(image_size_, channel, row, col);

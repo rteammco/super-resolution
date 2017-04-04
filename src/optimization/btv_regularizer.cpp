@@ -49,10 +49,9 @@ double GetBilateralTotalVariation(
 
 BilateralTotalVariationRegularizer::BilateralTotalVariationRegularizer(
     const cv::Size& image_size,
-    const int num_channels,
     const int scale_range,
     const double spatial_decay)
-    : Regularizer(image_size, num_channels),
+    : Regularizer(image_size),
       scale_range_(scale_range),
       spatial_decay_(spatial_decay) {
 
@@ -66,13 +65,13 @@ BilateralTotalVariationRegularizer::BilateralTotalVariationRegularizer(
 }
 
 std::vector<double> BilateralTotalVariationRegularizer::ApplyToImage(
-    const double* image_data) const {
+    const double* image_data, const int num_channels) const {
 
   CHECK_NOTNULL(image_data);
 
   const int num_pixels = image_size_.width * image_size_.height;
-  std::vector<double> residuals(num_pixels * num_channels_);
-  for (int channel = 0; channel < num_channels_; ++channel) {
+  std::vector<double> residuals(num_pixels * num_channels);
+  for (int channel = 0; channel < num_channels; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = util::GetPixelIndex(image_size_, channel, row, col);
@@ -93,18 +92,19 @@ std::vector<double> BilateralTotalVariationRegularizer::ApplyToImage(
 std::pair<std::vector<double>, std::vector<double>>
 BilateralTotalVariationRegularizer::ApplyToImageWithDifferentiation(
     const double* image_data,
-    const std::vector<double>& gradient_constants) const {
+    const std::vector<double>& gradient_constants,
+    const int num_channels) const {
 
   CHECK_NOTNULL(image_data);
 
-  const std::vector<double> residuals = ApplyToImage(image_data);
+  const std::vector<double> residuals = ApplyToImage(image_data, num_channels);
 
   // Compute the gradient.
   // TODO: add some descriptive comments about computing the gradient.
   const int num_pixels = image_size_.width * image_size_.height;
-  const int num_parameters = num_pixels * num_channels_;
+  const int num_parameters = num_pixels * num_channels;
   std::vector<double> gradient(num_parameters);
-  for (int channel = 0; channel < num_channels_; ++channel) {
+  for (int channel = 0; channel < num_channels; ++channel) {
     for (int row = 0; row < image_size_.height; ++row) {
       for (int col = 0; col < image_size_.width; ++col) {
         const int index = util::GetPixelIndex(image_size_, channel, row, col);
